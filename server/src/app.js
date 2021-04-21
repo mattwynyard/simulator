@@ -10,6 +10,7 @@ const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 
 let latlng = null;
+let faults = [] 
 
 app.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
@@ -30,7 +31,11 @@ app.use((req, res, next) => {
 });
 
 app.get('/position', async (req, res) => {
-  res.send({ latlng: latlng});
+  res.send({ latlng: latlng, faults: faults});
+});
+
+app.get('/fault', async (req, res) => {
+  res.send({ faults: faults});
 });
 
 app.post('/location', async (req, res) => {
@@ -41,6 +46,7 @@ app.post('/location', async (req, res) => {
 
 app.post('/fault', async (req, res) => {
   console.log(req.body);
+  faults.push(req.body)
   res.send({ message: "ok"});
 });
 

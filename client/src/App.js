@@ -8,14 +8,15 @@ function App() {
 
   const [counter, setCounter] = useState(0);
   const [latlng, setPosition] = useState([]);
+  const [points, setPoints] = useState([]);
   const [host] = useState("localhost:5000");
 
   useEffect(
     () => {
         const id = setInterval(() => {
         setCounter(counter + 1); 
-        getPosition().then(data => {
-            console.log(data);
+        getData().then(data => {
+            //console.log(data);
             if (data.latlng !== null) {
               try {
                 let lat = data.latlng[0];
@@ -24,6 +25,10 @@ function App() {
               } catch {
                 console.log("error")
               }     
+            }
+            if (data.faults !== null) {
+              console.log(data.faults)
+              setPoints(data.faults)
             }
              
         });           
@@ -34,7 +39,7 @@ function App() {
     },
     [counter],
 );
-const getPosition = async () => {
+const getData = async () => {
         
   try {
       const response = await fetch("http://" + host + '/position', {
@@ -89,6 +94,22 @@ const getPosition = async () => {
               center={position}
               radius ={5}
               fill={true}
+              fillOpacity={1.0}
+              eventHandlers={{
+                click: () => {
+                  console.log('marker clicked')
+                },
+              }}
+              >        
+            </CircleMarker>
+          )}
+          {points.map((position, idx) =>
+            <CircleMarker
+              key={`marker-${idx}`} 
+              center={L.latLng(position.LatLng[0], position.LatLng[1])}
+              radius ={4}
+              fill={true}
+              color={"red"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: () => {
