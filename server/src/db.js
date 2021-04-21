@@ -13,7 +13,7 @@ const connection = new Client({
     connectionTimeoutMillis: 10000,
 });
 
-//connection.connect();
+connection.connect();
 connection.on('connect', () => {
     console.log("connected to database on port: " + process.env.PORT);
 });
