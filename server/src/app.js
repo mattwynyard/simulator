@@ -69,8 +69,7 @@ app.post('/updateFault', async (req, res) => {
     res.send({ message: "updated"});
   } else {
     res.send({ message: "not updated"});
-  }
-  
+  } 
 });
 
 app.post('/deleteFault', async (req, res) => {
@@ -82,7 +81,6 @@ app.post('/deleteFault', async (req, res) => {
   } else {
     res.send({ message: "not deleted"});
   }
-  
 });
 
 

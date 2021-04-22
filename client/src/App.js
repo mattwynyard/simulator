@@ -1,6 +1,6 @@
 import './App.css';
 import { MapContainer, TileLayer, CircleMarker, ScaleControl} from 'react-leaflet';
-import L, { LatLng } from 'leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect} from 'react';
 
@@ -10,6 +10,7 @@ function App() {
   const [latlng, setPosition] = useState([]);
   const [points, setPoints] = useState([]);
   const [host] = useState("localhost:5000");
+  const [timerInterval] = useState(1000);
 
   useEffect(
     () => {
@@ -23,24 +24,26 @@ function App() {
                 let lng = data.latlng[1];
                 setPosition([L.latLng(lat, lng)]);     
               } catch {
-                console.log("error")
+                console.log("position error");
               }     
             }
-            if (data.faults !== null) {
-              console.log(data.faults)
-              setPoints(data.faults)
-            }
-             
+            try {
+              if (data.faults !== null) {
+                //console.log(data.faults);
+                setPoints(data.faults);
+              }
+            } catch {
+              console.log("fault error")
+            }     
         });           
-        }, 1000);
+        }, timerInterval);
         return () => {
         clearInterval(id);
         };
     },
     [counter],
 );
-const getData = async () => {
-        
+const getData = async () => {      
   try {
       const response = await fetch("http://" + host + '/position', {
           method: 'GET',
@@ -53,8 +56,6 @@ const getData = async () => {
       });
       if (response.ok) {
           const body = await response.json();
-          console.log(body);
-
           return body; 
       } else {
           
@@ -118,8 +119,7 @@ const getData = async () => {
               }}
               >        
             </CircleMarker>
-          )}
-          
+          )}         
          </MapContainer>
     </div>
   );
