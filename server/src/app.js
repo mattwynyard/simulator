@@ -47,20 +47,33 @@ app.get('/fault', async (req, res) => {
   res.send({ faults: faults});
 });
 
+app.post('/reset', async (req, res) => {
+  faultMap = new Map();
+  faults = [];
+  res.send({ message: "ok"});
+});
+
 app.post('/location', async (req, res) => {
   console.log(req.body);
   latlng = req.body.latlng
   res.send({ message: "ok"});
 });
 
-app.post('/insertFault', async (req, res) => {
+app.post('/insertPoint', async (req, res) => {
   console.log(req.body);
   faultMap.set(req.body.id, req.body);
   faults.push(req.body);
   res.send({ message: "ok"});
 });
 
-app.post('/updateFault', async (req, res) => {
+app.post('/insertLine', async (req, res) => {
+  console.log(req.body);
+  //faultMap.set(req.body.id, req.body);
+  //faults.push(req.body);
+  res.send({ message: "ok"});
+});
+
+app.post('/updatePoint', async (req, res) => {
   console.log(req.body);
   if (faultMap.has(req.body.id)) {
     faultMap.delete(req.body.id);
@@ -72,7 +85,7 @@ app.post('/updateFault', async (req, res) => {
   } 
 });
 
-app.post('/deleteFault', async (req, res) => {
+app.post('/deletePoint', async (req, res) => {
   console.log(req.body);
   if (faultMap.has(req.body.id)) {
     faultMap.delete(req.body.id);
@@ -82,11 +95,5 @@ app.post('/deleteFault', async (req, res) => {
     res.send({ message: "not deleted"});
   }
 });
-
-
-
-
-
-
 
 module.exports = app;

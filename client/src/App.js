@@ -1,23 +1,59 @@
 import './App.css';
-import { MapContainer, TileLayer, CircleMarker, ScaleControl} from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, ScaleControl, useMap} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect} from 'react';
 
+function MapRef(props) {
+
+  const [center, setCenter] = useState(props.center);
+  const map = useMap();
+  if (props.center.length !== 0) {
+    console.log(props.center);
+    map.panTo(props.center[0])
+  }
+  
+  
+  return null
+}
+
 function App() {
 
   const [counter, setCounter] = useState(0);
-  const [latlng, setPosition] = useState([]);
+  const [position, setPosition] = useState([]);
+  const [center] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [host] = useState("localhost:5000");
   const [timerInterval] = useState(1000);
+
+  const getData = async () => {      
+    try {
+        const response = await fetch("http://" + host + '/position', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',        
+            },
+           
+        });
+        if (response.ok) {
+            const body = await response.json();
+            return body; 
+        } else {
+            
+            return Error(response);
+        }
+    } catch {
+        return new Error("connection error")
+    }      
+  };
 
   useEffect(
     () => {
         const id = setInterval(() => {
         setCounter(counter + 1); 
         getData().then(data => {
-            //console.log(data);
             if (data.latlng !== null) {
               try {
                 let lat = data.latlng[0];
@@ -41,38 +77,16 @@ function App() {
         clearInterval(id);
         };
     },
-    [counter],
+    [counter, getData, timerInterval],
 );
-const getData = async () => {      
-  try {
-      const response = await fetch("http://" + host + '/position', {
-          method: 'GET',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',        
-          },
-         
-      });
-      if (response.ok) {
-          const body = await response.json();
-          return body; 
-      } else {
-          
-          return Error(response);
-      }
-  } catch {
-      return new Error("connection error")
-  }      
-};
 
   return (
     <div className="App">
        <MapContainer 
             className="map" 
-            center={[-36.81835, 174.74581]} 
-            zoom={12} 
-            minZoom={10}
+            center={center} 
+            zoom={18} 
+            minZoom={1}
             maxZoom={18}
             scrollWheelZoom={true}
             keyboard={true}
@@ -89,7 +103,7 @@ const getData = async () => {
           //url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
         />
          <ScaleControl name="Scale" className="scale"/>
-         {latlng.map((position, idx) =>
+         {position.map((position, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
               center={position}
@@ -104,6 +118,7 @@ const getData = async () => {
               >        
             </CircleMarker>
           )}
+          
           {points.map((position, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
@@ -119,7 +134,8 @@ const getData = async () => {
               }}
               >        
             </CircleMarker>
-          )}         
+          )} 
+          <MapRef center={position}></MapRef>
          </MapContainer>
     </div>
   );
