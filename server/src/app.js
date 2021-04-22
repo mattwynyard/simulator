@@ -44,9 +44,15 @@ app.post('/location', async (req, res) => {
   res.send({ message: "ok"});
 });
 
-app.post('/fault', async (req, res) => {
+app.post('/insertFault', async (req, res) => {
   console.log(req.body);
   faults.push(req.body)
+  res.send({ message: "ok"});
+});
+
+app.post('/deleteFault', async (req, res) => {
+
+  console.log(req.body)
   res.send({ message: "ok"});
 });
 
