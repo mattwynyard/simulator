@@ -10,7 +10,16 @@ const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 
 let latlng = null;
-let faults = [] 
+let faults = [];
+let faultMap = new Map();
+
+const refreshFaults = () => {
+  let f = [];
+  faultMap.forEach(function(value, key) {
+    f.push(value);
+  });
+  faults = f;
+}
 
 app.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
@@ -46,15 +55,37 @@ app.post('/location', async (req, res) => {
 
 app.post('/insertFault', async (req, res) => {
   console.log(req.body);
-  faults.push(req.body)
+  faultMap.set(req.body.id, req.body);
+  faults.push(req.body);
   res.send({ message: "ok"});
+});
+
+app.post('/updateFault', async (req, res) => {
+  console.log(req.body);
+  if (faultMap.has(req.body.id)) {
+    faultMap.delete(req.body.id);
+    faultMap.set(req.body.id, req.body);
+    refreshFaults();
+    res.send({ message: "updated"});
+  } else {
+    res.send({ message: "not updated"});
+  }
+  
 });
 
 app.post('/deleteFault', async (req, res) => {
-
-  console.log(req.body)
-  res.send({ message: "ok"});
+  console.log(req.body);
+  if (faultMap.has(req.body.id)) {
+    faultMap.delete(req.body.id);
+    refreshFaults();
+    res.send({ message: "deleted"});
+  } else {
+    res.send({ message: "not deleted"});
+  }
+  
 });
+
+
 
 
 
