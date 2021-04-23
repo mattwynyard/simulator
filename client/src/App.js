@@ -71,6 +71,7 @@ function App() {
         getData().then(data => {
             if (data.latlng !== null) {
               try {
+                //console.log(data.latlng)
                 let lat = data.latlng[0];
                 let lng = data.latlng[1];
                 setPosition([L.latLng(lat, lng)]);
@@ -84,7 +85,7 @@ function App() {
             }
             try {
               if (data.faults !== null) {
-                //console.log(data.faults);
+                console.log(data.faults);
                 setPoints(data.faults);
               }
             } catch {
@@ -145,7 +146,7 @@ useEffect(
           {points.map((position, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
-              center={L.latLng(position.LatLng[0], position.LatLng[1])}
+              center={L.latLng(position.latlng[0], position.latlng[1])}
               radius ={4}
               fill={true}
               color={"red"}
