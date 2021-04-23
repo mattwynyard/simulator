@@ -50,6 +50,7 @@ app.get('/fault', async (req, res) => {
 app.post('/reset', async (req, res) => {
   faultMap = new Map();
   faults = [];
+  latlng = null;
   res.send({ message: "ok"});
 });
 
@@ -68,8 +69,16 @@ app.post('/insertPoint', async (req, res) => {
 
 app.post('/insertLine', async (req, res) => {
   console.log(req.body);
-  //faultMap.set(req.body.id, req.body);
-  //faults.push(req.body);
+  res.send({ message: "ok"});
+});
+
+app.post('/updateLine', async (req, res) => {
+  console.log(req.body);
+  res.send({ message: "ok"});
+});
+
+app.post('/deleteLine', async (req, res) => {
+  console.log(req.body);
   res.send({ message: "ok"});
 });
 

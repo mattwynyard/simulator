@@ -6,25 +6,22 @@ import React, { useState, useEffect} from 'react';
 
 function MapRef(props) {
 
-  const [center, setCenter] = useState(props.center);
   const map = useMap();
   if (props.center.length !== 0) {
-    console.log(props.center);
     map.panTo(props.center[0])
   }
-  
-  
   return null
 }
 
 function App() {
 
   const [counter, setCounter] = useState(0);
+  const [initialise, setIntialise] = useState(false);
   const [position, setPosition] = useState([]);
-  const [center] = useState([-36.81835, 174.74581]);
+  const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [host] = useState("localhost:5000");
-  const [timerInterval] = useState(1000);
+  const [timerInterval] = useState(500);
 
   const getData = async () => {      
     try {
@@ -58,7 +55,11 @@ function App() {
               try {
                 let lat = data.latlng[0];
                 let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);     
+                setPosition([L.latLng(lat, lng)]);
+                if (!initialise) {
+                  setCenter([L.latLng(lat, lng)]);
+                  setIntialise(true);
+                }
               } catch {
                 console.log("position error");
               }     
@@ -77,7 +78,16 @@ function App() {
         clearInterval(id);
         };
     },
-    [counter, getData, timerInterval],
+    [counter, getData, timerInterval, initialise],
+);
+
+useEffect(
+  () => {
+    if (counter % 10 === 0) {
+      setCenter(position);
+    }
+  },
+  [position],
 );
 
   return (
@@ -135,7 +145,7 @@ function App() {
               >        
             </CircleMarker>
           )} 
-          <MapRef center={position}></MapRef>
+          <MapRef center={center}></MapRef>
          </MapContainer>
     </div>
   );
