@@ -13,10 +13,29 @@ function MapRef(props) {
   return null
 }
 
+function CustomTileLayer(props) {
+  if (props.isRemote) {
+    return (
+      <TileLayer
+        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
+      />
+    );
+  } else {
+    return (
+      <TileLayer
+        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+    );
+  }
+}
+
 function App() {
 
   const [counter, setCounter] = useState(0);
   const [initialise, setIntialise] = useState(false);
+  const [isRemote] = useState(false);
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
@@ -31,8 +50,7 @@ function App() {
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',        
-            },
-           
+            },      
         });
         if (response.ok) {
             const body = await response.json();
@@ -100,18 +118,13 @@ useEffect(
             maxZoom={18}
             scrollWheelZoom={true}
             keyboard={true}
-            
             eventHandlers={{
                 load: () => {
                   console.log('onload')
                 },
               }}
         >
-        <TileLayer
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          //url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
-        />
+        <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
          {position.map((position, idx) =>
             <CircleMarker
