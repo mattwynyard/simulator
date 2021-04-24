@@ -86,6 +86,7 @@ function App() {
             try {
               if (data.faults !== null) {
                 console.log(data.faults);
+                console.log(data.faults[0].radius)
                 setPoints(data.faults);
               }
             } catch {
@@ -97,7 +98,7 @@ function App() {
         clearInterval(id);
         };
     },
-    [counter, getData, timerInterval, initialise],
+    [counter, timerInterval, initialise],
 );
 
 useEffect(
@@ -147,10 +148,10 @@ useEffect(
             <CircleMarker
               key={`marker-${idx}`} 
               center={L.latLng(position.latlng[0], position.latlng[1])}
-              radius ={4}
+              radius ={position.radius}
               fill={true}
-              color={"red"}
-              fillOpacity={1.0}
+              color={position.color}
+              fillOpacity={position.opacity}
               eventHandlers={{
                 click: () => {
                   console.log('marker clicked')
