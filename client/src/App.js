@@ -89,8 +89,8 @@ function App() {
                 console.log(data.faults[0].radius)
                 setPoints(data.faults);
               }
-            } catch {
-              console.log("fault error")
+            } catch (e) {
+              console.log("fault error: " + e)
             }     
         });           
         }, timerInterval);
