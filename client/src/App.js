@@ -86,7 +86,7 @@ function App() {
             try {
               if (data.faults !== null) {
                 console.log(data.faults);
-                console.log(data.faults[0].radius)
+                //console.log(data.faults[0].radius)
                 setPoints(data.faults);
               }
             } catch (e) {
@@ -149,7 +149,7 @@ useEffect(
               key={`marker-${idx}`} 
               center={L.latLng(position.latlng[0], position.latlng[1])}
               radius ={position.radius}
-              fill={true}
+              fill={position.fill === "true" ? true : false}
               color={position.color}
               fillOpacity={position.opacity}
               eventHandlers={{
