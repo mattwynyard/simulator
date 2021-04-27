@@ -1,8 +1,8 @@
 import './App.css';
-import { MapContainer, TileLayer, CircleMarker, ScaleControl, useMap} from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 
 function MapRef(props) {
 
@@ -39,12 +39,13 @@ function App() {
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
+  const [lines, setLines] = useState([]);
   const [host] = useState("localhost:5000");
   const [timerInterval] = useState(500);
 
-  const getData = async () => {      
+  const getData = useCallback(async () => {      
     try {
-        const response = await fetch("http://" + host + '/position', {
+        const response = await fetch("http://" + "localhost:5000" + '/position', {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -62,43 +63,42 @@ function App() {
     } catch {
         return new Error("connection error")
     }      
-  };
+  }, []);
+  
 
   useEffect(
     () => {
         const id = setInterval(() => {
         setCounter(counter + 1); 
-        getData().then(data => {
-            if (data.latlng !== null) {
-              try {
-                //console.log(data.latlng)
-                let lat = data.latlng[0];
-                let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);
-                if (!initialise) {
-                  setCenter([L.latLng(lat, lng)]);
-                  setIntialise(true);
-                }
-              } catch {
-                console.log("position error");
-              }     
-            }
-            try {
-              if (data.faults !== null) {
-                console.log(data.faults);
-                //console.log(data.faults[0].radius)
-                setPoints(data.faults);
+          getData().then(data => {
+              if (data.latlng) {
+                try{
+                  let lat = data.latlng[0];
+                  let lng = data.latlng[1];
+                  setPosition([L.latLng(lat, lng)]);
+                  if (!initialise) {
+                    setCenter([L.latLng(lat, lng)]);
+                    setIntialise(true);
+                  }
+                } catch {
+                  console.log("position error");
+                }     
               }
-            } catch (e) {
-              console.log("fault error: " + e)
-            }     
-        });           
+              if (data.faults) {
+                try {
+                    console.log(data.faults);
+                    setPoints(data.faults);      
+                } catch (e) {
+                  console.log("fault error: " + e)
+                } 
+            }    
+          });
         }, timerInterval);
         return () => {
         clearInterval(id);
         };
     },
-    [counter, timerInterval, initialise],
+    [counter, timerInterval, initialise, getData],
 );
 
 useEffect(
@@ -107,7 +107,7 @@ useEffect(
       setCenter(position);
     }
   },
-  [position],
+  [position, counter],
 );
 
   return (
@@ -116,7 +116,7 @@ useEffect(
             className="map" 
             center={center} 
             zoom={18} 
-            minZoom={1}
+            minZoom={10}
             maxZoom={18}
             scrollWheelZoom={true}
             keyboard={true}
@@ -131,34 +131,54 @@ useEffect(
          {position.map((position, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
+              stroke={true}
               center={position}
-              radius ={5}
+              radius ={6}
               fill={true}
+              color={"#3388ff"}
+              fillColor={"blue"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: () => {
                   console.log('marker clicked')
                 },
+                
               }}
-              >        
+              > 
+              <Popup>Sydney</Popup>       
             </CircleMarker>
           )}
-          
-          {points.map((position, idx) =>
+          {points.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
-              center={L.latLng(position.latlng[0], position.latlng[1])}
-              radius ={position.radius}
-              fill={position.fill === "true" ? true : false}
-              color={position.color}
-              fillOpacity={position.opacity}
+              center={L.latLng(point.latlng[0], point.latlng[1])}
+              radius ={point.radius}
+              fill={true}
+              color={point.color}
+              fillColor={point.color}
+              fillOpacity={point.opacity}
               eventHandlers={{
                 click: () => {
                   console.log('marker clicked')
                 },
+                mouseover: (e) => {
+                  e.target.openPopup();
+                }
               }}
-              >        
+              > 
+              <Popup
+                key={`marker-${idx}`}>
+                  id: {point.id}<br></br>
+              </Popup>       
             </CircleMarker>
+          )}
+          {lines.map((line, idx) =>
+            <Polyline
+              positions={line.latlngs}
+              color={line.color}
+            >
+              
+            </Polyline>
           )} 
           <MapRef center={center}></MapRef>
          </MapContainer>

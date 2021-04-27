@@ -17,6 +17,8 @@ Private Sub Class_Initialize()
     Set fixDict = CreateObject("Scripting.Dictionary")
     With fixDict
         .Add "latlng", Nothing
+        .Add "bearing", 0
+        .Add "velocity", 0
         End With
     
     Set mapDict = CreateObject("Scripting.Dictionary")
@@ -24,14 +26,12 @@ Private Sub Class_Initialize()
         .Add "id", 0
         .Add "fault", ""
         .Add "latlng", Nothing
-        .Add "bearing", 0
-        .Add "velocity", 0
         .Add "altitude", 0
         .Add "gpstime", #1/1/2000#
         .Add "radius", Nothing      '0 to 4
         .Add "color", ""
         .Add "opacity", 0           '0.0 to 1.0
-        .Add "fill", False
+        .Add "fill", "True"
         .Add "fillColor", ""
         .Add "fillOpacity", 0       '0.0 to 1.0
         .Add "weight", 0            '0 to 4
@@ -39,14 +39,14 @@ Private Sub Class_Initialize()
     End Sub
 
 Private Sub Class_Terminate()
-    ResetPoints
+    'ResetPoints
     Set mapDict = Nothing
     Set fixDict = Nothing
     Set httpLocation = Nothing
     End Sub
 
 Public Function postJSON(endpoint As String, json As String) As Boolean
-    Const thistask = "postJSON"
+    Const thisTask = "postJSON"
     
     Dim urlLocation As String
     Dim strReturn As String
@@ -67,13 +67,19 @@ Public Function postJSON(endpoint As String, json As String) As Boolean
     Exit Function
     
 Error_Handler:
+    If Err.Number = 91 Then
+        LogEvent thisTask, "*91 Error"
+        Resume Next
+        Exit Function
+        End If
+    
     If Err.Number = -2147012867 Then
-        'LogEvent thistask, "*Map not open"
+        LogEvent thisTask, "*Map not open"
         postJSON = False
         Exit Function
         End If
     
-    LogEvent thistask
+    LogEvent thisTask
     postJSON = False
     Exit Function
     End Function
@@ -109,8 +115,8 @@ Private Function stringifyArray(ByRef a As Variant) As String
 Private Function compileJSON(ByRef dict As Object) As String
     Dim key As Variant
     Dim json As String
-    Dim size As Long
-    size = dict.Count
+    Dim Size As Long
+    Size = dict.Count
 
     json = "{"
     Dim i As Integer
@@ -132,15 +138,17 @@ Private Function compileJSON(ByRef dict As Object) As String
         ElseIf VarType(dict(key)) = vbInteger Then
             value = CStr(dict(key))
         ElseIf VarType(dict(key)) = vbBoolean Then
-            value = CStr(dict(key))
-        Else 'If VarType(dict(key)) = vbArray Then 'is array value 8192 + value type
+            'value = CStr(dict(key))
+        ElseIf IsArray(dict(key)) Then 'is array value 8192 + value type
             Dim s As String
             Dim a As Variant
             a = dict(key)
             value = stringifyArray(dict(key))
+        Else:
+            'handle error
         End If
         json = json + """" + key + """: " + value
-        If i = size Then
+        If i = Size Then
         Else
             json = json + ","
         End If
@@ -158,7 +166,7 @@ Public Function arrLength(a As Variant) As Long
         End If
     End Function
 
-Public Function GPSMapFix(Lat As Double, Lon As Double) As Boolean
+Public Function GPSMapFix(Lat As Double, Lon As Double, Brg As Double, Vel As Double) As Boolean
     Dim json As String
     Dim coords As Variant
     
@@ -166,6 +174,8 @@ Public Function GPSMapFix(Lat As Double, Lon As Double) As Boolean
         If Lat <> 0# Then
             coords = Array(Lat, Lon)
             .Item("latlng") = coords
+            .Item("bearing") = Round(Brg, 1)
+            .Item("velocity") = Round(Vel, 1)
             json = compileJSON(fixDict)
             'Me.JsonTxt.Caption = JSONString
             GPSMapFix = postJSON("/location", json)
@@ -176,8 +186,8 @@ Public Function GPSMapFix(Lat As Double, Lon As Double) As Boolean
         End With
     End Function
 
-Public Function AddPoint(ID As Long, FType As String, Lat As Double, Lon As Double, Brg As Double, Vel As Double, Alt As Double, _
-    gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
+Public Function AddPoint(ID As Long, FType As String, Lat As Double, Lon As Double, Alt As Double, _
+    gpstime As Date, radius As Integer, Color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
     
     Dim json As String
     Dim coords As Variant
@@ -188,20 +198,18 @@ Public Function AddPoint(ID As Long, FType As String, Lat As Double, Lon As Doub
             .Item("fault") = FType
             coords = Array(Lat, Lon)
             .Item("latlng") = coords
-            .Item("bearing") = Round(Brg, 1)
-            .Item("velocity") = Round(Vel, 1)
             .Item("altitude") = Round(Alt, 1)
             .Item("gpstime") = Format(gpstime, "yyyy-mm-dd HH:mm:ss")
             .Item("radius") = radius
-            .Item("color") = "#" + color
+            .Item("color") = "#" + Color
             .Item("opacity") = opacity
-            .Item("fill") = "True"
+            .Item("fill") = IIf(fill, "true", "false")
             .Item("fillColor") = "#" + fillcolor
             .Item("fillOpacity") = fillopacity
             .Item("weight") = weight
 
             json = compileJSON(mapDict)
-            Debug.Print json
+            'Debug.Print json
             AddPoint = postJSON("/insertpoint", json)
         Else
             AddPoint = False
@@ -209,7 +217,8 @@ Public Function AddPoint(ID As Long, FType As String, Lat As Double, Lon As Doub
         End With
     End Function
 
-Public Function UpdatePoint(ByRef dict As Object) As Boolean
+Public Function UpdatePoint(ID As Long, FType As String, Lat As Double, Lon As Double, Brg As Double, Vel As Double, Alt As Double, _
+    gpstime As Date, radius As Integer, Color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
 
     End Function
 
@@ -218,11 +227,30 @@ Public Function DeletePoint(ID As Long) As Boolean
     
     With mapDict
         .Item("id") = ID
-        json = compileJSON(mapDict)
+        'json = compileJSON(mapDict)
+        
+        json = "{""id"": " & ID & "}"
+        'Debug.Print json
         DeletePoint = postJSON("/deletePoint", json)
         End With
     End Function
 
 Public Function ResetPoints() As Boolean
-    ResetPoints = postJSON("/reset", "")
+    Dim urlLocation As String
+    Dim strReturn As String
+    Dim res As Boolean
+    Set httpLocation = CreateObject("WinHttp.WinHttpRequest.5.1")
+    urlLocation = "http://localhost:5000/reset"
+    res = httpLocation.Open("GET", urlLocation, True)
+    Debug.Print res
+    If res Then
+        httpLocation.SetRequestHeader "Content-Type", "application/json"
+        httpLocation.Send
+        httpLocation.WaitForResponse
+        End If
+        
+    Set httpLocation = Nothing
+    ResetPoints = res
     End Function
+
+

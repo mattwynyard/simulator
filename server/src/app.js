@@ -55,7 +55,6 @@ app.post('/reset', async (req, res) => {
 });
 
 app.post('/location', async (req, res) => {
-  console.log(req.body);
   latlng = req.body.latlng
   res.send({ message: "ok"});
 });
