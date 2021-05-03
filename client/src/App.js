@@ -1,17 +1,31 @@
 import './App.css';
+import AntDrawer from'./AntDrawer.js'
 import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback, useRef} from 'react';
 
 function MapRef(props) {
-
+  const [counter, setCounter] = useState(0);
   const map = useMap();
-  if (props.center.length !== 0) {
-    map.panTo(props.center[0])
+  useEffect(
+    () => {
+        const id = setInterval(() => {
+          setCounter(counter + 1);    
+          let bounds = map.getBounds();
+          //console.log(bounds)
+        }, 10000);
+        return () => {
+          clearInterval(id);
+        };
+    },
+    [counter],
+    );
+    if (props.center.length !== 0) {
+      map.panTo(props.center[0])
+    }
+    return null
   }
-  return null
-}
 
 function CustomTileLayer(props) {
   if (props.isRemote) {
@@ -69,7 +83,8 @@ function App() {
   useEffect(
     () => {
         const id = setInterval(() => {
-        setCounter(counter + 1); 
+        setCounter(counter + 1);
+        
           getData().then(data => {
               if (data.latlng) {
                 try{
@@ -86,7 +101,6 @@ function App() {
               }
               if (data.faults) {
                 try {
-                    console.log(data.faults);
                     setPoints(data.faults);      
                 } catch (e) {
                   console.log("fault error: " + e)
@@ -112,19 +126,20 @@ useEffect(
 
   return (
     <div className="App">
-       <MapContainer 
-            className="map" 
-            center={center} 
-            zoom={18} 
-            minZoom={10}
-            maxZoom={18}
-            scrollWheelZoom={true}
-            keyboard={true}
-            eventHandlers={{
-                load: () => {
-                  console.log('onload')
-                },
-              }}
+      
+      <MapContainer 
+          className="map" 
+          center={center} 
+          zoom={18} 
+          minZoom={10}
+          maxZoom={18}
+          scrollWheelZoom={true}
+          keyboard={true}
+          eventHandlers={{
+              load: () => {
+                console.log('onload')
+              },
+            }}
         >
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
@@ -144,8 +159,7 @@ useEffect(
                 },
                 
               }}
-              > 
-              <Popup>Sydney</Popup>       
+              >      
             </CircleMarker>
           )}
           {points.map((point, idx) =>
@@ -163,6 +177,9 @@ useEffect(
                 },
                 mouseover: (e) => {
                   e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
                 }
               }}
               > 
@@ -176,12 +193,13 @@ useEffect(
             <Polyline
               positions={line.latlngs}
               color={line.color}
-            >
-              
+            >           
             </Polyline>
           )} 
-          <MapRef center={center}></MapRef>
+          <MapRef center={center}></MapRef>  
          </MapContainer>
+         <AntDrawer className="drawer" ></AntDrawer>
+         
     </div>
   );
 }

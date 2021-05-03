@@ -15,7 +15,7 @@ let faultMap = new Map();
 
 const refreshFaults = () => {
   let f = [];
-  faultMap.forEach(function(value, key) {
+  faultMap.forEach((value) => {
     f.push(value);
   });
   faults = f;
@@ -39,6 +39,11 @@ app.use((req, res, next) => {
   next();
 });
 
+//serve tiles
+app.get('/tiles/:z/:x/:y', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../', req.url));
+});
+
 app.get('/position', async (req, res) => {
   res.send({ latlng: latlng, faults: faults});
 });
@@ -47,11 +52,16 @@ app.get('/fault', async (req, res) => {
   res.send({ faults: faults});
 });
 
-app.post('/reset', async (req, res) => {
-  faultMap = new Map();
-  faults = [];
-  latlng = null;
-  res.send({ message: "ok"});
+app.get('/reset', async (req, res) => {
+  try {
+    faultMap = new Map();
+    faults = [];
+    latlng = null;
+    res.send("reset");
+  } catch(error) {
+    console.log(error)
+    res.send("error");
+  }
 });
 
 app.post('/location', async (req, res) => {
