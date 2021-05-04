@@ -11,10 +11,14 @@ Option Compare Database
 
 Private mapDict As Object
 Private fixDict As Object
-Dim httpLocation As Object
+Dim WinHttpRequest As Object
+Dim host As String
+
 
 Private Sub Class_Initialize()
+    
     Set fixDict = CreateObject("Scripting.Dictionary")
+    host = "localhost:5000"
     With fixDict
         .Add "latlng", Nothing
         .Add "bearing", 0
@@ -44,37 +48,147 @@ Private Sub Class_Terminate()
     Set fixDict = Nothing
     Set httpLocation = Nothing
     End Sub
+Public Function GPSMapFix(Lat As Double, Lon As Double, Brg As Double, Vel As Double) As Boolean
+    Dim json As String
+    Dim coords As Variant
+    
+    With fixDict
+        If Lat <> 0# Then
+            coords = Array(Lat, Lon)
+            .Item("latlng") = coords
+            .Item("bearing") = Round(Brg, 1)
+            .Item("velocity") = Round(Vel, 1)
+            json = compileJSON(fixDict)
+            'Me.JsonTxt.Caption = JSONString
+            GPSMapFix = postJSON("/location", json)
+            'Debug.Print json
+        Else
+            GPSMapFix = False
+            End If
+        End With
+    End Function
+
+Public Function AddPoint(id As Long, fType As String, Lat As Double, Lon As Double, Alt As Double, _
+    gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
+
+    
+    Dim json As String
+    Dim coords As Variant
+    With mapDict
+        If Lat <> 0 Then
+            .Item("id") = id
+            .Item("fault") = fType
+            coords = Array(Lat, Lon)
+            .Item("latlng") = coords
+            .Item("altitude") = Round(Alt, 1)
+            .Item("gpstime") = Format(gpstime, "yyyy-mm-dd HH:mm:ss")
+            .Item("radius") = radius
+            .Item("color") = "#" + color
+            .Item("opacity") = opacity
+            .Item("fill") = IIf(fill, "true", "false")
+            .Item("fillColor") = "#" + fillcolor
+            .Item("fillOpacity") = fillopacity
+            .Item("weight") = weight
+            json = compileJSON(mapDict)
+            'Debug.Print json
+            AddPoint = postJSON("/insertPoint", json)
+        Else
+            AddPoint = False
+            End If
+        End With
+    End Function
+
+Public Function UpdatePoint(id As Long, fType As String, Lat As Double, Lon As Double, Brg As Double, Vel As Double, Alt As Double, _
+    gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
+
+    End Function
+
+Public Function DeletePoint(id As Long) As Boolean
+    
+    Dim json As String
+    json = "{""id"": " & id & "}"
+    DeletePoint = postJSON("/deletePoint", json)
+
+    End Function
+
+Public Function ResetPoints() As Boolean
+    Dim urlLocation As String
+    Dim strReturn As String
+    Dim req As Boolean
+    Dim res As String
+    Dim resText As String
+    Dim resStatus As String
+    Set WinHttpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
+    urlLocation = "http://" + host + "/reset"
+    req = WinHttpRequest.Open("GET", urlLocation, False)
+    
+    On Error GoTo errHand:
+    ResetPoints = False
+    
+    WinHttpRequest.SetRequestHeader "Content-Type", "application/json"
+    WinHttpRequest.Send
+    res = WinHttpRequest.WaitForResponse
+    resText = WinHttpRequest.ResponseText
+    resStatus = WinHttpRequest.Status
+    Set WinHttpRequest = Nothing
+    ResetPoints = res
+    
+errHand:
+    Select Case Err.Number
+        Case -2147012867 'Code for Connection not established
+            Debug.Print Error(Err.Number)
+        Case -2147012894 'Code for Timeout
+            Debug.Print Error(Err.Number)
+        Case -2147012891 'Code for Invalid URL
+            Debug.Print Error(Err.Number)
+        Case Else 'Add more Errorcodes here if wanted
+            Debug.Print Error(Err.Number)
+    End Select
+End Function
+Private Function wktToLatLng(wkt As String) As String
+'MULTILINESTRING ((174.892731953107 -36.9395173499249,174.89293639596 -36.939548976714,174.89311445909 -36.9395806034901,174.893269439962 _
+'-36.9396069591267,174.893404636042 -36.9396333147543,174.893566211845 -36.9396649414953))
+
+End Function
+
+Private Function mapEditToLatLng(mapEdit As String) As String
+
+    Dim gme As String
+    gme = "(-36.939112,174.889622),(-36.939073,174.889640),(-36.939042,174.889678),(-36.939020,174.889740),(-36.939013,174.889820),(-36.939023,174.889910)"
+    Dim js As String
+    js = Replace(gme, "(", "[")
+    Debug.Print js
+
+End Function
 
 Public Function postJSON(endpoint As String, json As String) As Boolean
     Const thisTask = "postJSON"
-    
     Dim urlLocation As String
     Dim strReturn As String
-    
     On Error GoTo Error_Handler
     
-    urlLocation = "http://localhost:5000" + endpoint
-    'Debug.Print urlLocation
-    Set httpLocation = CreateObject("WinHttp.WinHttpRequest.5.1")
-    httpLocation.Open "POST", urlLocation, True
-    httpLocation.SetRequestHeader "Content-Type", "application/json"
-    httpLocation.Send json
-    httpLocation.WaitForResponse
-    strReturn = httpLocation.ResponseText
+    urlLocation = "http://" + host + endpoint
+    Set WinHttpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
+    WinHttpRequest.Open "POST", urlLocation, True
+    WinHttpRequest.SetRequestHeader "Content-Type", "application/json"
+    WinHttpRequest.Send json
+    WinHttpRequest.WaitForResponse
+    strReturn = WinHttpRequest.ResponseText
     'Debug.Print httpLocation.ResponseText
-    Set httpLocation = Nothing
+    Set WinHttpRequest = Nothing
     postJSON = True
     Exit Function
     
 Error_Handler:
     If Err.Number = 91 Then
-        LogEvent thisTask, "*91 Error"
-        Resume Next
-        Exit Function
+        'LogEvent thisTask, "*91 Error"
+        'Resume Next
+        'Exit Function
+        MsgBox (Error(Err.Number))
         End If
     
     If Err.Number = -2147012867 Then
-        LogEvent thisTask, "*Map not open"
+        'LogEvent thisTask, "*Map not open"
         postJSON = False
         Exit Function
         End If
@@ -125,20 +239,15 @@ Private Function compileJSON(ByRef dict As Object) As String
         i = i + 1
         Dim vType As Integer
         Dim value As String
-        
-        'Debug.Print VarType(dict(key))
-        
         If VarType(dict(key)) = vbString Then
             value = """" + dict(key) + """"
         ElseIf VarType(dict(key)) = vbLong Then
-            'Debug.Print dict(key)
             value = CStr(dict(key))
         ElseIf VarType(dict(key)) = vbDouble Then
             value = CStr(dict(key))
         ElseIf VarType(dict(key)) = vbInteger Then
             value = CStr(dict(key))
         ElseIf VarType(dict(key)) = vbBoolean Then
-            'value = CStr(dict(key))
         ElseIf IsArray(dict(key)) Then 'is array value 8192 + value type
             Dim s As String
             Dim a As Variant
@@ -163,94 +272,9 @@ Public Function arrLength(a As Variant) As Long
         arrLength = 0
     Else
         arrLength = UBound(a) - LBound(a) + 1
-        End If
-    End Function
+    End If
+End Function
 
-Public Function GPSMapFix(Lat As Double, Lon As Double, Brg As Double, Vel As Double) As Boolean
-    Dim json As String
-    Dim coords As Variant
-    
-    With fixDict
-        If Lat <> 0# Then
-            coords = Array(Lat, Lon)
-            .Item("latlng") = coords
-            .Item("bearing") = Round(Brg, 1)
-            .Item("velocity") = Round(Vel, 1)
-            json = compileJSON(fixDict)
-            'Me.JsonTxt.Caption = JSONString
-            GPSMapFix = postJSON("/location", json)
-            'Debug.Print json
-        Else
-            GPSMapFix = False
-            End If
-        End With
-    End Function
 
-Public Function AddPoint(ID As Long, FType As String, Lat As Double, Lon As Double, Alt As Double, _
-    gpstime As Date, radius As Integer, Color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
-    
-    Dim json As String
-    Dim coords As Variant
-    
-    With mapDict
-        If Lat <> 0 Then
-            .Item("id") = ID
-            .Item("fault") = FType
-            coords = Array(Lat, Lon)
-            .Item("latlng") = coords
-            .Item("altitude") = Round(Alt, 1)
-            .Item("gpstime") = Format(gpstime, "yyyy-mm-dd HH:mm:ss")
-            .Item("radius") = radius
-            .Item("color") = "#" + Color
-            .Item("opacity") = opacity
-            .Item("fill") = IIf(fill, "true", "false")
-            .Item("fillColor") = "#" + fillcolor
-            .Item("fillOpacity") = fillopacity
-            .Item("weight") = weight
-
-            json = compileJSON(mapDict)
-            'Debug.Print json
-            AddPoint = postJSON("/insertpoint", json)
-        Else
-            AddPoint = False
-            End If
-        End With
-    End Function
-
-Public Function UpdatePoint(ID As Long, FType As String, Lat As Double, Lon As Double, Brg As Double, Vel As Double, Alt As Double, _
-    gpstime As Date, radius As Integer, Color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
-
-    End Function
-
-Public Function DeletePoint(ID As Long) As Boolean
-    Dim json As String
-    
-    With mapDict
-        .Item("id") = ID
-        'json = compileJSON(mapDict)
-        
-        json = "{""id"": " & ID & "}"
-        'Debug.Print json
-        DeletePoint = postJSON("/deletePoint", json)
-        End With
-    End Function
-
-Public Function ResetPoints() As Boolean
-    Dim urlLocation As String
-    Dim strReturn As String
-    Dim res As Boolean
-    Set httpLocation = CreateObject("WinHttp.WinHttpRequest.5.1")
-    urlLocation = "http://localhost:5000/reset"
-    res = httpLocation.Open("GET", urlLocation, True)
-    Debug.Print res
-    If res Then
-        httpLocation.SetRequestHeader "Content-Type", "application/json"
-        httpLocation.Send
-        httpLocation.WaitForResponse
-        End If
-        
-    Set httpLocation = Nothing
-    ResetPoints = res
-    End Function
 
 
