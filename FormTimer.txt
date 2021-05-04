@@ -1,0 +1,65 @@
+Private Sub Form_Timer()
+    Const thisTask = "Form_Timer"
+    Dim strSQL As String
+    Dim c As String
+    Dim p As Integer
+    Dim n As Integer
+    Dim GPSFix As recGPS_Fix
+    Dim myTime As Date
+    Dim systime As Double
+    Dim sysMilliSecs As Integer
+    Dim coords As Variant
+    Dim JSONString As String
+    Dim ok As Boolean
+
+    RetraceGetGPSTrail GPSFix
+    With GPSFix
+        Me.Clock.Caption = FormatDateTime(.GPTime, vbLongTime)
+        Me.Lat.Caption = Format(.GPLat, "0.000000")
+        Me.Lon.Caption = Format(.GPLon, "0.000000")
+        Me.Alt.Caption = Format(.GPAlt, "0.00")
+        Me.Brg.Caption = Format(.GPBrg, "0.0")
+        Me.Vel.Caption = Format(.GPVel, "0.0")
+        Me.Hdop.Caption = Format(.GPHdop, "0.0")
+        Me.Pdop.Caption = Format(.GPPdop, "0.0")
+        Me.Sats.Caption = Format(.GPSats, "0")
+        ok = objMap.GPSMapFix(.GPLat, .GPLon, .GPBrg, .GPVel)
+        If rstFaults.EOF Then
+        Else
+            If rstFaults![AcceptTime] >= .GPTime Then
+                If Nz(rstFaults![Delete], 0) > 0 Then
+                    ok = objMap.DeletePoint(rstFaults![Delete])
+                Else
+                    Dim fault As FaultPoint
+                    Set fault = New FaultPoint
+                    With fault
+                        .id = rstFaults![Problem Number]
+                        .fType = rstFaults![Type]
+                        .Lat = GPSFix.GPLat
+                        .Lon = GPSFix.GPLon
+                        .Alt = GPSFix.GPAlt
+                        .gpstime = GPSFix.GPTime
+                        .radius = 5
+                        .color = Left$(rstFaults![KMLColour], 6)
+                        .opacity = 1
+                        .fill = True
+                        .fillcolor = Left$(rstFaults![KMLColour], 6)
+                        .fillopacity = 1
+                        .weight = 1
+                    End With
+                    ok = objMap.AddPoint(fault)
+                    End If
+                
+                rstFaults.MoveNext
+                End If
+            End If
+        End With
+    
+Exit_Form:
+    Exit Sub
+    
+'Error_Handler:
+    'MsgBox "Error:" & Err.Number & " " & Err.Description
+    'LogEvent thistask
+    'Resume Next
+    End Sub

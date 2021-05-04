@@ -67,36 +67,37 @@ Public Function GPSMapFix(Lat As Double, Lon As Double, Brg As Double, Vel As Do
             End If
         End With
     End Function
-
-Public Function AddPoint(id As Long, fType As String, Lat As Double, Lon As Double, Alt As Double, _
-    gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
-
     
+
+'Public Function AddPoint(id As Long, fType As String, Lat As Double, Lon As Double, Alt As Double, _
+    gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
+    Public Function AddPoint(point As FaultPoint) As Boolean
+
     Dim json As String
     Dim coords As Variant
     With mapDict
-        If Lat <> 0 Then
-            .Item("id") = id
-            .Item("fault") = fType
-            coords = Array(Lat, Lon)
-            .Item("latlng") = coords
-            .Item("altitude") = Round(Alt, 1)
-            .Item("gpstime") = Format(gpstime, "yyyy-mm-dd HH:mm:ss")
-            .Item("radius") = radius
-            .Item("color") = "#" + color
-            .Item("opacity") = opacity
-            .Item("fill") = IIf(fill, "true", "false")
-            .Item("fillColor") = "#" + fillcolor
-            .Item("fillOpacity") = fillopacity
-            .Item("weight") = weight
-            json = compileJSON(mapDict)
-            'Debug.Print json
-            AddPoint = postJSON("/insertPoint", json)
-        Else
-            AddPoint = False
-            End If
-        End With
-    End Function
+        'If Lat <> 0 Then
+        .Item("id") = point.id
+        .Item("fault") = point.fType
+        coords = Array(point.Lat, point.Lon)
+        .Item("latlng") = coords
+        .Item("altitude") = Round(point.Alt, 1)
+        .Item("gpstime") = Format(point.gpstime, "yyyy-mm-dd HH:mm:ss")
+        .Item("radius") = point.radius
+        .Item("color") = "#" + point.color
+        .Item("opacity") = point.opacity
+        .Item("fill") = IIf(fill, "true", "false")
+        .Item("fillColor") = "#" + point.fillcolor
+        .Item("fillOpacity") = point.fillopacity
+        .Item("weight") = point.weight
+        json = compileJSON(mapDict)
+        Debug.Print json
+        AddPoint = postJSON("/insertPoint", json)
+        'Else
+            'AddPoint = False
+            'End If
+    End With
+End Function
 
 Public Function UpdatePoint(id As Long, fType As String, Lat As Double, Lon As Double, Brg As Double, Vel As Double, Alt As Double, _
     gpstime As Date, radius As Integer, color As String, opacity As Integer, fill As Boolean, fillcolor As String, fillopacity As Integer, weight As Integer) As Boolean
