@@ -10,15 +10,17 @@ const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 
 let latlng = null;
-let faults = [];
+let points = [];
+let lines = [];
 let faultMap = new Map();
+let lineMap = new Map();
 
 const refreshFaults = () => {
   let f = [];
   faultMap.forEach((value) => {
     f.push(value);
   });
-  faults = f;
+  points = f;
 }
 
 app.listen(port, () => {
@@ -45,17 +47,28 @@ app.get('/tiles/:z/:x/:y', async (req, res) => {
 });
 
 app.get('/position', async (req, res) => {
-  res.send({ latlng: latlng, faults: faults});
+  res.send({ latlng: latlng, points: points, lines, lines});
+});
+
+app.post('/centrelines', async (req, res) => {
+  //let result = await db.centrelines(req.body.bounds, req.body.center);
+  //console.log(result.rows)
+  //let geojson = JSON.parse(result.rows.geojson);
+  //console.log(geojson)
+
+  res.send({data: "ok"})
 });
 
 app.get('/fault', async (req, res) => {
-  res.send({ faults: faults});
+  //res.send({ points: faults});
 });
 
 app.get('/reset', async (req, res) => {
   try {
     faultMap = new Map();
-    faults = [];
+    lineMap = new Map();
+    points = [];
+    lines = [];
     latlng = null;
     res.send("reset");
   } catch(error) {
@@ -72,12 +85,22 @@ app.post('/location', async (req, res) => {
 app.post('/insertPoint', async (req, res) => {
   console.log(req.body);
   faultMap.set(req.body.id, req.body);
-  faults.push(req.body);
+  points.push(req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
   console.log(req.body);
+  lineMap.set(req.body.id, req.body);
+  lines.push(req.body);
+  res.send({ message: "ok"});
+});
+
+app.post('/appendLine', async (req, res) => {
+  console.log(req.body);
+  let line = lineMap.get(req.body.id);
+  line.latlng.push(req.body.latlng[0])
+  console.log(line.latlng);
   res.send({ message: "ok"});
 });
 
@@ -92,7 +115,7 @@ app.post('/deleteLine', async (req, res) => {
 });
 
 app.post('/updatePoint', async (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   if (faultMap.has(req.body.id)) {
     faultMap.delete(req.body.id);
     faultMap.set(req.body.id, req.body);

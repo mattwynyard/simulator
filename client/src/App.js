@@ -1,31 +1,79 @@
 import './App.css';
 import AntDrawer from'./AntDrawer.js'
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap} from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap, useMapEvents} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useCallback, useRef} from 'react';
+import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
 
-function MapRef(props) {
-  const [counter, setCounter] = useState(0);
-  const map = useMap();
+function Centreline(props) {
+  const redOptions = { color: 'red' }
+  let otherOptions = null;
+  let geojson = JSON.parse(props.positions.geojson);
+  let coords = []
+  geojson.coordinates.forEach(element => {
+      element.forEach(coord => {
+        let temp = coord[0];
+        coord[0] = coord[1];
+        coord[1] = temp;
+        coords.push(coord)
+      });     
+  });
+    if(props.idx % 2 === 0) {
+        otherOptions = { color: 'orange' }
+    } else {
+      otherOptions = { color: 'blue' }
+    } 
+  //console.log(coords)
+  return ( <Polyline
+      key={`marker-${props.idx}`} 
+      pathOptions={(props.idx === 0) ? redOptions: otherOptions}
+      positions={coords} 
+      weight={3}
+      >
+    </Polyline>);
+}
+
+const MapRef = forwardRef((props, ref) => {
+  const [center, setCenter] = useState(null);
+  const [bounds, setBounds] = useState(null);
+  const map = useMapEvents({
+    click: () => {
+      console.log("click")
+    },
+    zoom: () => {
+      let mapBounds = map.getBounds();
+      setBounds(mapBounds);
+      setCenter(center);
+      if(center !== null) {
+        props.callback(mapBounds, center);
+      }
+    },
+  })
+  const newCenter = (center) => {
+    setCenter(center);
+  };
+  useImperativeHandle(ref, () => {
+    return {
+      newCenter: newCenter
+    }
+ });
+
   useEffect(
     () => {
-        const id = setInterval(() => {
-          setCounter(counter + 1);    
-          let bounds = map.getBounds();
-          //console.log(bounds)
-        }, 10000);
-        return () => {
-          clearInterval(id);
-        };
-    },
-    [counter],
-    );
-    if (props.center.length !== 0) {
-      map.panTo(props.center[0])
-    }
+      //console.log(props.center);
+      if (props.center.length !== 0) {
+        map.panTo(props.center[0])
+      }
+      let mapBounds = map.getBounds();
+      setBounds(mapBounds);
+      if(center !== null) {
+        props.callback(mapBounds, center);
+      }
+      
+    }, [center]);
+    
     return null
-  }
+  });
 
 function CustomTileLayer(props) {
   if (props.isRemote) {
@@ -54,12 +102,15 @@ function App() {
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
+  const [centrelines, setCentreLines] = useState([]);
   const [host] = useState("localhost:5000");
   const [timerInterval] = useState(500);
+  const [online, setOnline] = useState(false);
+  const mapRef = useRef(null);
 
   const getData = useCallback(async () => {      
     try {
-        const response = await fetch("http://" + "localhost:5000" + '/position', {
+        const response = await fetch("http://" + host + '/position', {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -79,33 +130,75 @@ function App() {
     }      
   }, []);
   
+  const getCentrelines = useCallback(async (bounds, center)=> {
+    try {
+      const response = await fetch("http://localhost:5000/centrelines", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',        
+          },  
+          body: JSON.stringify({
+            bounds: bounds,
+            center: center
+        })    
+      });
+      if (response.ok) {
+          const body = await response.json();
+          let fp = []
+          for (let i = 0; i < body.data.length; i++) {
+              fp.push(body.data[i])
+              //console.log(body.data[i])
+          }
+          setCentreLines(fp)
+          return body; 
+      } else {
+          
+          return Error(response);
+      }
+  } catch {
+      return new Error("connection error")
+  }      
+  });
 
   useEffect(
     () => {
         const id = setInterval(() => {
-        setCounter(counter + 1);
-        
+          setCounter(counter + 1);
+          if (!initialise) { 
+            setCenter([L.latLng(center[0], center[1])]);
+            setPosition([L.latLng(center[0], center[1])]);
+            mapRef.current.newCenter({lat: center[0], lng: center[1]})
+            setIntialise(true);
+          }
           getData().then(data => {
-              if (data.latlng) {
-                try{
-                  let lat = data.latlng[0];
-                  let lng = data.latlng[1];
-                  setPosition([L.latLng(lat, lng)]);
-                  if (!initialise) {
-                    setCenter([L.latLng(lat, lng)]);
-                    setIntialise(true);
-                  }
-                } catch {
-                  console.log("position error");
-                }     
-              }
-              if (data.faults) {
-                try {
-                    setPoints(data.faults);      
-                } catch (e) {
-                  console.log("fault error: " + e)
-                } 
-            }    
+
+            if (data.points) {
+              try {
+                  setPoints(data.points);      
+              } catch (e) {
+                console.log("fault error: " + e)
+              } 
+            }
+            if (data.lines) {
+              try {
+                  console.log(data.lines);
+                  setLines(data.lines);      
+              } catch (e) {
+                console.log("fault error: " + e)
+              } 
+            }   
+            if (data.latlng) {
+              try{
+                let lat = data.latlng[0];
+                let lng = data.latlng[1];
+                setPosition([L.latLng(lat, lng)]);
+                
+              } catch {
+                console.log("position error");
+              }     
+            }             
           });
         }, timerInterval);
         return () => {
@@ -119,6 +212,10 @@ useEffect(
   () => {
     if (counter % 10 === 0) {
       setCenter(position);
+      if(mapRef.current !== null) {
+        mapRef.current.newCenter(position[0])
+      }
+      
     }
   },
   [position, counter],
@@ -126,7 +223,6 @@ useEffect(
 
   return (
     <div className="App">
-      
       <MapContainer 
           className="map" 
           center={center} 
@@ -145,6 +241,7 @@ useEffect(
          <ScaleControl name="Scale" className="scale"/>
          {position.map((position, idx) =>
             <CircleMarker
+              className="position"
               key={`marker-${idx}`} 
               stroke={true}
               center={position}
@@ -164,10 +261,11 @@ useEffect(
           )}
           {points.map((point, idx) =>
             <CircleMarker
+              className="fault"
               key={`marker-${idx}`} 
               center={L.latLng(point.latlng[0], point.latlng[1])}
               radius ={point.radius}
-              fill={true}
+              fill={point.fill}
               color={point.color}
               fillColor={point.color}
               fillOpacity={point.opacity}
@@ -189,14 +287,25 @@ useEffect(
               </Popup>       
             </CircleMarker>
           )}
-          {lines.map((line, idx) =>
+          {/* {centrelines.map((line, idx) =>
+            <Centreline
+              key={`marker-${idx}`}    
+              positions={line}
+              idx={idx}
+              //color={line.color}
+            >           
+            </Centreline>
+          )} */}
+           {lines.map((line, idx) =>
             <Polyline
-              positions={line.latlngs}
-              color={line.color}
+              key={`marker-${idx}`}    
+              positions={line.latlng}
+              idx={idx}
+              //color={line.color}
             >           
             </Polyline>
-          )} 
-          <MapRef center={center}></MapRef>  
+          )}
+          <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>
          
