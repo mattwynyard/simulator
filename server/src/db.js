@@ -14,7 +14,7 @@ const connection = new Client({
 });
 
 try {
-    //connection.connect();
+    connection.connect();
 } catch (err) {
     console.log(err);
 }

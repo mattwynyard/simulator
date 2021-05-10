@@ -50,6 +50,8 @@ const MapRef = forwardRef((props, ref) => {
     },
   })
   const newCenter = (center) => {
+    let mapBounds = map.getBounds();
+    setBounds(mapBounds);
     setCenter(center);
   };
   useImperativeHandle(ref, () => {
@@ -64,10 +66,8 @@ const MapRef = forwardRef((props, ref) => {
       if (props.center.length !== 0) {
         map.panTo(props.center[0])
       }
-      let mapBounds = map.getBounds();
-      setBounds(mapBounds);
       if(center !== null) {
-        props.callback(mapBounds, center);
+        props.callback(bounds, center);
       }
       
     }, [center]);
@@ -268,7 +268,6 @@ useEffect(
               idx={idx}
               color={line.color}
               weight ={line.weight}
-              color={line.color}
               opacity={line.opacity}
               eventHandlers={{
                 click: () => {
