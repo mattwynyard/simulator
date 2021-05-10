@@ -15,12 +15,12 @@ let lines = [];
 let faultMap = new Map();
 let lineMap = new Map();
 
-const refreshFaults = () => {
+const refreshDataStore = (map, arr) => {
   let f = [];
-  faultMap.forEach((value) => {
+  map.forEach((value) => {
     f.push(value);
   });
-  points = f;
+  arr = f;
 }
 
 app.listen(port, () => {
@@ -51,12 +51,8 @@ app.get('/position', async (req, res) => {
 });
 
 app.post('/centrelines', async (req, res) => {
-  //let result = await db.centrelines(req.body.bounds, req.body.center);
-  //console.log(result.rows)
-  //let geojson = JSON.parse(result.rows.geojson);
-  //console.log(geojson)
-
-  res.send({data: "ok"})
+  let result = await db.centrelines(req.body.bounds, req.body.center);
+  res.send({data: result.rows})
 });
 
 app.get('/fault', async (req, res) => {
@@ -97,7 +93,7 @@ app.post('/insertLine', async (req, res) => {
 });
 
 app.post('/appendLine', async (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   let line = lineMap.get(req.body.id);
   line.latlng.push(req.body.latlng[0])
   console.log(line.latlng);
@@ -106,23 +102,36 @@ app.post('/appendLine', async (req, res) => {
 
 app.post('/updateLine', async (req, res) => {
   console.log(req.body);
-  res.send({ message: "ok"});
+  if (lineMap.has(req.body.id)) {
+    lineMap.delete(req.body.id);
+    lineMap.set(req.body.id, req.body);
+    refreshDataStore(lineMap, lines);
+    res.send({ message: "updated"});
+  } else {
+    res.send({ message: "not updated"});
+  }
 });
 
 app.post('/deleteLine', async (req, res) => {
   console.log(req.body);
-  res.send({ message: "ok"});
+  if (lineMap.has(req.body.id)) {
+    lineMap.delete(req.body.id);
+    refreshDataStore(lineMap, lines);
+    res.send({ message: "deleted"});
+  } else {
+    res.send({ message: "id not found"});
+  }
 });
 
 app.post('/updatePoint', async (req, res) => {
-  //console.log(req.body);
+  console.log(req.body);
   if (faultMap.has(req.body.id)) {
     faultMap.delete(req.body.id);
     faultMap.set(req.body.id, req.body);
-    refreshFaults();
+    refreshDataStore(faultMap, points);
     res.send({ message: "updated"});
   } else {
-    res.send({ message: "not updated"});
+    res.send({ message: "id not found"});
   } 
 });
 
@@ -130,10 +139,10 @@ app.post('/deletePoint', async (req, res) => {
   console.log(req.body);
   if (faultMap.has(req.body.id)) {
     faultMap.delete(req.body.id);
-    refreshFaults();
+    refreshDataStore(faultMap, points);
     res.send({ message: "deleted"});
   } else {
-    res.send({ message: "not deleted"});
+    res.send({ message: "id not found"});
   }
 });
 

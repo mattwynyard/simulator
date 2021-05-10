@@ -1,6 +1,6 @@
 import './App.css';
 import AntDrawer from'./AntDrawer.js'
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap, useMapEvents} from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap, useMapEvents, Pane} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
@@ -105,7 +105,6 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const [host] = useState("localhost:5000");
   const [timerInterval] = useState(500);
-  const [online, setOnline] = useState(false);
   const mapRef = useRef(null);
 
   const getData = useCallback(async () => {      
@@ -128,9 +127,9 @@ function App() {
     } catch {
         return new Error("connection error")
     }      
-  }, []);
+  }, [host]);
   
-  const getCentrelines = useCallback(async (bounds, center)=> {
+  const getCentrelines = async (bounds, center)=> {
     try {
       const response = await fetch("http://localhost:5000/centrelines", {
           method: 'POST',
@@ -146,6 +145,7 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
+          console.log(body);
           let fp = []
           for (let i = 0; i < body.data.length; i++) {
               fp.push(body.data[i])
@@ -160,7 +160,7 @@ function App() {
   } catch {
       return new Error("connection error")
   }      
-  });
+  }
 
   useEffect(
     () => {
@@ -214,11 +214,10 @@ useEffect(
       setCenter(position);
       if(mapRef.current !== null) {
         mapRef.current.newCenter(position[0])
-      }
-      
+      }      
     }
   },
-  [position, counter],
+  [position, counter, mapRef],
 );
 
   return (
@@ -239,9 +238,9 @@ useEffect(
         >
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
-         {position.map((position, idx) =>
+         <Pane name="position" style={{ zIndex: 1000 }}>
+          {position.map((position, idx) =>
             <CircleMarker
-              className="position"
               key={`marker-${idx}`} 
               stroke={true}
               center={position}
@@ -253,22 +252,56 @@ useEffect(
               eventHandlers={{
                 click: () => {
                   console.log('marker clicked')
-                },
-                
+                }, 
               }}
               >      
             </CircleMarker>
           )}
-          {points.map((point, idx) =>
+          </Pane >
+           
+         <Pane name="lines" style={{ zIndex: 990 }}>
+         {lines.map((line, idx) =>
+            <Polyline
+              key={`marker-${idx}`} 
+              style={{ zIndex: 999 }}   
+              positions={line.latlng}
+              idx={idx}
+              color={line.color}
+              weight ={line.weight}
+              color={line.color}
+              opacity={line.opacity}
+              eventHandlers={{
+                click: () => {
+                  console.log('line clicked')
+                },
+                mouseover: (e) => {
+                  console.log("mouse over")
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
+                }
+              }}
+            > 
+            <Popup
+                key={`marker-${idx}`}>
+                  {line.id}<br></br>
+                  
+              </Popup>            
+            </Polyline>
+          )}
+         </Pane>
+         <Pane name="points" style={{ zIndex: 990}}>
+         {points.map((point, idx) =>
             <CircleMarker
-              className="fault"
               key={`marker-${idx}`} 
               center={L.latLng(point.latlng[0], point.latlng[1])}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}
-              fillColor={point.color}
-              fillOpacity={point.opacity}
+              opacity={point.opacity}
+              fillColor={point.fillColor}
+              fillOpacity={point.fillOpacity}
               eventHandlers={{
                 click: () => {
                   console.log('marker clicked')
@@ -283,28 +316,24 @@ useEffect(
               > 
               <Popup
                 key={`marker-${idx}`}>
-                  id: {point.id}<br></br>
+                  {point.id}<br></br>
+                  {point.fault}<br></br>
               </Popup>       
             </CircleMarker>
           )}
-          {/* {centrelines.map((line, idx) =>
+         </Pane >
+          <Pane name="centreline" style={{ zIndex: 900}}>
+          {centrelines.map((line, idx) =>
             <Centreline
               key={`marker-${idx}`}    
               positions={line}
               idx={idx}
-              //color={line.color}
             >           
             </Centreline>
-          )} */}
-           {lines.map((line, idx) =>
-            <Polyline
-              key={`marker-${idx}`}    
-              positions={line.latlng}
-              idx={idx}
-              //color={line.color}
-            >           
-            </Polyline>
           )}
+          </Pane>
+          
+          
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>

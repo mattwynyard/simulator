@@ -5,11 +5,11 @@
 }
 
 .position {
-  z-index: 900;
+  z-index: 1000;
 
 }
 
-.fault {
+.points {
   z-index: 999;
 
 }

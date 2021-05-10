@@ -16,7 +16,7 @@ const connection = new Client({
 try {
     //connection.connect();
 } catch (err) {
-    //console.log(err);
+    console.log(err);
 }
 connection.on('connect', () => {
     console.log("connected to database on port: " + process.env.PORT);
