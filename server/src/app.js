@@ -12,15 +12,15 @@ const host = process.env.PROXY;
 let latlng = null;
 let points = [];
 let lines = [];
-let faultMap = new Map();
+let pointMap = new Map();
 let lineMap = new Map();
 
-const refreshDataStore = (map, arr) => {
+const refreshDataStore = (map) => {
   let f = [];
   map.forEach((value) => {
     f.push(value);
   });
-  arr = f;
+  return f;
 }
 
 app.listen(port, () => {
@@ -55,13 +55,18 @@ app.post('/centrelines', async (req, res) => {
   res.send({data: result.rows})
 });
 
+app.post('/closestCentreline', async (req, res) => {
+  let result = await db.closestCentreline(req.body.center);
+  res.send({data: result.rows})
+});
+
 app.get('/fault', async (req, res) => {
   //res.send({ points: faults});
 });
 
 app.get('/reset', async (req, res) => {
   try {
-    faultMap = new Map();
+    pointMap = new Map();
     lineMap = new Map();
     points = [];
     lines = [];
@@ -79,24 +84,20 @@ app.post('/location', async (req, res) => {
 });
 
 app.post('/insertPoint', async (req, res) => {
-  console.log(req.body);
-  faultMap.set(req.body.id, req.body);
+  pointMap.set(req.body.id, req.body);
   points.push(req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
-  console.log(req.body);
   lineMap.set(req.body.id, req.body);
   lines.push(req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/appendLine', async (req, res) => {
-  //console.log(req.body);
   let line = lineMap.get(req.body.id);
   line.latlng.push(req.body.latlng[0])
-  console.log(line.latlng);
   res.send({ message: "ok"});
 });
 
@@ -105,7 +106,7 @@ app.post('/updateLine', async (req, res) => {
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
     lineMap.set(req.body.id, req.body);
-    refreshDataStore(lineMap, lines);
+    lines = refreshDataStore(lineMap);
     res.send({ message: "updated"});
   } else {
     res.send({ message: "not updated"});
@@ -116,19 +117,20 @@ app.post('/deleteLine', async (req, res) => {
   console.log(req.body);
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
-    refreshDataStore(lineMap, lines);
+    lines = refreshDataStore(lineMap);
+    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
   } else {
-    res.send({ message: "id not found"});
+    console.log("notfound:" + req.body.id)
+    res.send({ message: "id " + req.body.id + "not found"});
   }
 });
 
 app.post('/updatePoint', async (req, res) => {
-  console.log(req.body);
-  if (faultMap.has(req.body.id)) {
-    faultMap.delete(req.body.id);
-    faultMap.set(req.body.id, req.body);
-    refreshDataStore(faultMap, points);
+  if (pointMap.has(req.body.id)) {
+    pointMap.delete(req.body.id);
+    pointMap.set(req.body.id, req.body);
+    points = refreshDataStore(pointMap);
     res.send({ message: "updated"});
   } else {
     res.send({ message: "id not found"});
@@ -137,11 +139,13 @@ app.post('/updatePoint', async (req, res) => {
 
 app.post('/deletePoint', async (req, res) => {
   console.log(req.body);
-  if (faultMap.has(req.body.id)) {
-    faultMap.delete(req.body.id);
-    refreshDataStore(faultMap, points);
+  if (pointMap.has(req.body.id)) {
+    pointMap.delete(req.body.id);
+    points = refreshDataStore(pointMap);
+    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
   } else {
+    console.log("notfound:" + req.body.id)
     res.send({ message: "id not found"});
   }
 });

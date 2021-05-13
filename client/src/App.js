@@ -128,6 +128,31 @@ function App() {
         return new Error("connection error")
     }      
   }, [host]);
+
+  const getClosestCentreline = async (center)=> {
+    try {
+      const response = await fetch("http://localhost:5000/closestCentreline", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',        
+          },  
+          body: JSON.stringify({
+            center: center
+        })    
+      });
+      if (response.ok) {
+          const body = await response.json();
+          console.log(body);        
+          return body; 
+      } else {  
+          return Error(response);
+      }
+    } catch {
+        return new Error("connection error")
+    }      
+  }
   
   const getCentrelines = async (bounds, center)=> {
     try {
@@ -145,7 +170,7 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          console.log(body);
+          //console.log(body);
           let fp = []
           for (let i = 0; i < body.data.length; i++) {
               fp.push(body.data[i])
@@ -173,17 +198,17 @@ function App() {
             setIntialise(true);
           }
           getData().then(data => {
-
             if (data.points) {
               try {
-                  setPoints(data.points);      
+                  setPoints(data.points); 
+                  console.log(data)     
               } catch (e) {
                 console.log("fault error: " + e)
               } 
             }
             if (data.lines) {
               try {
-                  console.log(data.lines);
+                  //console.log(data.lines);
                   setLines(data.lines);      
               } catch (e) {
                 console.log("fault error: " + e)
@@ -215,6 +240,8 @@ useEffect(
       if(mapRef.current !== null) {
         mapRef.current.newCenter(position[0])
       }      
+    } else {
+      getClosestCentreline(position);
     }
   },
   [position, counter, mapRef],
