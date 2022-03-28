@@ -22,8 +22,7 @@ function Centreline(props) {
         otherOptions = { color: 'orange' }
     } else {
       otherOptions = { color: 'blue' }
-    } 
-  //console.log(coords)
+  } 
   return ( <Polyline
       key={`marker-${props.idx}`} 
       pathOptions={(props.idx === 0) ? redOptions: otherOptions}
@@ -93,6 +92,16 @@ function CustomTileLayer(props) {
   }
 }
 
+function LMap() {
+  const map = useMap();
+  useEffect(
+    () => {
+      console.log("mount")
+    return null
+  }, []);
+  return null;
+}
+
 function App() {
 
   const [counter, setCounter] = useState(0);
@@ -145,7 +154,6 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          console.log(body);
           let fp = []
           for (let i = 0; i < body.data.length; i++) {
               fp.push(body.data[i])
@@ -173,7 +181,6 @@ function App() {
             setIntialise(true);
           }
           getData().then(data => {
-
             if (data.points) {
               try {
                   setPoints(data.points);      
@@ -183,7 +190,6 @@ function App() {
             }
             if (data.lines) {
               try {
-                  console.log(data.lines);
                   setLines(data.lines);      
               } catch (e) {
                 console.log("fault error: " + e)
@@ -332,7 +338,7 @@ useEffect(
           )}
           </Pane>
           
-          
+          <LMap/>
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>
