@@ -62,7 +62,6 @@ const MapRef = forwardRef((props, ref) => {
 
   useEffect(
     () => {
-      //console.log(props.center);
       if (props.center.length !== 0) {
         map.panTo(props.center[0])
       }
@@ -120,8 +119,7 @@ function App() {
         if (response.ok) {
             const body = await response.json();
             return body; 
-        } else {
-            
+        } else { 
             return Error(response);
         }
     } catch {
@@ -144,7 +142,7 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          console.log(body);        
+    
           return body; 
       } else {  
           return Error(response);
@@ -170,11 +168,9 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          //console.log(body);
           let fp = []
           for (let i = 0; i < body.data.length; i++) {
               fp.push(body.data[i])
-              //console.log(body.data[i])
           }
           setCentreLines(fp)
           return body; 
@@ -208,7 +204,6 @@ function App() {
             }
             if (data.lines) {
               try {
-                  //console.log(data.lines);
                   setLines(data.lines);      
               } catch (e) {
                 console.log("fault error: " + e)
@@ -218,8 +213,7 @@ function App() {
               try{
                 let lat = data.latlng[0];
                 let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);
-                
+                setPosition([L.latLng(lat, lng)]);             
               } catch {
                 console.log("position error");
               }     
@@ -227,7 +221,7 @@ function App() {
           });
         }, timerInterval);
         return () => {
-        clearInterval(id);
+          clearInterval(id);
         };
     },
     [counter, timerInterval, initialise, getData],
@@ -357,9 +351,7 @@ useEffect(
             >           
             </Centreline>
           )}
-          </Pane>
-          
-          
+          </Pane>  
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>
