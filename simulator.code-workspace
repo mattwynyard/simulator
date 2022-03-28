@@ -4,6 +4,7 @@
 			"path": "."
 		}
 	],
+<<<<<<< HEAD
 	"settings": {},
 	"launch": {
 		"configurations": [
@@ -15,4 +16,7 @@
 			}
 		]
 	}
+=======
+	"settings": {}
+>>>>>>> 04e685721b0fcb72e706bf6d1cbc358f5dd65534
 }

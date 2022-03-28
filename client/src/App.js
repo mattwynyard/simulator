@@ -63,7 +63,6 @@ const MapRef = forwardRef((props, ref) => {
 
   useEffect(
     () => {
-      //console.log(props.center);
       if (props.center.length !== 0) {
         map.panTo(props.center[0])
       }
@@ -131,14 +130,38 @@ function App() {
         if (response.ok) {
             const body = await response.json();
             return body; 
-        } else {
-            
+        } else { 
             return Error(response);
         }
     } catch {
         return new Error("connection error")
     }      
   }, [host]);
+
+  const getClosestCentreline = async (center)=> {
+    try {
+      const response = await fetch("http://localhost:5000/closestCentreline", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',        
+          },  
+          body: JSON.stringify({
+            center: center
+        })    
+      });
+      if (response.ok) {
+          const body = await response.json();
+    
+          return body; 
+      } else {  
+          return Error(response);
+      }
+    } catch {
+        return new Error("connection error")
+    }      
+  }
   
   const getCentrelines = async (bounds, center)=> {
     try {
@@ -184,7 +207,8 @@ function App() {
           getData().then(data => {
             if (data.points) {
               try {
-                  setPoints(data.points);      
+                  setPoints(data.points); 
+                  console.log(data)     
               } catch (e) {
                 console.log("fault error: " + e)
               } 
@@ -200,8 +224,7 @@ function App() {
               try{
                 let lat = data.latlng[0];
                 let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);
-                
+                setPosition([L.latLng(lat, lng)]);             
               } catch {
                 console.log("position error");
               }     
@@ -209,7 +232,7 @@ function App() {
           });
         }, timerInterval);
         return () => {
-        clearInterval(id);
+          clearInterval(id);
         };
     },
     [counter, timerInterval, initialise, getData],
@@ -222,6 +245,8 @@ useEffect(
       if(mapRef.current !== null) {
         mapRef.current.newCenter(position[0])
       }      
+    } else {
+      getClosestCentreline(position);
     }
   },
   [position, counter, mapRef],
@@ -337,9 +362,7 @@ useEffect(
             >           
             </Centreline>
           )}
-          </Pane>
-          
-          <LMap/>
+          </Pane>  
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>

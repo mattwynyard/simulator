@@ -50,6 +50,23 @@ module.exports = {
             });
         });
     },
+    closestCentreline: (center) => {
+        console.log(center);
+        let lat = center[0].lat;
+        let lng = center[0].lng;
+        return new Promise((resolve, reject) => {
+            let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
+             + lng + "," + lat + "),4326)) AS dist FROM centreline ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326) LIMIT 1";
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let line = resolve(result);
+                return line;
+            });
+        });
+    }
 
 
 }
