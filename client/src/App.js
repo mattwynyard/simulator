@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
 
-const REFRESH_RATE = 500;
+const REFRESH_RATE = 100;
 
 function Centreline(props) {
   const redOptions = { color: 'red' }
