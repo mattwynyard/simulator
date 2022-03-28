@@ -5,6 +5,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
 
+const REFRESH_RATE = 500;
+
 function Centreline(props) {
   const redOptions = { color: 'red' }
   let otherOptions = null;
@@ -113,7 +115,7 @@ function App() {
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const [host] = useState("localhost:5000");
-  const [timerInterval] = useState(500);
+  const [timerInterval] = useState(REFRESH_RATE);
   const mapRef = useRef(null);
 
   const getData = useCallback(async () => {      
@@ -157,7 +159,6 @@ function App() {
           let fp = []
           for (let i = 0; i < body.data.length; i++) {
               fp.push(body.data[i])
-              //console.log(body.data[i])
           }
           setCentreLines(fp)
           return body; 
