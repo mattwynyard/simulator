@@ -58,8 +58,8 @@ app.use((req, res, next) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.emit('request', "hello");
+  console.log("client connected");
+  socket.emit("api", "ack")
 });
 
 //serve tiles
@@ -70,9 +70,12 @@ app.get('/tiles/:z/:x/:y', async (req, res) => {
 /**
  * incoming location from access
  */
-app.post('/location', async (req, res) => {
+ app.post('/location', async (req, res) => {
   latlng = req.body.latlng
+  console.log( req.body.latlng);
+  io.emit("latlng", req.body.latlng[0]);
   res.send({ message: "ok"});
+  
 });
 
 

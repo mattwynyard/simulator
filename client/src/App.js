@@ -42,6 +42,7 @@ const MapRef = forwardRef((props, ref) => {
     () => {
       if (center) {
         console.log(center)
+        map.panTo(props.center[0])
       }
       if(bounds !== null) {
         props.callback(bounds, center);
@@ -59,9 +60,6 @@ const MapRef = forwardRef((props, ref) => {
 //   }, []);
 //   return null;
 // }
-
-
-
 function App() {
 
   const [counter, setCounter] = useState(0);
@@ -83,8 +81,12 @@ function App() {
           methods: ["GET", "POST"]
         }
       });
-      socket.on("connection", data => {
+      socket.on("api", data => {
         console.log(data)
+      });
+      socket.on("latlng", data => {
+        setPosition([L.latLng(data[0], data[1])]); 
+
       });
       const initialise = async () => {
         try {
@@ -111,12 +113,11 @@ function App() {
         if (res.error) {
           alert(res.error);
           return;
-        }
-        
+        }       
         setIntialise(true)      
       })
       .catch(console.error); 
-      //return () => socket.disconnect();   
+      return () => socket.disconnect();   
   }, []);
 
   useEffect(() => {
@@ -126,7 +127,11 @@ function App() {
   }, [initialise])
 
   useEffect(() => {
-    console.log("position: " + position)
+    //console.log("position: " + position)
+    setCenter(position);
+    if(mapRef.current) {
+      mapRef.current.newCenter(position[0])
+    }
   }, [position])
 
   
@@ -206,9 +211,9 @@ function App() {
           
           return Error(response);
       }
-  } catch {
-      return new Error("connection error")
-  }      
+    } catch {
+        return new Error("connection error")
+    }      
   }
 
 //   useEffect(
