@@ -4,35 +4,12 @@ import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, u
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
+import Centreline from './Centreline.js';
+import CustomTileLayer from './CustomTileLayer.js';
+import socketIOClient from "socket.io-client";
+const ENDPOINT = "http://localhost:5000";
 
-const REFRESH_RATE = 100;
-
-function Centreline(props) {
-  const redOptions = { color: 'red' }
-  let otherOptions = null;
-  let geojson = JSON.parse(props.positions.geojson);
-  let coords = []
-  geojson.coordinates.forEach(element => {
-      element.forEach(coord => {
-        let temp = coord[0];
-        coord[0] = coord[1];
-        coord[1] = temp;
-        coords.push(coord)
-      });     
-  });
-    if(props.idx % 2 === 0) {
-        otherOptions = { color: 'orange' }
-    } else {
-      otherOptions = { color: 'blue' }
-  } 
-  return ( <Polyline
-      key={`marker-${props.idx}`} 
-      pathOptions={(props.idx === 0) ? redOptions: otherOptions}
-      positions={coords} 
-      weight={3}
-      >
-    </Polyline>);
-}
+const REFRESH_RATE = 500;
 
 const MapRef = forwardRef((props, ref) => {
   const [center, setCenter] = useState(null);
@@ -63,45 +40,27 @@ const MapRef = forwardRef((props, ref) => {
 
   useEffect(
     () => {
-      if (props.center.length !== 0) {
-        map.panTo(props.center[0])
+      if (center) {
+        console.log(center)
       }
-      if(center !== null) {
+      if(bounds !== null) {
         props.callback(bounds, center);
-      }
-      
+      }      
     }, [center]);
     
     return null
   });
 
-function CustomTileLayer(props) {
-  if (props.isRemote) {
-    return (
-      <TileLayer
-        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
-      />
-    );
-  } else {
-    return (
-      <TileLayer
-        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-    );
-  }
-}
+// function LMap() {
+//   const map = useMap();
+//   useEffect(
+//     () => {
+//       console.log("mount");
+//   }, []);
+//   return null;
+// }
 
-function LMap() {
-  const map = useMap();
-  useEffect(
-    () => {
-      console.log("mount")
-    return null
-  }, []);
-  return null;
-}
+
 
 function App() {
 
@@ -113,30 +72,88 @@ function App() {
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
-  const [host] = useState("localhost:5000");
   const [timerInterval] = useState(REFRESH_RATE);
   const mapRef = useRef(null);
 
-  const getData = useCallback(async () => {      
-    try {
-        const response = await fetch("http://" + host + '/position', {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',        
-            },      
-        });
-        if (response.ok) {
-            const body = await response.json();
-            return body; 
-        } else { 
-            return Error(response);
+  useEffect(
+    () => {
+      const socket = socketIOClient(ENDPOINT, {
+        cors: {
+          origin: "http://localhost:8080",
+          methods: ["GET", "POST"]
         }
-    } catch {
-        return new Error("connection error")
-    }      
-  }, [host]);
+      });
+      socket.on("connection", data => {
+        console.log(data)
+      });
+      const initialise = async () => {
+        try {
+          const response = await fetch("http://localhost:5000/position", {
+              method: 'GET',
+              credentials: 'same-origin',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',        
+              },      
+          });
+          if (response.ok) {
+              const body = await response.json();
+              return body; 
+          } else { 
+              return Error(response);
+          }
+        } catch {
+            return {error: "server down"}
+        }
+      }
+      initialise()
+      .then((res) => {
+        if (res.error) {
+          alert(res.error);
+          return;
+        }
+        
+        setIntialise(true)      
+      })
+      .catch(console.error); 
+      //return () => socket.disconnect();   
+  }, []);
+
+  useEffect(() => {
+    let lat = center[0];;
+    let lng = center[1];
+    setPosition([L.latLng(lat, lng)]); 
+  }, [initialise])
+
+  useEffect(() => {
+    console.log("position: " + position)
+  }, [position])
+
+  
+
+
+  // const getData = useCallback(async () => {      
+  //   try {
+  //       const response = await fetch("http://localhost:5000/position", {
+  //           method: 'GET',
+  //           credentials: 'same-origin',
+  //           headers: {
+  //               'Accept': 'application/json',
+  //               'Content-Type': 'application/json',        
+  //           },      
+  //       });
+  //       if (response.ok) {
+  //           const body = await response.json();
+  //           return body; 
+  //       } else { 
+  //           return Error(response);
+  //       }
+  //   } catch {
+  //       return new Error("connection error")
+  //   }      
+  // }, [host]);
+
+  
 
   const getClosestCentreline = async (center)=> {
     try {
@@ -194,63 +211,63 @@ function App() {
   }      
   }
 
-  useEffect(
-    () => {
-        const id = setInterval(() => {
-          setCounter(counter + 1);
-          if (!initialise) { 
-            setCenter([L.latLng(center[0], center[1])]);
-            setPosition([L.latLng(center[0], center[1])]);
-            mapRef.current.newCenter({lat: center[0], lng: center[1]})
-            setIntialise(true);
-          }
-          getData().then(data => {
-            if (data.points) {
-              try {
-                  setPoints(data.points); 
-                  console.log(data)     
-              } catch (e) {
-                console.log("fault error: " + e)
-              } 
-            }
-            if (data.lines) {
-              try {
-                  setLines(data.lines);      
-              } catch (e) {
-                console.log("fault error: " + e)
-              } 
-            }   
-            if (data.latlng) {
-              try{
-                let lat = data.latlng[0];
-                let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);             
-              } catch {
-                console.log("position error");
-              }     
-            }             
-          });
-        }, timerInterval);
-        return () => {
-          clearInterval(id);
-        };
-    },
-    [counter, timerInterval, initialise, getData],
-);
+//   useEffect(
+//     () => {
+//         const id = setInterval(() => {
+//           setCounter(counter + 1);
+//           if (!initialise) { 
+//             setCenter([L.latLng(center[0], center[1])]);
+//             setPosition([L.latLng(center[0], center[1])]);
+//             mapRef.current.newCenter({lat: center[0], lng: center[1]})
+//             setIntialise(true);
+//           }
+//           getData().then(data => {
+//             if (data.points) {
+//               try {
+//                   setPoints(data.points); 
+//                   console.log(data)     
+//               } catch (e) {
+//                 console.log("fault error: " + e)
+//               } 
+//             }
+//             if (data.lines) {
+//               try {
+//                   setLines(data.lines);      
+//               } catch (e) {
+//                 console.log("fault error: " + e)
+//               } 
+//             }   
+//             if (data.latlng) {
+//               try{
+//                 let lat = data.latlng[0];
+//                 let lng = data.latlng[1];
+//                 setPosition([L.latLng(lat, lng)]);             
+//               } catch {
+//                 console.log("position error");
+//               }     
+//             }             
+//           });
+//         }, timerInterval);
+//         return () => {
+//           clearInterval(id);
+//         };
+//     },
+//     [counter, timerInterval, initialise, getData],
+// );
 
-useEffect(
-  () => {
-    if (counter % 10 === 0) {
-      setCenter(position);
-      if(mapRef.current !== null) {
-        mapRef.current.newCenter(position[0])
-      }      
-    } else {
-      getClosestCentreline(position);
-    }
-  },
-  [position, counter, mapRef],
-);
+// useEffect(
+//   () => {
+//     if (counter % 10 === 0) {
+//       setCenter(position);
+//       if(mapRef.current !== null) {
+//         mapRef.current.newCenter(position[0])
+//       }      
+//     } else {
+//       getClosestCentreline(position);
+//     }
+//   },
+//   [position, counter, mapRef],
+// );
 
   return (
     <div className="App">

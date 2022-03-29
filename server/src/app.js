@@ -1,10 +1,15 @@
 'use strict';
 const express = require('express');
+const app = express();
+const http = require('http');
+//const server = require('http').createServer(app);
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+
 const morgan = require('morgan');
-const helmet = require('helmet');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const app = express();
+
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
@@ -23,9 +28,20 @@ const refreshDataStore = (map) => {
   return f;
 }
 
-app.listen(port, () => {
+const io = new Server(server, {
+  cors: {
+    origin: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+server.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
 });
+
+// app.listen(port, () => {
+//   console.log(`Listening: http://${host}:${port}`);
+// });
  
 app.use(cors());
 app.use(morgan('dev'));
@@ -41,13 +57,27 @@ app.use((req, res, next) => {
   next();
 });
 
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.emit('request', "hello");
+});
+
 //serve tiles
 app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
 
+/**
+ * incoming location from access
+ */
+app.post('/location', async (req, res) => {
+  latlng = req.body.latlng
+  res.send({ message: "ok"});
+});
+
+
 app.get('/position', async (req, res) => {
-  res.send({ latlng: latlng, points: points, lines, lines});
+  res.send({ latlng: latlng});
 });
 
 app.post('/centrelines', async (req, res) => {
@@ -76,11 +106,6 @@ app.get('/reset', async (req, res) => {
     console.log(error)
     res.send("error");
   }
-});
-
-app.post('/location', async (req, res) => {
-  latlng = req.body.latlng
-  res.send({ message: "ok"});
 });
 
 app.post('/insertPoint', async (req, res) => {
