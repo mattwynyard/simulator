@@ -1,8 +1,7 @@
 import { Polyline } from 'react-leaflet';
 
 function Centreline(props) {
-    const redOptions = { color: 'red' }
-    let otherOptions = null;
+    const color = { color: 'blue' }
     let geojson = JSON.parse(props.positions.geojson);
     let coords = []
     geojson.coordinates.forEach(element => {
@@ -13,16 +12,11 @@ function Centreline(props) {
           coords.push(coord)
         });     
     });
-      if(props.idx % 2 === 0) {
-          otherOptions = { color: 'orange' }
-      } else {
-        otherOptions = { color: 'blue' }
-    } 
     return ( <Polyline
         key={`marker-${props.idx}`} 
-        pathOptions={(props.idx === 0) ? redOptions: otherOptions}
+        pathOptions={props.color ? props.color : color}
         positions={coords} 
-        weight={3}
+        weight={props.weight ? props.weight : 3}
         >
       </Polyline>);
   }

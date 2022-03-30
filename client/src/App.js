@@ -1,15 +1,12 @@
 import './App.css';
 import AntDrawer from'./AntDrawer.js'
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap, useMapEvents, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, useMapEvents, Pane} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-import socketIOClient from "socket.io-client";
-const ENDPOINT = "http://localhost:5000";
-
-const REFRESH_RATE = 500;
+import Socket from './Socket.js'
 
 const MapRef = forwardRef((props, ref) => {
   const [center, setCenter] = useState(null);
@@ -41,28 +38,18 @@ const MapRef = forwardRef((props, ref) => {
   useEffect(
     () => {
       if (center) {
-        console.log(center)
         map.panTo(props.center[0])
       }
       if(bounds !== null) {
         props.callback(bounds, center);
       }      
     }, [center]);
-    
     return null
   });
 
-// function LMap() {
-//   const map = useMap();
-//   useEffect(
-//     () => {
-//       console.log("mount");
-//   }, []);
-//   return null;
-// }
+  
 function App() {
 
-  const [counter, setCounter] = useState(0);
   const [initialise, setIntialise] = useState(false);
   const [isRemote] = useState(false);
   const [position, setPosition] = useState([]);
@@ -70,27 +57,13 @@ function App() {
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
-  const [timerInterval] = useState(REFRESH_RATE);
   const mapRef = useRef(null);
 
   useEffect(
     () => {
-      const socket = socketIOClient(ENDPOINT, {
-        cors: {
-          origin: "http://localhost:8080",
-          methods: ["GET", "POST"]
-        }
-      });
-      socket.on("api", data => {
-        console.log(data)
-      });
-      socket.on("latlng", data => {
-        setPosition([L.latLng(data[0], data[1])]); 
-
-      });
       const initialise = async () => {
         try {
-          const response = await fetch("http://localhost:5000/position", {
+          const response = await fetch("http://localhost:5000/initialise", {
               method: 'GET',
               credentials: 'same-origin',
               headers: {
@@ -108,16 +81,21 @@ function App() {
             return {error: "server down"}
         }
       }
-      initialise()
-      .then((res) => {
-        if (res.error) {
-          alert(res.error);
-          return;
-        }       
-        setIntialise(true)      
-      })
-      .catch(console.error); 
-      return () => socket.disconnect();   
+      if (!initialise) {
+        console.log("initialise")
+        initialise()
+        .then((res) => {
+          if (res.error) {
+            alert(res.error);
+            return;
+          }
+          console.log(res)       
+          setIntialise(true)    
+        })
+        .catch(console.error); 
+        
+      }
+      console.log("mount")
   }, []);
 
   useEffect(() => {
@@ -127,62 +105,23 @@ function App() {
   }, [initialise])
 
   useEffect(() => {
-    //console.log("position: " + position)
     setCenter(position);
     if(mapRef.current) {
       mapRef.current.newCenter(position[0])
-    }
-  }, [position])
+    }  
+  }, [position]);
 
-  
+  const insertPoint = (point) => {
+    setPoints(points => [...points, point]);
+  }
 
+  const insertLine = (line) => {
+    setLines(lines => [...lines, line]);
+  }
 
-  // const getData = useCallback(async () => {      
-  //   try {
-  //       const response = await fetch("http://localhost:5000/position", {
-  //           method: 'GET',
-  //           credentials: 'same-origin',
-  //           headers: {
-  //               'Accept': 'application/json',
-  //               'Content-Type': 'application/json',        
-  //           },      
-  //       });
-  //       if (response.ok) {
-  //           const body = await response.json();
-  //           return body; 
-  //       } else { 
-  //           return Error(response);
-  //       }
-  //   } catch {
-  //       return new Error("connection error")
-  //   }      
-  // }, [host]);
-
-  
-
-  const getClosestCentreline = async (center)=> {
-    try {
-      const response = await fetch("http://localhost:5000/closestCentreline", {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',        
-          },  
-          body: JSON.stringify({
-            center: center
-        })    
-      });
-      if (response.ok) {
-          const body = await response.json();
-    
-          return body; 
-      } else {  
-          return Error(response);
-      }
-    } catch {
-        return new Error("connection error")
-    }      
+  const reset = () => {
+    setLines([]);
+    setPoints([]);
   }
   
   const getCentrelines = async (bounds, center)=> {
@@ -216,71 +155,13 @@ function App() {
     }      
   }
 
-//   useEffect(
-//     () => {
-//         const id = setInterval(() => {
-//           setCounter(counter + 1);
-//           if (!initialise) { 
-//             setCenter([L.latLng(center[0], center[1])]);
-//             setPosition([L.latLng(center[0], center[1])]);
-//             mapRef.current.newCenter({lat: center[0], lng: center[1]})
-//             setIntialise(true);
-//           }
-//           getData().then(data => {
-//             if (data.points) {
-//               try {
-//                   setPoints(data.points); 
-//                   console.log(data)     
-//               } catch (e) {
-//                 console.log("fault error: " + e)
-//               } 
-//             }
-//             if (data.lines) {
-//               try {
-//                   setLines(data.lines);      
-//               } catch (e) {
-//                 console.log("fault error: " + e)
-//               } 
-//             }   
-//             if (data.latlng) {
-//               try{
-//                 let lat = data.latlng[0];
-//                 let lng = data.latlng[1];
-//                 setPosition([L.latLng(lat, lng)]);             
-//               } catch {
-//                 console.log("position error");
-//               }     
-//             }             
-//           });
-//         }, timerInterval);
-//         return () => {
-//           clearInterval(id);
-//         };
-//     },
-//     [counter, timerInterval, initialise, getData],
-// );
-
-// useEffect(
-//   () => {
-//     if (counter % 10 === 0) {
-//       setCenter(position);
-//       if(mapRef.current !== null) {
-//         mapRef.current.newCenter(position[0])
-//       }      
-//     } else {
-//       getClosestCentreline(position);
-//     }
-//   },
-//   [position, counter, mapRef],
-// );
-
   return (
     <div className="App">
       <MapContainer 
           className="map" 
           center={center} 
           zoom={18} 
-          minZoom={10}
+          minZoom={13}
           maxZoom={18}
           scrollWheelZoom={true}
           keyboard={true}
@@ -374,7 +255,7 @@ function App() {
               </Popup>       
             </CircleMarker>
           )}
-         </Pane >
+         </Pane>
           <Pane name="centreline" style={{ zIndex: 900}}>
           {centrelines.map((line, idx) =>
             <Centreline
@@ -386,6 +267,7 @@ function App() {
           )}
           </Pane>  
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
+          <Socket setPosition={setPosition} insertPoint={insertPoint} insertLine={insertLine} reset={reset}/>
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>
          
