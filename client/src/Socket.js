@@ -1,10 +1,15 @@
 import socketIOClient from "socket.io-client";
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import L from 'leaflet';
 
 const ENDPOINT = "http://localhost:5000";
 
 function Socket(props) {
+
+    const setPosition = props.setPosition;
+    const reset = props.reset;
+    const insertPoint = props.insertPoint;
+    const insertLine = props.insertLine
 
     useEffect(() => {
       const socket = socketIOClient(ENDPOINT, {
@@ -13,21 +18,22 @@ function Socket(props) {
           methods: ["GET", "POST"]
         }
       });
-      socket.on("api", data => {
-        console.log(data)
+      socket.on("connect", () => {
+        console.log("connect");
+        socket.sendBuffer = [];
       });
-      socket.on("reset", data => {
-        props.reset();
+      socket.on("reset", () => {
+        reset();
       });
       socket.on("latlng", data => {
-        props.setPosition([L.latLng(data[0], data[1])]); 
+        setPosition([L.latLng(data[0], data[1])]); 
       });
       socket.on("insertPoint", data => {
-        props.insertPoint(data);
+        insertPoint(data);
       });
       socket.on("insertLine", data => {
         console.log(data)
-        props.insertLine(data);
+        insertLine(data);
       });
       return () => socket.disconnect();   
     }, []);

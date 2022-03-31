@@ -53,7 +53,6 @@ app.use((req, res, next) => {
 
 io.on('connection', (socket) => {
   console.log("client connected on socket");
-  socket.emit("api", "ack")
 });
 
 //serve tiles
@@ -69,6 +68,7 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
+   console.log(req.body)
   io.emit("latlng", req.body.latlng[0]);
   res.send({ message: "ok"}); 
 });
@@ -76,15 +76,6 @@ app.get('/initialise', async (req, res) => {
 app.post('/centrelines', async (req, res) => {
   let result = await db.centrelines(req.body.bounds, req.body.center);
   res.send({data: result.rows})
-});
-
-app.post('/closestCentreline', async (req, res) => {
-  let result = await db.closestCentreline(req.body.center);
-  res.send({data: result.rows})
-});
-
-app.get('/fault', async (req, res) => {
-  //res.send({ points: faults});
 });
 
 app.get('/reset', async (req, res) => {
@@ -104,6 +95,7 @@ app.get('/reset', async (req, res) => {
 
 app.post('/insertPoint', async (req, res) => {
   io.emit("insertPoint", req.body);
+  console.log(req.body)
   pointMap.set(req.body.id, req.body);
   res.send({ message: "ok"});
 });
@@ -111,13 +103,6 @@ app.post('/insertPoint', async (req, res) => {
 app.post('/insertLine', async (req, res) => {
   lineMap.set(req.body.id, req.body);
   io.emit("insertLine", req.body);
-  res.send({ message: "ok"});
-});
-
-app.post('/appendLine', async (req, res) => {
-  let line = lineMap.get(req.body.id);
-  line.latlng.push(req.body.latlng[0]);
-  io.emit("appendLine", req.body);
   res.send({ message: "ok"});
 });
 
