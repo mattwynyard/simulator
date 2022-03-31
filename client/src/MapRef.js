@@ -2,11 +2,10 @@ import { useState, useEffect, useImperativeHandle, forwardRef} from 'react';
 import { useMapEvents} from 'react-leaflet';
 
 const MapRef = forwardRef((props, ref) => {
-    const [center, setCenter] = useState(null);
+    const [center, setCenter] = useState(props.center[0] ? props.center[0] : null);
     const [bounds, setBounds] = useState(null);
 
     const getCentrelines = props.getCentrelines;
-    const initalCenter = props.center[0];
     const map = useMapEvents({
       click: () => {
         console.log("click")
@@ -14,33 +13,39 @@ const MapRef = forwardRef((props, ref) => {
       zoom: () => {
         let mapBounds = map.getBounds();
         setBounds(mapBounds);
-        setCenter(center);
         if(center !== null) {
           props.callback(mapBounds, center);
         }
       },
     })
     const newCenter = (center) => {
-      let mapBounds = map.getBounds();
-      setBounds(mapBounds);
       setCenter(center);
     };
+
+    const getBounds = () => {
+        return bounds;
+      };
+
     useImperativeHandle(ref, () => {
       return {
-        newCenter: newCenter
+        newCenter: newCenter,
+        getBounds : getBounds
       }
-   });
+    });
   
     useEffect(
       () => {
         if (center) {
-          map.panTo(initalCenter)
+          map.panTo(center)
         }
-        if(bounds) {
-          getCentrelines(bounds, center);
-        }      
-      }, [center]);
-      return null
-    });
+        let mapBounds = map.getBounds();
+        setBounds(mapBounds);
+        // if(mapBounds) {
+        //   getCentrelines(mapBounds, center);
+        // }      
+    }, [center]);
+
+    return null
+});
 
     export default MapRef;

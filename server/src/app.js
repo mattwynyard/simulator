@@ -68,7 +68,6 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-   console.log(req.body)
   io.emit("latlng", req.body.latlng[0]);
   res.send({ message: "ok"}); 
 });
@@ -95,7 +94,6 @@ app.get('/reset', async (req, res) => {
 
 app.post('/insertPoint', async (req, res) => {
   io.emit("insertPoint", req.body);
-  console.log(req.body)
   pointMap.set(req.body.id, req.body);
   res.send({ message: "ok"});
 });
@@ -119,7 +117,6 @@ app.post('/updateLine', async (req, res) => {
 });
 
 app.post('/deleteLine', async (req, res) => {
-  console.log(req.body);
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
     lines = refreshDataStore(lineMap);
@@ -143,7 +140,6 @@ app.post('/updatePoint', async (req, res) => {
 });
 
 app.post('/deletePoint', async (req, res) => {
-  console.log(req.body);
   if (pointMap.has(req.body.id)) {
     pointMap.delete(req.body.id);
     points = refreshDataStore(pointMap);

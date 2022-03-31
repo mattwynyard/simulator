@@ -5,8 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-import Socket from './Socket.js'
-import MapRef from './MapRef.js'
+import Socket from './Socket.js';
+import MapRef from './MapRef.js';
 
 function App() {
 
@@ -46,8 +46,7 @@ function App() {
       if (!online) {
         console.log("initialise")
         initialise()
-        .then((res) => {
-          console.log(res)       
+        .then((res) => {    
           setOnline(true)    
         })
         .catch(console.error);  
@@ -55,15 +54,22 @@ function App() {
       console.log("mount")
   }, [online]);
 
-  // useEffect(() => {
-  //   setPosition([L.latLng(-36.81835, 174.74581)]); 
-  // }, [initialise])
-
   useEffect(() => {
     setCenter(position);
     if(mapRef.current) {
-      mapRef.current.newCenter(position[0])
-    }  
+      mapRef.current.newCenter(position[0]);
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
+        response.then((body) => {
+          let cl = []
+          for (let i = 0; i < body.data.length; i++) {
+              cl.push(body.data[i])
+          }
+          setCentreLines(cl);
+        });
+      }
+    }    
   }, [position]);
 
   const insertPoint = (point) => {
@@ -95,11 +101,6 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          let fp = []
-          for (let i = 0; i < body.data.length; i++) {
-              fp.push(body.data[i])
-          }
-          setCentreLines(fp)
           return body; 
       } else {         
           return Error(response);
