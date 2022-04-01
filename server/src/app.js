@@ -74,6 +74,7 @@ app.get('/initialise', async (req, res) => {
 
 app.post('/centrelines', async (req, res) => {
   let result = await db.centrelines(req.body.bounds, req.body.center);
+  //io.emit("centreline", result.rows)
   res.send({data: result.rows})
 });
 

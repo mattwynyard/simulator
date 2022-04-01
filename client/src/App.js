@@ -18,6 +18,9 @@ function App() {
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
+  const [counter, setCounter] = useState(0);
+
+  const REFRESH_RATE = 5;
 
   useEffect(
     () => {
@@ -56,21 +59,27 @@ function App() {
 
   useEffect(() => {
     setCenter(position);
+    setCounter(counter + 1);
     if(mapRef.current) {
       mapRef.current.newCenter(position[0]);
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-        let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
-        response.then((body) => {
-          let cl = []
-          for (let i = 0; i < body.data.length; i++) {
-              cl.push(body.data[i])
-          }
-          setCentreLines(cl);
-        });
+        if (counter % REFRESH_RATE === 0) refreshUI(bounds, {lat: position[0].lat, lng: position[0].lng});  
       }
     }    
   }, [position]);
+
+  const refreshUI = ((bounds, center) => {
+    let response = getCentrelines(bounds, center);     
+      response.then((body) => {
+        let cl = []
+        for (let i = 0; i < body.data.length; i++) {
+            cl.push(body.data[i])
+        }
+        console.log(cl)
+        setCentreLines(cl);
+      });  
+  });
 
   const insertPoint = (point) => {
     setPoints(points => [...points, point]);
@@ -78,6 +87,16 @@ function App() {
 
   const insertLine = (line) => {
     setLines(lines => [...lines, line]);
+  }
+
+  const updateLines = (lines) => {
+    console.log(lines)
+    setLines([lines]);
+  }
+
+  const updateCentrelines = (data) => {
+    //console.log(data)
+    //setLines([lines]);
   }
 
   const reset = () => {
@@ -221,8 +240,19 @@ function App() {
             </Centreline>
           )}
           </Pane>  
-          <MapRef ref={mapRef} center={center} getCentrelines={getCentrelines}></MapRef>  
-          <Socket setPosition={setPosition} insertPoint={insertPoint} insertLine={insertLine} reset={reset}/>
+          <MapRef 
+            ref={mapRef} 
+            center={center} 
+            refreshUI={refreshUI}
+            />  
+          <Socket 
+            setPosition={setPosition} 
+            insertPoint={insertPoint} 
+            insertLine={insertLine} 
+            updateLines={updateLines}
+            updateCentrelines={updateCentrelines}
+            reset={reset}
+            />
          </MapContainer>  
     </div>
   );

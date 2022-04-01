@@ -5,7 +5,6 @@ const MapRef = forwardRef((props, ref) => {
     const [center, setCenter] = useState(props.center[0] ? props.center[0] : null);
     const [bounds, setBounds] = useState(null);
 
-    const getCentrelines = props.getCentrelines;
     const map = useMapEvents({
       click: () => {
         console.log("click")
@@ -13,9 +12,13 @@ const MapRef = forwardRef((props, ref) => {
       zoom: () => {
         let mapBounds = map.getBounds();
         setBounds(mapBounds);
-        if(center !== null) {
-          props.callback(mapBounds, center);
-        }
+        // if(center) {
+        //   props.refreshUI(mapBounds, center);
+        // }
+      },
+      move: () => {
+        let mapBounds = map.getBounds();
+        setBounds(mapBounds);
       },
     })
     const newCenter = (center) => {
@@ -39,11 +42,8 @@ const MapRef = forwardRef((props, ref) => {
           map.panTo(center)
         }
         let mapBounds = map.getBounds();
-        setBounds(mapBounds);
-        // if(mapBounds) {
-        //   getCentrelines(mapBounds, center);
-        // }      
-    }, [center]);
+        setBounds(mapBounds);      
+    }, [center, map]);
 
     return null
 });

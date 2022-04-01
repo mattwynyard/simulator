@@ -4,12 +4,9 @@ import L from 'leaflet';
 
 const ENDPOINT = "http://localhost:5000";
 
-function Socket(props) {
+const Socket = (props) => {
 
-    const setPosition = props.setPosition;
-    const reset = props.reset;
-    const insertPoint = props.insertPoint;
-    const insertLine = props.insertLine
+    const {updateLines, setPosition, insertLine, reset, insertPoint, updateCentrelines} = props;
 
     useEffect(() => {
       const socket = socketIOClient(ENDPOINT, {
@@ -20,20 +17,25 @@ function Socket(props) {
       });
       socket.on("connect", () => {
         console.log("connect");
-        socket.sendBuffer = [];
-      });
-      socket.on("reset", () => {
-        reset();
-      });
-      socket.on("latlng", data => {
-        setPosition([L.latLng(data[0], data[1])]); 
-      });
-      socket.on("insertPoint", data => {
-        insertPoint(data);
-      });
-      socket.on("insertLine", data => {
-        console.log(data)
-        insertLine(data);
+        socket.sendBuffer = []; 
+        socket.on("reset", () => {
+            reset();
+          });
+          socket.on("latlng", data => {
+            setPosition([L.latLng(data[0], data[1])]); 
+          });
+          socket.on("insertPoint", data => {
+            insertPoint(data);
+          });
+          socket.on("insertLine", data => {
+            insertLine(data);
+          });
+          socket.on("updateLine", data => {
+            updateLines(data);
+          });
+          socket.on("centreline", data => {
+            updateCentrelines(data);
+          });
       });
       return () => socket.disconnect();   
     }, []);
