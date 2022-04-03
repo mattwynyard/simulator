@@ -12,9 +12,6 @@ const MapRef = forwardRef((props, ref) => {
       zoom: () => {
         let mapBounds = map.getBounds();
         setBounds(mapBounds);
-        // if(center) {
-        //   props.refreshUI(mapBounds, center);
-        // }
       },
       move: () => {
         let mapBounds = map.getBounds();
@@ -48,4 +45,4 @@ const MapRef = forwardRef((props, ref) => {
     return null
 });
 
-    export default MapRef;
+export default MapRef;

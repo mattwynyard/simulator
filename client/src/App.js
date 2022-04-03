@@ -5,8 +5,10 @@ import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-import Socket from './Socket.js';
+//import Socket from './Socket.js';
 import MapRef from './MapRef.js';
+import socketIOClient from "socket.io-client";
+const SERVER_URL = "http://localhost:5000";
 
 function App() {
 
@@ -21,6 +23,39 @@ function App() {
   const [counter, setCounter] = useState(0);
 
   const REFRESH_RATE = 5;
+
+  useEffect(() => {
+    const socket = socketIOClient(SERVER_URL, {
+      cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST"]
+      }
+    });
+    socket.on("connect", () => {
+      console.log("connect");
+      socket.sendBuffer = []; 
+      socket.on("reset", () => {
+          reset();
+        });
+        socket.on("latlng", data => {
+          setPosition([L.latLng(data[0], data[1])]); 
+        });
+        socket.on("insertPoint", data => {
+          insertPoint(data);
+        });
+        socket.on("insertLine", data => {
+          insertLine(data);
+        });
+        socket.on("updateLine", data => {
+          updateLines(data);
+        });
+        socket.on("centreline", data => {
+          updateCentrelines(data);
+        });
+    });
+    return () => socket.disconnect();   
+  }, []);
+
 
   useEffect(
     () => {
@@ -50,35 +85,43 @@ function App() {
         console.log("initialise")
         initialise()
         .then((res) => {    
-          setOnline(true)    
+          setOnline(true) 
+          
         })
         .catch(console.error);  
       }
-      console.log("mount")
+      refreshUI();   
   }, [online]);
 
   useEffect(() => {
     setCenter(position);
-    setCounter(counter + 1);
+    refreshUI();
+    if (online) {
+      setCounter(counter + 1);
+    }
+    
+       
+  }, [position]);
+
+  const refreshUI = (() => {
     if(mapRef.current) {
       mapRef.current.newCenter(position[0]);
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-        if (counter % REFRESH_RATE === 0) refreshUI(bounds, {lat: position[0].lat, lng: position[0].lng});  
-      }
-    }    
-  }, [position]);
-
-  const refreshUI = ((bounds, center) => {
-    let response = getCentrelines(bounds, center);     
-      response.then((body) => {
-        let cl = []
-        for (let i = 0; i < body.data.length; i++) {
-            cl.push(body.data[i])
+        if (counter % REFRESH_RATE === 0) {
+          let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
+          response.then((body) => {
+            let cl = []
+            for (let i = 0; i < body.data.length; i++) {
+                cl.push(body.data[i])
+            }
+            console.log(cl)
+            setCentreLines(cl);
+          });
         }
-        console.log(cl)
-        setCentreLines(cl);
-      });  
+      }
+    } 
+      
   });
 
   const insertPoint = (point) => {
@@ -243,18 +286,18 @@ function App() {
           <MapRef 
             ref={mapRef} 
             center={center} 
-            refreshUI={refreshUI}
             />  
-          <Socket 
+          {/* <Socket 
             setPosition={setPosition} 
             insertPoint={insertPoint} 
             insertLine={insertLine} 
             updateLines={updateLines}
             updateCentrelines={updateCentrelines}
             reset={reset}
-            />
+            /> */}
          </MapContainer>  
     </div>
+    
   );
 }
 
