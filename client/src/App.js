@@ -1,63 +1,61 @@
 import './App.css';
-import AntDrawer from'./AntDrawer.js'
-import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, useMapEvents, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef} from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-import Socket from './Socket.js'
+//import Socket from './Socket.js';
+import MapRef from './MapRef.js';
+import socketIOClient from "socket.io-client";
+const SERVER_URL = "http://localhost:5000";
 
-const MapRef = forwardRef((props, ref) => {
-  const [center, setCenter] = useState(null);
-  const [bounds, setBounds] = useState(null);
-  const map = useMapEvents({
-    click: () => {
-      console.log("click")
-    },
-    zoom: () => {
-      let mapBounds = map.getBounds();
-      setBounds(mapBounds);
-      setCenter(center);
-      if(center !== null) {
-        props.callback(mapBounds, center);
-      }
-    },
-  })
-  const newCenter = (center) => {
-    let mapBounds = map.getBounds();
-    setBounds(mapBounds);
-    setCenter(center);
-  };
-  useImperativeHandle(ref, () => {
-    return {
-      newCenter: newCenter
-    }
- });
-
-  useEffect(
-    () => {
-      if (center) {
-        map.panTo(props.center[0])
-      }
-      if(bounds !== null) {
-        props.callback(bounds, center);
-      }      
-    }, [center]);
-    return null
-  });
-
-  
 function App() {
 
-  const [initialise, setIntialise] = useState(false);
+  const [online, setOnline] = useState(false);
   const [isRemote] = useState(false);
-  const [position, setPosition] = useState([]);
+  const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
+  const [counter, setCounter] = useState(0);
+
+  const REFRESH_RATE = 5;
+
+  useEffect(() => {
+    const socket = socketIOClient(SERVER_URL, {
+      cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST"]
+      }
+    });
+    socket.on("connect", () => {
+      console.log("connect");
+      socket.sendBuffer = []; 
+      socket.on("reset", () => {
+          reset();
+        });
+        socket.on("latlng", data => {
+          setPosition([L.latLng(data[0], data[1])]); 
+        });
+        socket.on("insertPoint", data => {
+          insertPoint(data);
+        });
+        socket.on("insertLine", data => {
+          insertLine(data);
+        });
+        socket.on("updateLine", data => {
+          updateLines(data);
+        });
+        socket.on("centreline", data => {
+          updateCentrelines(data);
+        });
+    });
+    return () => socket.disconnect();   
+  }, []);
+
 
   useEffect(
     () => {
@@ -75,41 +73,59 @@ function App() {
               const body = await response.json();
               return body; 
           } else { 
-              return Error(response);
+            console.log(response)
+            return response;
           }
-        } catch {
-            return {error: "server down"}
+        } catch (error) {
+          console.log(error)
+          return error;
         }
       }
-      if (!initialise) {
+      if (!online) {
         console.log("initialise")
         initialise()
-        .then((res) => {
-          if (res.error) {
-            alert(res.error);
-            return;
-          }
-          console.log(res)       
-          setIntialise(true)    
+        .then((res) => {    
+          setOnline(true) 
+          
         })
-        .catch(console.error); 
-        
+        .catch(console.error);  
       }
-      console.log("mount")
-  }, []);
-
-  useEffect(() => {
-    let lat = center[0];;
-    let lng = center[1];
-    setPosition([L.latLng(lat, lng)]); 
-  }, [initialise])
+      refreshUI();   
+  }, [online]);
 
   useEffect(() => {
     setCenter(position);
-    if(mapRef.current) {
-      mapRef.current.newCenter(position[0])
-    }  
+    refreshUI();
+    if (online) {
+      setCounter(counter => counter + 1);
+    }
+    
+       
   }, [position]);
+
+  const refreshUI = (() => {
+    if(mapRef.current) {
+      mapRef.current.newCenter(position[0]);
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        if (counter % REFRESH_RATE === 0) {
+          refreshCentrelines(bounds);
+        }
+      }
+    }       
+  });
+
+  const refreshCentrelines = ((bounds) => {
+    let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
+    response.then((body) => {
+      let cl = []
+      for (let i = 0; i < body.data.length; i++) {
+          cl.push(body.data[i])
+      }
+      console.log(cl)
+      setCentreLines(cl);
+    });
+  })
 
   const insertPoint = (point) => {
     setPoints(points => [...points, point]);
@@ -117,6 +133,16 @@ function App() {
 
   const insertLine = (line) => {
     setLines(lines => [...lines, line]);
+  }
+
+  const updateLines = (lines) => {
+    console.log(lines)
+    setLines([lines]);
+  }
+
+  const updateCentrelines = (data) => {
+    //console.log(data)
+    //setLines([lines]);
   }
 
   const reset = () => {
@@ -140,14 +166,8 @@ function App() {
       });
       if (response.ok) {
           const body = await response.json();
-          let fp = []
-          for (let i = 0; i < body.data.length; i++) {
-              fp.push(body.data[i])
-          }
-          setCentreLines(fp)
           return body; 
-      } else {
-          
+      } else {         
           return Error(response);
       }
     } catch {
@@ -266,12 +286,21 @@ function App() {
             </Centreline>
           )}
           </Pane>  
-          <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
-          <Socket setPosition={setPosition} insertPoint={insertPoint} insertLine={insertLine} reset={reset}/>
-         </MapContainer>
-         <AntDrawer className="drawer" ></AntDrawer>
-         
+          <MapRef 
+            ref={mapRef} 
+            center={center} 
+            />  
+          {/* <Socket 
+            setPosition={setPosition} 
+            insertPoint={insertPoint} 
+            insertLine={insertLine} 
+            updateLines={updateLines}
+            updateCentrelines={updateCentrelines}
+            reset={reset}
+            /> */}
+         </MapContainer>  
     </div>
+    
   );
 }
 

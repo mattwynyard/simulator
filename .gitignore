@@ -32,7 +32,7 @@
 /server/.env
 /server/server.cert
 /server/server.key
-client/.eslintcache
+/client/.eslintcache
 /model
 *.accdb
 *.mdb

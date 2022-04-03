@@ -53,7 +53,6 @@ app.use((req, res, next) => {
 
 io.on('connection', (socket) => {
   console.log("client connected on socket");
-  socket.emit("api", "ack")
 });
 
 //serve tiles
@@ -75,16 +74,8 @@ app.get('/initialise', async (req, res) => {
 
 app.post('/centrelines', async (req, res) => {
   let result = await db.centrelines(req.body.bounds, req.body.center);
+  //io.emit("centreline", result.rows)
   res.send({data: result.rows})
-});
-
-app.post('/closestCentreline', async (req, res) => {
-  let result = await db.closestCentreline(req.body.center);
-  res.send({data: result.rows})
-});
-
-app.get('/fault', async (req, res) => {
-  //res.send({ points: faults});
 });
 
 app.get('/reset', async (req, res) => {
@@ -114,13 +105,6 @@ app.post('/insertLine', async (req, res) => {
   res.send({ message: "ok"});
 });
 
-app.post('/appendLine', async (req, res) => {
-  let line = lineMap.get(req.body.id);
-  line.latlng.push(req.body.latlng[0]);
-  io.emit("appendLine", req.body);
-  res.send({ message: "ok"});
-});
-
 app.post('/updateLine', async (req, res) => {
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
@@ -134,7 +118,6 @@ app.post('/updateLine', async (req, res) => {
 });
 
 app.post('/deleteLine', async (req, res) => {
-  console.log(req.body);
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
     lines = refreshDataStore(lineMap);
@@ -158,7 +141,6 @@ app.post('/updatePoint', async (req, res) => {
 });
 
 app.post('/deletePoint', async (req, res) => {
-  console.log(req.body);
   if (pointMap.has(req.body.id)) {
     pointMap.delete(req.body.id);
     points = refreshDataStore(pointMap);
