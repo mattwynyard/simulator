@@ -97,7 +97,7 @@ function App() {
     setCenter(position);
     refreshUI();
     if (online) {
-      setCounter(counter + 1);
+      setCounter(counter => counter + 1);
     }
     
        
@@ -109,20 +109,23 @@ function App() {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
         if (counter % REFRESH_RATE === 0) {
-          let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
-          response.then((body) => {
-            let cl = []
-            for (let i = 0; i < body.data.length; i++) {
-                cl.push(body.data[i])
-            }
-            console.log(cl)
-            setCentreLines(cl);
-          });
+          refreshCentrelines(bounds);
         }
       }
-    } 
-      
+    }       
   });
+
+  const refreshCentrelines = ((bounds) => {
+    let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
+    response.then((body) => {
+      let cl = []
+      for (let i = 0; i < body.data.length; i++) {
+          cl.push(body.data[i])
+      }
+      console.log(cl)
+      setCentreLines(cl);
+    });
+  })
 
   const insertPoint = (point) => {
     setPoints(points => [...points, point]);
