@@ -30,7 +30,7 @@
     "openssl": "^1.1.0",
     "pg": "^8.5.1",
     "serialport": "^9.0.7",
-    "socket.io": "^3.1.1",
+    "socket.io": "^3.1.2",
     "usb-detection": "^4.10.0"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "eslint-plugin-react-hooks": "^1.7.0",
     "mocha": "^5.2.0",
     "nodemon": "^1.18.9",
-    "snyk": "^1.252.0",
+    "snyk": "^1.889.0",
     "supertest": "^3.3.0"
   }
 }

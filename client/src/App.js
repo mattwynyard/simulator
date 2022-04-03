@@ -1,38 +1,12 @@
 import './App.css';
 import AntDrawer from'./AntDrawer.js'
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, ScaleControl, useMap, useMapEvents, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, useMapEvents, Pane} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
-
-const REFRESH_RATE = 100;
-
-function Centreline(props) {
-  const redOptions = { color: 'red' }
-  let otherOptions = null;
-  let geojson = JSON.parse(props.positions.geojson);
-  let coords = []
-  geojson.coordinates.forEach(element => {
-      element.forEach(coord => {
-        let temp = coord[0];
-        coord[0] = coord[1];
-        coord[1] = temp;
-        coords.push(coord)
-      });     
-  });
-    if(props.idx % 2 === 0) {
-        otherOptions = { color: 'orange' }
-    } else {
-      otherOptions = { color: 'blue' }
-  } 
-  return ( <Polyline
-      key={`marker-${props.idx}`} 
-      pathOptions={(props.idx === 0) ? redOptions: otherOptions}
-      positions={coords} 
-      weight={3}
-      >
-    </Polyline>);
-}
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef} from 'react';
+import Centreline from './Centreline.js';
+import CustomTileLayer from './CustomTileLayer.js';
+import Socket from './Socket.js'
 
 const MapRef = forwardRef((props, ref) => {
   const [center, setCenter] = useState(null);
@@ -63,49 +37,19 @@ const MapRef = forwardRef((props, ref) => {
 
   useEffect(
     () => {
-      if (props.center.length !== 0) {
+      if (center) {
         map.panTo(props.center[0])
       }
-      if(center !== null) {
+      if(bounds !== null) {
         props.callback(bounds, center);
-      }
-      
+      }      
     }, [center]);
-    
     return null
   });
 
-function CustomTileLayer(props) {
-  if (props.isRemote) {
-    return (
-      <TileLayer
-        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
-      />
-    );
-  } else {
-    return (
-      <TileLayer
-        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-    );
-  }
-}
-
-function LMap() {
-  const map = useMap();
-  useEffect(
-    () => {
-      console.log("mount")
-    return null
-  }, []);
-  return null;
-}
-
+  
 function App() {
 
-  const [counter, setCounter] = useState(0);
   const [initialise, setIntialise] = useState(false);
   const [isRemote] = useState(false);
   const [position, setPosition] = useState([]);
@@ -113,54 +57,71 @@ function App() {
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
-  const [host] = useState("localhost:5000");
-  const [timerInterval] = useState(REFRESH_RATE);
   const mapRef = useRef(null);
 
-  const getData = useCallback(async () => {      
-    try {
-        const response = await fetch("http://" + host + '/position', {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',        
-            },      
-        });
-        if (response.ok) {
-            const body = await response.json();
-            return body; 
-        } else { 
-            return Error(response);
+  useEffect(
+    () => {
+      const initialise = async () => {
+        try {
+          const response = await fetch("http://localhost:5000/initialise", {
+              method: 'GET',
+              credentials: 'same-origin',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',        
+              },      
+          });
+          if (response.ok) {
+              const body = await response.json();
+              return body; 
+          } else { 
+              return Error(response);
+          }
+        } catch {
+            return {error: "server down"}
         }
-    } catch {
-        return new Error("connection error")
-    }      
-  }, [host]);
-
-  const getClosestCentreline = async (center)=> {
-    try {
-      const response = await fetch("http://localhost:5000/closestCentreline", {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',        
-          },  
-          body: JSON.stringify({
-            center: center
-        })    
-      });
-      if (response.ok) {
-          const body = await response.json();
-    
-          return body; 
-      } else {  
-          return Error(response);
       }
-    } catch {
-        return new Error("connection error")
-    }      
+      if (!initialise) {
+        console.log("initialise")
+        initialise()
+        .then((res) => {
+          if (res.error) {
+            alert(res.error);
+            return;
+          }
+          console.log(res)       
+          setIntialise(true)    
+        })
+        .catch(console.error); 
+        
+      }
+      console.log("mount")
+  }, []);
+
+  useEffect(() => {
+    let lat = center[0];;
+    let lng = center[1];
+    setPosition([L.latLng(lat, lng)]); 
+  }, [initialise])
+
+  useEffect(() => {
+    setCenter(position);
+    if(mapRef.current) {
+      mapRef.current.newCenter(position[0])
+    }  
+  }, [position]);
+
+  const insertPoint = (point) => {
+    setPoints(points => [...points, point]);
+  }
+
+  const insertLine = (line) => {
+    setLines(lines => [...lines, line]);
+  }
+
+  const reset = () => {
+    setLines([]);
+    setPoints([]);
   }
   
   const getCentrelines = async (bounds, center)=> {
@@ -189,68 +150,10 @@ function App() {
           
           return Error(response);
       }
-  } catch {
-      return new Error("connection error")
-  }      
+    } catch {
+        return new Error("connection error")
+    }      
   }
-
-  useEffect(
-    () => {
-        const id = setInterval(() => {
-          setCounter(counter + 1);
-          if (!initialise) { 
-            setCenter([L.latLng(center[0], center[1])]);
-            setPosition([L.latLng(center[0], center[1])]);
-            mapRef.current.newCenter({lat: center[0], lng: center[1]})
-            setIntialise(true);
-          }
-          getData().then(data => {
-            if (data.points) {
-              try {
-                  setPoints(data.points); 
-                  console.log(data)     
-              } catch (e) {
-                console.log("fault error: " + e)
-              } 
-            }
-            if (data.lines) {
-              try {
-                  setLines(data.lines);      
-              } catch (e) {
-                console.log("fault error: " + e)
-              } 
-            }   
-            if (data.latlng) {
-              try{
-                let lat = data.latlng[0];
-                let lng = data.latlng[1];
-                setPosition([L.latLng(lat, lng)]);             
-              } catch {
-                console.log("position error");
-              }     
-            }             
-          });
-        }, timerInterval);
-        return () => {
-          clearInterval(id);
-        };
-    },
-    [counter, timerInterval, initialise, getData],
-);
-
-useEffect(
-  () => {
-    if (counter % 10 === 0) {
-      setCenter(position);
-      if(mapRef.current !== null) {
-        mapRef.current.newCenter(position[0])
-      }      
-    } else {
-      getClosestCentreline(position);
-    }
-  },
-  [position, counter, mapRef],
-);
 
   return (
     <div className="App">
@@ -258,7 +161,7 @@ useEffect(
           className="map" 
           center={center} 
           zoom={18} 
-          minZoom={10}
+          minZoom={13}
           maxZoom={18}
           scrollWheelZoom={true}
           keyboard={true}
@@ -352,7 +255,7 @@ useEffect(
               </Popup>       
             </CircleMarker>
           )}
-         </Pane >
+         </Pane>
           <Pane name="centreline" style={{ zIndex: 900}}>
           {centrelines.map((line, idx) =>
             <Centreline
@@ -364,6 +267,7 @@ useEffect(
           )}
           </Pane>  
           <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
+          <Socket setPosition={setPosition} insertPoint={insertPoint} insertLine={insertLine} reset={reset}/>
          </MapContainer>
          <AntDrawer className="drawer" ></AntDrawer>
          

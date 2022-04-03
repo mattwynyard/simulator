@@ -1,15 +1,19 @@
 'use strict';
 const express = require('express');
+const app = express();
+const http = require('http');
+//const server = require('http').createServer(app);
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+
 const morgan = require('morgan');
-const helmet = require('helmet');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const app = express();
+
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 
-let latlng = null;
 let points = [];
 let lines = [];
 let pointMap = new Map();
@@ -23,13 +27,19 @@ const refreshDataStore = (map) => {
   return f;
 }
 
-app.listen(port, () => {
+const io = new Server(server, {
+  cors: {
+    origin: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+server.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
 });
  
 app.use(cors());
 app.use(morgan('dev'));
-//app.use(helmet());
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.json({limit: '500mb', extended: false}));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: false }))
@@ -41,13 +51,26 @@ app.use((req, res, next) => {
   next();
 });
 
+io.on('connection', (socket) => {
+  console.log("client connected on socket");
+  socket.emit("api", "ack")
+});
+
 //serve tiles
 app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
 
-app.get('/position', async (req, res) => {
-  res.send({ latlng: latlng, points: points, lines, lines});
+app.get('/initialise', async (req, res) => {
+  res.send({ points: points, lines, lines});
+});
+
+/**
+ * incoming location from access
+ */
+ app.post('/location', async (req, res) => {
+  io.emit("latlng", req.body.latlng[0]);
+  res.send({ message: "ok"}); 
 });
 
 app.post('/centrelines', async (req, res) => {
@@ -70,43 +93,40 @@ app.get('/reset', async (req, res) => {
     lineMap = new Map();
     points = [];
     lines = [];
-    latlng = null;
+    io.emit("reset", { points: [], lines: []})
     res.send("reset");
   } catch(error) {
     console.log(error)
+    io.emit("error", error)
     res.send("error");
   }
 });
 
-app.post('/location', async (req, res) => {
-  latlng = req.body.latlng
-  res.send({ message: "ok"});
-});
-
 app.post('/insertPoint', async (req, res) => {
+  io.emit("insertPoint", req.body);
   pointMap.set(req.body.id, req.body);
-  points.push(req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
   lineMap.set(req.body.id, req.body);
-  lines.push(req.body);
+  io.emit("insertLine", req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/appendLine', async (req, res) => {
   let line = lineMap.get(req.body.id);
-  line.latlng.push(req.body.latlng[0])
+  line.latlng.push(req.body.latlng[0]);
+  io.emit("appendLine", req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/updateLine', async (req, res) => {
-  console.log(req.body);
   if (lineMap.has(req.body.id)) {
     lineMap.delete(req.body.id);
     lineMap.set(req.body.id, req.body);
     lines = refreshDataStore(lineMap);
+    io.emit("updateLine", lines);
     res.send({ message: "updated"});
   } else {
     res.send({ message: "not updated"});
