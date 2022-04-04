@@ -68,7 +68,7 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-  io.emit("latlng", req.body.latlng[0]);
+  io.emit("latlng", req.body);
   res.send({ message: "ok"}); 
 });
 
