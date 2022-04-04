@@ -5,14 +5,12 @@ import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-//import Socket from './Socket.js';
 import MapRef from './MapRef.js';
 import socketIOClient from "socket.io-client";
 const SERVER_URL = "http://localhost:5000";
 
 function App() {
 
-  const [online, setOnline] = useState(false);
   const [isRemote] = useState(false);
   const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
@@ -33,12 +31,14 @@ function App() {
     });
     socket.on("connect", () => {
       console.log("connect");
+      refreshUI();
       socket.sendBuffer = []; 
       socket.on("reset", () => {
           reset();
         });
         socket.on("latlng", data => {
-          setPosition([L.latLng(data[0], data[1])]); 
+          console.log(data)
+          setPosition([L.latLng(data.latlng[0], data.latlng[1])]); 
         });
         socket.on("insertPoint", data => {
           insertPoint(data);
@@ -47,71 +47,39 @@ function App() {
           insertLine(data);
         });
         socket.on("updateLine", data => {
-          updateLines(data);
+          //updateLines(data);
         });
         socket.on("centreline", data => {
           updateCentrelines(data);
+        });
+        socket.on("inspection", data => {
+          console.log(data);
         });
     });
     return () => socket.disconnect();   
   }, []);
 
-
-  useEffect(
-    () => {
-      const initialise = async () => {
-        try {
-          const response = await fetch("http://localhost:5000/initialise", {
-              method: 'GET',
-              credentials: 'same-origin',
-              headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',        
-              },      
-          });
-          if (response.ok) {
-              const body = await response.json();
-              return body; 
-          } else { 
-            console.log(response)
-            return response;
-          }
-        } catch (error) {
-          console.log(error)
-          return error;
-        }
-      }
-      if (!online) {
-        console.log("initialise")
-        initialise()
-        .then((res) => {    
-          setOnline(true) 
-          
-        })
-        .catch(console.error);  
-      }
-      refreshUI();   
-  }, [online]);
-
   useEffect(() => {
     setCenter(position);
-    refreshUI();
-    if (online) {
-      setCounter(counter => counter + 1);
+    if (mapRef.current) {
+      mapRef.current.newCenter(position[0]);
+      if (counter % REFRESH_RATE === 0) {
+        refreshUI();
+      }
     }
     
-       
+    //if (online) {
+    setCounter(counter => counter + 1);
+    //}    
   }, [position]);
 
   const refreshUI = (() => {
     if(mapRef.current) {
-      mapRef.current.newCenter(position[0]);
+      
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-        if (counter % REFRESH_RATE === 0) {
-          refreshCentrelines(bounds);
-        }
-      }
+          refreshCentrelines(bounds);    
+      } 
     }       
   });
 
@@ -119,11 +87,14 @@ function App() {
     let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
     response.then((body) => {
       let cl = []
-      for (let i = 0; i < body.data.length; i++) {
+      if (body.data) {
+        for (let i = 0; i < body.data.length; i++) {
           cl.push(body.data[i])
       }
       console.log(cl)
       setCentreLines(cl);
+      }
+      
     });
   })
 
@@ -290,14 +261,6 @@ function App() {
             ref={mapRef} 
             center={center} 
             />  
-          {/* <Socket 
-            setPosition={setPosition} 
-            insertPoint={insertPoint} 
-            insertLine={insertLine} 
-            updateLines={updateLines}
-            updateCentrelines={updateCentrelines}
-            reset={reset}
-            /> */}
          </MapContainer>  
     </div>
     

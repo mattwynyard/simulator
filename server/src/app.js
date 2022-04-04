@@ -78,6 +78,11 @@ app.post('/centrelines', async (req, res) => {
   res.send({data: result.rows})
 });
 
+app.post('/inspection', async (req, res) => {
+  io.emit("inspection", req.body.inspection);
+  res.send({result: "ok"})
+});
+
 app.get('/reset', async (req, res) => {
   try {
     pointMap = new Map();
