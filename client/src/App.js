@@ -19,8 +19,10 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
+  const [rate, setRate] = useState(null);
 
-  const REFRESH_RATE = 5;
+
+  const REFRESH_RATE = 5; //seconds
 
   useEffect(() => {
     const socket = socketIOClient(SERVER_URL, {
@@ -39,6 +41,7 @@ function App() {
         socket.on("latlng", data => {
           console.log(data)
           setPosition([L.latLng(data.latlng[0], data.latlng[1])]); 
+          setRate(data.rate)
         });
         socket.on("insertPoint", data => {
           insertPoint(data);
