@@ -53,6 +53,16 @@ app.use((req, res, next) => {
 
 io.on('connection', (socket) => {
   console.log("client connected on socket");
+  socket.conn.on("close", (reason) => {
+    if (reason !== "transport close") console.log(reason)
+  });
+});
+
+io.engine.on("connection_error", (err) => {
+  console.log(err.req);      // the request object
+  console.log(err.code);     // the error code, for example 1
+  console.log(err.message);  // the error message, for example "Session ID unknown"
+  console.log(err.context);  // some additional error context
 });
 
 //serve tiles
@@ -68,7 +78,7 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-  io.emit("latlng", req.body.latlng[0]);
+  io.emit("latlng", req.body);
   res.send({ message: "ok"}); 
 });
 

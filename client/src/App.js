@@ -12,6 +12,7 @@ const SERVER_URL = "http://localhost:5000";
 function App() {
 
   const [isRemote] = useState(false);
+  const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
@@ -19,6 +20,7 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
+  const [rate, setRate] = useState(null) //access rate in milliseconds
 
   const REFRESH_RATE = 5;
 
@@ -31,14 +33,17 @@ function App() {
     });
     socket.on("connect", () => {
       console.log("connect");
-      refreshUI();
+      setOnline(true)
+      
       socket.sendBuffer = []; 
       socket.on("reset", () => {
           reset();
         });
         socket.on("latlng", data => {
           console.log(data)
-          setPosition([L.latLng(data.latlng[0], data.latlng[1])]); 
+          setPosition([L.latLng(data.latlng[0], data.latlng[1])]);
+          setRate(1000 / data.rate);
+          refreshUI();
         });
         socket.on("insertPoint", data => {
           insertPoint(data);
@@ -63,19 +68,15 @@ function App() {
     setCenter(position);
     if (mapRef.current) {
       mapRef.current.newCenter(position[0]);
-      if (counter % REFRESH_RATE === 0) {
+      if (counter % (REFRESH_RATE * rate) === 0) {
         refreshUI();
       }
     }
-    
-    //if (online) {
-    setCounter(counter => counter + 1);
-    //}    
+    setCounter(counter => counter + 1);   
   }, [position]);
 
   const refreshUI = (() => {
-    if(mapRef.current) {
-      
+    if(mapRef.current) {      
       let bounds = mapRef.current.getBounds();
       if (bounds) {
           refreshCentrelines(bounds);    
