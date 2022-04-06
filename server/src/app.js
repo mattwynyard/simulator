@@ -53,10 +53,19 @@ app.use((req, res, next) => {
 
 io.on('connection',(socket) => {
   console.log("client connected on socket");
-  socket.on("trail", async bounds => {
+  socket.on("trail", async (bounds) => {
     let trail = await db.trail(bounds);
-    //io.emit("centreline", centre.rows);
-    io.emit("trail", trail.rows);
+    let data = []
+    trail.rows.forEach(row => {
+      let newRow = {};
+      newRow.timestamp = row.ts;
+      newRow.bearing = row.bearing;
+      newRow.velocity = row.velocity;
+      let geojson = JSON.parse(row.geojson);
+      newRow.coordinates = [geojson.coordinates[1], geojson.coordinates[0]];
+      data.push(newRow)
+    })
+    io.emit("trail", data);
   });
 });
 
@@ -73,7 +82,10 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-  await db.updateTrail(req.body);
+   let arr = req.body.timestamp.split('.');
+   if (arr[1] === "000") {
+    await db.updateTrail(req.body);
+   }
   io.emit("latlng", req.body);
   res.send({ message: "ok"}); 
 });

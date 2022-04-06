@@ -45,13 +45,16 @@ function App() {
           if (mapRef) {
             socket.emit("trail", mapRef.current.getBounds());
           }
+          let t = [...trail]
+          t.push([data.latlng[0], data.latlng[1]])
+          setTrail(t);
           let freq = 1000 / data.rate
           setFrequency(freq);
       
         });
         socket.on("trail", data => {
           console.log(data);
-          //setPoints(data)
+          setTrail(data)
         });
         socket.on("insertPoint", data => {
           insertPoint(data);
@@ -198,7 +201,7 @@ function App() {
             <CircleMarker
               key={`marker-${idx}`} 
               stroke={true}
-              center={center}
+              center={point.coordinates}
               radius ={4}
               fill={true}
               color={"green"}
