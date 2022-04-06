@@ -2,7 +2,7 @@ import { useState, useEffect, useImperativeHandle, forwardRef} from 'react';
 import { useMapEvents} from 'react-leaflet';
 
 const MapRef = forwardRef((props, ref) => {
-    const [center, setCenter] = useState(props.center[0] ? props.center[0] : null);
+    const [center, setCenter] = useState(props.center ? props.center : null);
     const [bounds, setBounds] = useState(null);
 
     const map = useMapEvents({

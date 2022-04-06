@@ -41,21 +41,16 @@ function App() {
           reset();
         });
         socket.on("latlng", data => {
-          setPosition([L.latLng(data.latlng[0], data.latlng[1])]);
-          if (mapRef) {
-            socket.emit("trail", mapRef.current.getBounds());
-          }
-          let t = [...trail]
-          t.push([data.latlng[0], data.latlng[1]])
-          setTrail(t);
+          setPosition([data]);
+
           let freq = 1000 / data.rate
           setFrequency(freq);
       
         });
-        socket.on("trail", data => {
-          console.log(data);
-          setTrail(data)
-        });
+        // socket.on("trail", data => {
+        //   console.log(data);
+        //   setTrail(data)
+        // });
         socket.on("insertPoint", data => {
           insertPoint(data);
         });
@@ -76,10 +71,28 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setCenter(position);
-    if (mapRef.current) {
-      mapRef.current.newCenter(position[0]);
-      setCounter(counter => counter + 1);  
+    if (position.length > 0) {
+      setCenter(position[0].latlng);
+      let ms = position[0].timestamp.split('.')[1];
+      if (ms === '000') {
+        let p = {};
+        p.timestamp = position[0].timestamp;
+        p.bearing = position[0].bearing;
+        p.velocity = position[0].velocity;
+        p.latlng = position[0].latlng;
+        let t = [...trail]
+        t.push(p);
+        setTrail(t);
+      }
+      
+      // if (mapRef) {
+      //   socket.emit("trail", mapRef.current.getBounds());
+      // }
+      
+      if (mapRef.current) {
+        mapRef.current.newCenter(position[0].latlng);
+        setCounter(counter => counter + 1);  
+      }
     }
   }, [position]);
 
@@ -106,7 +119,6 @@ function App() {
         for (let i = 0; i < body.data.length; i++) {
           cl.push(body.data[i])
       }
-      console.log(cl)
       setCentreLines(cl);
       }     
     });
@@ -164,7 +176,7 @@ function App() {
     <div className="App">
       <MapContainer 
           className="map" 
-          center={center} 
+          //center={center} 
           zoom={18} 
           minZoom={13}
           maxZoom={18}
@@ -179,11 +191,11 @@ function App() {
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
          <Pane name="position" style={{ zIndex: 1000 }}>
-          {position.map((position, idx) =>
+          {position.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
               stroke={true}
-              center={position}
+              center={point.latlng}
               radius ={6}
               fill={true}
               color={"#3388ff"}
@@ -201,7 +213,7 @@ function App() {
             <CircleMarker
               key={`marker-${idx}`} 
               stroke={true}
-              center={point.coordinates}
+              center={point.latlng}
               radius ={4}
               fill={true}
               color={"green"}
@@ -291,7 +303,7 @@ function App() {
           </Pane>  
           <MapRef 
             ref={mapRef} 
-            center={center} 
+            center={position.length !== 0 ? position[0].latlng : center} 
             />  
          </MapContainer>  
     </div>

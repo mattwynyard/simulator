@@ -62,7 +62,7 @@ io.on('connection',(socket) => {
       newRow.bearing = row.bearing;
       newRow.velocity = row.velocity;
       let geojson = JSON.parse(row.geojson);
-      newRow.coordinates = [geojson.coordinates[1], geojson.coordinates[0]];
+      newRow.latlng = [geojson.coordinates[1], geojson.coordinates[0]];
       data.push(newRow)
     })
     io.emit("trail", data);
