@@ -51,18 +51,13 @@ app.use((req, res, next) => {
   next();
 });
 
-io.on('connection', (socket) => {
+io.on('connection',(socket) => {
   console.log("client connected on socket");
-  socket.conn.on("close", (reason) => {
-    if (reason !== "transport close") console.log(reason)
+  socket.on("trail", async bounds => {
+    let trail = await db.trail(bounds);
+    //io.emit("centreline", centre.rows);
+    io.emit("trail", trail.rows);
   });
-});
-
-io.engine.on("connection_error", (err) => {
-  console.log(err.req);      // the request object
-  console.log(err.code);     // the error code, for example 1
-  console.log(err.message);  // the error message, for example "Session ID unknown"
-  console.log(err.context);  // some additional error context
 });
 
 //serve tiles
@@ -78,18 +73,21 @@ app.get('/initialise', async (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
+  await db.updateTrail(req.body);
   io.emit("latlng", req.body);
   res.send({ message: "ok"}); 
 });
 
+
+
 app.post('/centrelines', async (req, res) => {
-  let result = await db.centrelines(req.body.bounds, req.body.center);
-  //io.emit("centreline", result.rows)
-  res.send({data: result.rows})
+  let centre = await db.centrelines(req.body.bounds, req.body.center);
+
+  res.send({data: centre.rows})
 });
 
 app.post('/inspection', async (req, res) => {
-  io.emit("inspection", req.body.inspection);
+  io.emit("inspection", req.body);
   res.send({result: "ok"})
 });
 

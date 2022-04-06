@@ -27,7 +27,55 @@ connection.on('error', error => {
     throw err;
 });
 
+function parseDate(d) {
+    if (!d.indexOf('-') && d.indexOf('\/')) {
+        let index = s.indexOf('\ ');
+        let date = d.substring(0, index);
+        let time = d.substring(index, d.length);
+    } else {
+        return "'" + d + "'";
+    }
+}
+
 module.exports = { 
+    updateTrail: (body) => {
+        let latlng = body.latlng;
+        let bearing = body.bearing;
+        let rate = body.rate;
+        let velocity = body.velocity;
+        let timestamp = parseDate(body.timestamp);
+        let sql = `INSERT INTO trail(ts, bearing, velocity, rate, geom) VALUES (` + `${timestamp}, ${bearing}, ${velocity}, ${rate}, ST_MakePoint(${latlng[1]}, ${latlng[0]}));`
+        return new Promise((resolve, reject) => {           
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let ok = resolve(result);
+                return ok;
+            });
+        });
+    },
+
+    trail: (bounds) => {
+        let minx = bounds._southWest.lng;
+        let miny = bounds._southWest.lat;
+        let maxx = bounds._northEast.lng;
+        let maxy = bounds._northEast.lat;
+        return new Promise((resolve, reject) => {
+            let sql = "SELECT ts, bearing, velocity, rate, ST_AsGeoJSON(geom) as geojson FROM trail " +
+            "WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     centrelines: (bounds, center) => {
         let minx = bounds._southWest.lng;
         let miny = bounds._southWest.lat;

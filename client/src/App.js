@@ -13,14 +13,16 @@ function App() {
 
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
-  const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
+  //const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
+  const [position, setPosition] = useState([]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
+  const [trail, setTrail] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  const [rate, setRate] = useState(null) //access rate in milliseconds
+  const [frequency, setFrequency] = useState(null) //access rate in milliseconds
 
   const REFRESH_RATE = 5;
 
@@ -34,16 +36,22 @@ function App() {
     socket.on("connect", () => {
       console.log("connect");
       setOnline(true)
-      
       socket.sendBuffer = []; 
       socket.on("reset", () => {
           reset();
         });
         socket.on("latlng", data => {
-          console.log(data)
           setPosition([L.latLng(data.latlng[0], data.latlng[1])]);
-          setRate(1000 / data.rate);
-          refreshUI();
+          if (mapRef) {
+            socket.emit("trail", mapRef.current.getBounds());
+          }
+          let freq = 1000 / data.rate
+          setFrequency(freq);
+      
+        });
+        socket.on("trail", data => {
+          console.log(data);
+          //setPoints(data)
         });
         socket.on("insertPoint", data => {
           insertPoint(data);
@@ -68,12 +76,15 @@ function App() {
     setCenter(position);
     if (mapRef.current) {
       mapRef.current.newCenter(position[0]);
-      if (counter % (REFRESH_RATE * rate) === 0) {
-        refreshUI();
-      }
+      setCounter(counter => counter + 1);  
     }
-    setCounter(counter => counter + 1);   
   }, [position]);
+
+  useEffect(() => {
+      if (counter === 1 || counter % (REFRESH_RATE * frequency) === 0) {
+        refreshUI();     
+      }
+  }, [counter, frequency]);
 
   const refreshUI = (() => {
     if(mapRef.current) {      
@@ -94,8 +105,7 @@ function App() {
       }
       console.log(cl)
       setCentreLines(cl);
-      }
-      
+      }     
     });
   })
 
@@ -175,6 +185,24 @@ function App() {
               fill={true}
               color={"#3388ff"}
               fillColor={"blue"}
+              fillOpacity={1.0}
+              eventHandlers={{
+                click: () => {
+                  console.log('marker clicked')
+                }, 
+              }}
+              >      
+            </CircleMarker>
+          )}
+          {trail.map((point, idx) =>
+            <CircleMarker
+              key={`marker-${idx}`} 
+              stroke={true}
+              center={center}
+              radius ={4}
+              fill={true}
+              color={"green"}
+              fillColor={"green"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: () => {

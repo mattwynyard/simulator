@@ -23,7 +23,7 @@ const MapRef = forwardRef((props, ref) => {
     };
 
     const getBounds = () => {
-        return bounds;
+        return map.getBounds();
       };
 
     useImperativeHandle(ref, () => {
