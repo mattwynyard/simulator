@@ -3,22 +3,19 @@ import { useMapEvents} from 'react-leaflet';
 
 const MapRef = forwardRef((props, ref) => {
     const [center, setCenter] = useState(props.center ? props.center : null);
-    const [bounds, setBounds] = useState(null);
 
     const map = useMapEvents({
       click: () => {
         console.log("click")
       },
       zoom: () => {
-        let mapBounds = map.getBounds();
-        setBounds(mapBounds);
       },
       move: () => {
-        let mapBounds = map.getBounds();
-        setBounds(mapBounds);
       },
+      zoomend: () => {
+          console.log("zoomend")
+    },
     });
-    
     const newCenter = (center) => {
       setCenter(center);
     };
@@ -37,10 +34,12 @@ const MapRef = forwardRef((props, ref) => {
     useEffect(
       () => {
         if (center) {
-          map.panTo(center)
-        }
-        //let mapBounds = map.getBounds();
-        //setBounds(mapBounds);      
+          try {
+              map.panTo(center)
+          } catch(err) {
+              console.log(err)
+          }
+        }     
     }, [center, map]);
 
     return null

@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 const http = require('http');
-//const server = require('http').createServer(app);
+
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
@@ -84,17 +84,18 @@ app.get('/initialise', async (req, res) => {
  app.post('/location', async (req, res) => {
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
-    await db.updateTrail(req.body);
+    try {
+      await db.updateTrail(req.body);
+    } catch (err) {
+      console.log(err)
+    }
    }
   io.emit("latlng", req.body);
   res.send({ message: "ok"}); 
 });
 
-
-
 app.post('/centrelines', async (req, res) => {
   let centre = await db.centrelines(req.body.bounds, req.body.center);
-
   res.send({data: centre.rows})
 });
 

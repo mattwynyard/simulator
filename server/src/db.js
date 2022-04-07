@@ -40,11 +40,12 @@ function parseDate(d) {
 module.exports = { 
     updateTrail: (body) => {
         let latlng = body.latlng;
+        let lock = body.lock;
         let bearing = body.bearing;
         let rate = body.rate;
         let velocity = body.velocity;
         let timestamp = parseDate(body.timestamp);
-        let sql = `INSERT INTO trail(ts, bearing, velocity, rate, geom) VALUES (` + `${timestamp}, ${bearing}, ${velocity}, ${rate}, ST_MakePoint(${latlng[1]}, ${latlng[0]}));`
+        let sql = `INSERT INTO trail(ts, bearing, velocity, rate, geom, lock) VALUES (` + `${timestamp}, ${bearing}, ${velocity}, ${rate}, ST_MakePoint(${latlng[1]}, ${latlng[0]}), ST_MakePoint(${lock[1]}, ${lock[0]}));`
         return new Promise((resolve, reject) => {           
             connection.query(sql, (err, result) => {
                 if (err) {

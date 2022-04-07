@@ -16,7 +16,8 @@ function Centreline(props) {
         key={`marker-${props.idx}`} 
         pathOptions={props.color ? props.color : color}
         positions={coords} 
-        weight={props.weight ? props.weight : 3}
+        weight={props.weight ? props.weight : 4}
+        opacity={props.opacity ? props.opacity: 0.5}
         >
       </Polyline>);
   }

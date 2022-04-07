@@ -13,8 +13,8 @@ function App() {
 
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
-  //const [position, setPosition] = useState([L.latLng(-36.81835, 174.74581)]);
   const [position, setPosition] = useState([]);
+  const [lockPosition, setLockPosition] = useState([]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [trail, setTrail] = useState([]);
@@ -22,52 +22,66 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  const [frequency, setFrequency] = useState(null) //access rate in milliseconds
+  //const [frequency, setFrequency] = useState(null); //access rate in milliseconds
+  const [socketApp, setSocketApp] = useState(null);
+  const [markerBuffer, setMarkerBuffer] = useState(100)
 
   const REFRESH_RATE = 5;
+  let start = null;
 
   useEffect(() => {
+
     const socket = socketIOClient(SERVER_URL, {
       cors: {
         origin: "http://localhost:8080",
         methods: ["GET", "POST"]
       }
     });
+    setSocketApp(socket)
+
     socket.on("connect", () => {
       console.log("connect");
       setOnline(true)
       socket.sendBuffer = []; 
       socket.on("reset", () => {
           reset();
-        });
-        socket.on("latlng", data => {
-          setPosition([data]);
+      });
+      socket.on("latlng", data => {
+        console.log(data)
+        setPosition([data]);   
+      });
 
-          let freq = 1000 / data.rate
-          setFrequency(freq);
-      
-        });
-        // socket.on("trail", data => {
-        //   console.log(data);
-        //   setTrail(data)
-        // });
-        socket.on("insertPoint", data => {
-          insertPoint(data);
-        });
-        socket.on("insertLine", data => {
-          insertLine(data);
-        });
-        socket.on("updateLine", data => {
-          //updateLines(data);
-        });
-        socket.on("centreline", data => {
-          updateCentrelines(data);
-        });
-        socket.on("inspection", data => {
-          console.log(data);
-        });
+      socket.on("trail", data => {
+        const millis = Date.now() - start;
+        if (data.length > markerBuffer) {
+          setMarkerBuffer(data.length + 50); 
+        } else {
+          if (data.length > 100) {
+            setMarkerBuffer(data.length); 
+          } else {
+            setMarkerBuffer(100); 
+          }         
+        }
+        console.log(`Fetched ${data.length} trail markers in xxxx ms`);
+        setTrail(data)
+      });
+      socket.on("insertPoint", data => {
+        insertPoint(data);
+      });
+      socket.on("insertLine", data => {
+        insertLine(data);
+      });
+      // socket.on("updateLine", data => {
+      //   updateLines(data);
+      //});
+      socket.on("centreline", data => {
+        updateCentrelines(data);
+      });
+      socket.on("inspection", data => {
+        console.log(data);
+      });
     });
-    return () => socket.disconnect();   
+      return () => socket.disconnect();   
   }, []);
 
   useEffect(() => {
@@ -76,38 +90,61 @@ function App() {
       let ms = position[0].timestamp.split('.')[1];
       if (ms === '000') {
         let p = {};
+        let l = {};
         p.timestamp = position[0].timestamp;
+        l.timestamp = position[0].timestamp;
         p.bearing = position[0].bearing;
+        l.bearing = position[0].bearing;
         p.velocity = position[0].velocity;
+        l.velocity = position[0].velocity;
         p.latlng = position[0].latlng;
-        let t = [...trail]
+        l.latlng = position[0].lock;
+        let t = [...trail];
+        let lp = [...lockPosition]
         t.push(p);
+        if (l.latlng.length !== 0) {
+          lp.push(l);
+        }
         setTrail(t);
+        setLockPosition(lp);
         setCounter(counter => counter + 1); 
       }
       if (mapRef.current) {
-        mapRef.current.newCenter(position[0].latlng);
-         
+        mapRef.current.newCenter(position[0].latlng);     
       }
     }
   }, [position]);
 
   useEffect(() => {
-      if (counter === 1 || counter % (REFRESH_RATE * frequency) === 0) {
+      if (counter === 1 || counter % (REFRESH_RATE) === 0) {
         refreshUI();     
       }
-  }, [counter, frequency]);
+  }, [counter]);
+
+  useEffect(() => {
+    //console.log(`current trail length: ${trail.length} markers`);
+    
+    if (trail.length > markerBuffer) {
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("trail", bounds);    
+      } 
+    }
+}, [trail]);
 
   const refreshUI = (() => {
     if(mapRef.current) {      
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-          refreshCentrelines(bounds);    
+       
+        refreshCentrelines(bounds); 
       } 
     }       
   });
 
   const refreshCentrelines = ((bounds) => {
+    const start = Date.now();
     let response = getCentrelines(bounds, position[0].latlng);     
     response.then((body) => {
       let cl = []
@@ -115,6 +152,8 @@ function App() {
         for (let i = 0; i < body.data.length; i++) {
           cl.push(body.data[i])
       }
+      const millis = Date.now() - start;
+      console.log(`Fetched ${centrelines.length} centrelines in ${millis} ms`)
       setCentreLines(cl);
       }     
     });
@@ -196,6 +235,24 @@ function App() {
               fill={true}
               color={"#3388ff"}
               fillColor={"blue"}
+              fillOpacity={1.0}
+              eventHandlers={{
+                click: () => {
+                  console.log('marker clicked')
+                }, 
+              }}
+              >      
+            </CircleMarker>
+          )}
+          {lockPosition.map((point, idx) =>
+            <CircleMarker
+              key={`marker-${idx}`} 
+              stroke={true}
+              center={point.latlng}
+              radius ={2}
+              fill={true}
+              color={"red"}
+              fillColor={"red"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: () => {
