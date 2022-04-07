@@ -2,32 +2,32 @@ import './App.css';
 import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import socketIOClient from "socket.io-client";
 const SERVER_URL = "http://localhost:5000";
+let start = null;
 
 function App() {
 
+  const REFRESH_RATE = 5;
+  const DEFAULT_BUFFER_SIZE = 50;
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
-  const [lockPosition, setLockPosition] = useState([]);
+ 
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [points, setPoints] = useState([]);
   const [trail, setTrail] = useState([]);
+  //const [lockPosition, setLockPosition] = useState([]);
   const [lines, setLines] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  //const [frequency, setFrequency] = useState(null); //access rate in milliseconds
   const [socketApp, setSocketApp] = useState(null);
-  const [markerBuffer, setMarkerBuffer] = useState(100)
-
-  const REFRESH_RATE = 5;
-  let start = null;
+  const [markerBuffer, setMarkerBuffer] = useState(DEFAULT_BUFFER_SIZE)
 
   useEffect(() => {
 
@@ -47,22 +47,21 @@ function App() {
           reset();
       });
       socket.on("latlng", data => {
-        console.log(data)
         setPosition([data]);   
       });
 
       socket.on("trail", data => {
         const millis = Date.now() - start;
         if (data.length > markerBuffer) {
-          setMarkerBuffer(data.length + 50); 
+          setMarkerBuffer(data.length + (DEFAULT_BUFFER_SIZE / 2)); 
         } else {
-          if (data.length > 100) {
+          if (data.length > DEFAULT_BUFFER_SIZE) {
             setMarkerBuffer(data.length); 
           } else {
-            setMarkerBuffer(100); 
+            setMarkerBuffer(DEFAULT_BUFFER_SIZE); 
           }         
         }
-        console.log(`Fetched ${data.length} trail markers in xxxx ms`);
+        console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         setTrail(data)
       });
       socket.on("insertPoint", data => {
@@ -90,23 +89,16 @@ function App() {
       let ms = position[0].timestamp.split('.')[1];
       if (ms === '000') {
         let p = {};
-        let l = {};
         p.timestamp = position[0].timestamp;
-        l.timestamp = position[0].timestamp;
         p.bearing = position[0].bearing;
-        l.bearing = position[0].bearing;
         p.velocity = position[0].velocity;
-        l.velocity = position[0].velocity;
         p.latlng = position[0].latlng;
-        l.latlng = position[0].lock;
+        p.lock = position[0].lock;
         let t = [...trail];
-        let lp = [...lockPosition]
-        t.push(p);
-        if (l.latlng.length !== 0) {
-          lp.push(l);
+        if (p.lock.length !== 0) {
+          t.push(p);
         }
         setTrail(t);
-        setLockPosition(lp);
         setCounter(counter => counter + 1); 
       }
       if (mapRef.current) {
@@ -122,7 +114,7 @@ function App() {
   }, [counter]);
 
   useEffect(() => {
-    //console.log(`current trail length: ${trail.length} markers`);
+    console.log(`current trail length: ${trail.length} markers`);
     
     if (trail.length > markerBuffer) {
       let bounds = mapRef.current.getBounds();
@@ -244,25 +236,8 @@ function App() {
               >      
             </CircleMarker>
           )}
-          {lockPosition.map((point, idx) =>
-            <CircleMarker
-              key={`marker-${idx}`} 
-              stroke={true}
-              center={point.latlng}
-              radius ={2}
-              fill={true}
-              color={"red"}
-              fillColor={"red"}
-              fillOpacity={1.0}
-              eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                }, 
-              }}
-              >      
-            </CircleMarker>
-          )}
           {trail.map((point, idx) =>
+          <Fragment key={`fragment-${idx}`} >
             <CircleMarker
               key={`marker-${idx}`} 
               stroke={true}
@@ -279,6 +254,23 @@ function App() {
               }}
               >      
             </CircleMarker>
+            <CircleMarker
+            key={`lock-${idx}`} 
+            stroke={true}
+            center={point.lock}
+            radius ={2}
+            fill={true}
+            color={"red"}
+            fillColor={"red"}
+            fillOpacity={1.0}
+            eventHandlers={{
+              click: () => {
+                console.log('marker clicked')
+              }, 
+            }}
+            >      
+            </CircleMarker>
+          </Fragment>
           )}
           </Pane >
            
