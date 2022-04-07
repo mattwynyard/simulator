@@ -83,15 +83,11 @@ function App() {
         let t = [...trail]
         t.push(p);
         setTrail(t);
+        setCounter(counter => counter + 1); 
       }
-      
-      // if (mapRef) {
-      //   socket.emit("trail", mapRef.current.getBounds());
-      // }
-      
       if (mapRef.current) {
         mapRef.current.newCenter(position[0].latlng);
-        setCounter(counter => counter + 1);  
+         
       }
     }
   }, [position]);
@@ -112,7 +108,7 @@ function App() {
   });
 
   const refreshCentrelines = ((bounds) => {
-    let response = getCentrelines(bounds, {lat: position[0].lat, lng: position[0].lng});     
+    let response = getCentrelines(bounds, position[0].latlng);     
     response.then((body) => {
       let cl = []
       if (body.data) {
@@ -214,10 +210,10 @@ function App() {
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
-              radius ={4}
+              radius ={2}
               fill={true}
-              color={"green"}
-              fillColor={"green"}
+              color={"lime"}
+              fillColor={"lime"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: () => {

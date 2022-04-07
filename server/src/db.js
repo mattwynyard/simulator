@@ -81,8 +81,8 @@ module.exports = {
         let miny = bounds._southWest.lat;
         let maxx = bounds._northEast.lng;
         let maxy = bounds._northEast.lat;
-        let lat = center.lat;
-        let lng = center.lng;
+        let lat = center[0];
+        let lng = center[1];
   
         return new Promise((resolve, reject) => {
             let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("

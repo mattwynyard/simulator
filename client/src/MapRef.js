@@ -17,7 +17,8 @@ const MapRef = forwardRef((props, ref) => {
         let mapBounds = map.getBounds();
         setBounds(mapBounds);
       },
-    })
+    });
+    
     const newCenter = (center) => {
       setCenter(center);
     };
@@ -38,8 +39,8 @@ const MapRef = forwardRef((props, ref) => {
         if (center) {
           map.panTo(center)
         }
-        let mapBounds = map.getBounds();
-        setBounds(mapBounds);      
+        //let mapBounds = map.getBounds();
+        //setBounds(mapBounds);      
     }, [center, map]);
 
     return null
