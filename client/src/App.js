@@ -13,16 +13,17 @@ let start = null;
 function App() {
 
   const REFRESH_RATE = 5;
-  const DEFAULT_BUFFER_SIZE = 50;
+  const DEFAULT_BUFFER_SIZE = 100;
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
  
   const [center, setCenter] = useState([-36.81835, 174.74581]);
-  const [points, setPoints] = useState([]);
+  const [faultPoints, setFaultPoints] = useState([]);
+  const [faultLines, setFaultLines] = useState([]);
   const [trail, setTrail] = useState([]);
   //const [lockPosition, setLockPosition] = useState([]);
-  const [lines, setLines] = useState([]);
+  
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
@@ -37,7 +38,6 @@ function App() {
       }
     });
     setSocketApp(socket)
-
     socket.on("connect", () => {
       console.log("connect");
       setOnline(true)
@@ -61,19 +61,18 @@ function App() {
           }         
         }
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
-        setTrail(data)
+        setTrail(data);
       });
       socket.on("insertPoint", data => {
-        insertPoint(data);
+        insertFaultPoint(data);
       });
       socket.on("insertLine", data => {
-        insertLine(data);
+        insertFaultLine(data);
       });
       // socket.on("updateLine", data => {
       //   updateLines(data);
-      //});
+      // });
       socket.on("centrelines", data => {
-
         const millis = Date.now() - start;
         console.log(`Fetched ${data.length} centrelines in ${millis} ms`)
         setCentreLines(data);
@@ -87,19 +86,20 @@ function App() {
 
   useEffect(() => {
     if (position.length > 0) {
-      setCenter(position[0].latlng);
+
       let ms = position[0].timestamp.split('.')[1];
       if (ms === '000') {
         let p = {};
         p.timestamp = position[0].timestamp;
         p.bearing = position[0].bearing;
         p.velocity = position[0].velocity;
-        p.latlng = position[0].latlng;
-        p.lock = position[0].lock;
+        p.latlng = [...position[0].latlng];
+        p.lock = [...position[0].lock];
         let t = [...trail];
         if (p.lock.length !== 0) {
           t.push(p);
         }
+        setCenter([...position[0].latlng]);
         setTrail(t);
         setCounter(counter => counter + 1); 
       }
@@ -130,24 +130,30 @@ function App() {
         socketApp.emit("trail", bounds);    
       } 
     }
-}, [trail]);
+  }, [trail]);
 
-  const insertPoint = (point) => {
-    setPoints(points => [...points, point]);
+  const insertFaultPoint = (fault) => {
+    // let temp = [...faultPoints];
+    // temp.push(fault);
+    // setFaultPoints(temp);
+    //setFaultPoints(faultPoints => [...faultPoints, fault]);
   }
 
-  const insertLine = (line) => {
-    setLines(lines => [...lines, line]);
+  const insertFaultLine = (fault) => {
+    // let temp = [...faultPoints];
+    // temp.push(fault);
+    // setFaultLines(temp);
+    //setFaultLines(faultLines=> [...faultLines, fault]);
   }
 
-  const updateLines = (lines) => {
-    console.log(lines)
-    setLines([lines]);
-  }
+  // const updateLines = (lines) => {
+  //   console.log(lines)
+  //   setLines([lines]);
+  // }
 
   const reset = () => {
-    setLines([]);
-    setPoints([]);
+    setFaultLines([]);
+    setFaultPoints([]);
   }
   
   const getCentrelines = async (bounds, center)=> {
@@ -230,28 +236,28 @@ function App() {
               }}
               >      
             </CircleMarker>
-            {/* <CircleMarker
-            key={`lock-${idx}`} 
-            stroke={true}
-            center={point.lock}
-            radius ={2}
-            fill={true}
-            color={"red"}
-            fillColor={"red"}
-            fillOpacity={1.0}
-            eventHandlers={{
-              click: () => {
-                console.log('marker clicked')
-              }, 
+            <CircleMarker
+              key={`lock-${idx}`} 
+              stroke={true}
+              center={point.lock}
+              radius ={2}
+              fill={true}
+              color={"red"}
+              fillColor={"red"}
+              fillOpacity={1.0}
+              eventHandlers={{
+                click: () => {
+                  console.log('marker clicked')
+                }, 
             }}
             >      
-            </CircleMarker> */}
+            </CircleMarker>
           </Fragment>
           )}
           </Pane >
            
          <Pane name="lines" style={{ zIndex: 990 }}>
-         {lines.map((line, idx) =>
+         {faultLines.map((line, idx) =>
             <Polyline
               key={`marker-${idx}`} 
               style={{ zIndex: 999 }}   
@@ -282,7 +288,7 @@ function App() {
           )}
          </Pane>
          <Pane name="points" style={{ zIndex: 990}}>
-         {points.map((point, idx) =>
+         {faultPoints.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
               center={L.latLng(point.latlng[0], point.latlng[1])}
