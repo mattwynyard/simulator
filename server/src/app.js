@@ -69,6 +69,23 @@ io.on('connection',(socket) => {
     })
     io.emit("trail", data);
   });
+  socket.on("centrelines", async (bounds, center) => {
+    let data = await db.centrelines(bounds, center);
+    //console.log(lines);
+    data.rows.forEach(row => {
+      let line = JSON.parse(row.geojson).coordinates;
+      let newLine = [];
+      line[0].forEach((point) => {
+        let coords = [];
+        coords.push(point[1]);
+        coords.push(point[0]);
+        newLine.push(coords);
+      });
+      row.geojson = newLine;
+    });
+    io.emit("centrelines", data.rows);
+    data = null;
+  });
 });
 
 //serve tiles

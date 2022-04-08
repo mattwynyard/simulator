@@ -30,7 +30,6 @@ function App() {
   const [markerBuffer, setMarkerBuffer] = useState(DEFAULT_BUFFER_SIZE)
 
   useEffect(() => {
-
     const socket = socketIOClient(SERVER_URL, {
       cors: {
         origin: "http://localhost:8080",
@@ -73,8 +72,11 @@ function App() {
       // socket.on("updateLine", data => {
       //   updateLines(data);
       //});
-      socket.on("centreline", data => {
-        updateCentrelines(data);
+      socket.on("centrelines", data => {
+
+        const millis = Date.now() - start;
+        console.log(`Fetched ${data.length} centrelines in ${millis} ms`)
+        setCentreLines(data);
       });
       socket.on("inspection", data => {
         console.log(data);
@@ -105,17 +107,22 @@ function App() {
         mapRef.current.newCenter(position[0].latlng);     
       }
     }
-  }, [position]);
+  }, [position, mapRef]);
 
   useEffect(() => {
       if (counter === 1 || counter % (REFRESH_RATE) === 0) {
-        refreshUI();     
+        if(mapRef.current) {      
+          let bounds = mapRef.current.getBounds();
+          if (bounds) {
+            start = Date.now();
+            socketApp.emit("centrelines", bounds, position[0].latlng);
+          }
+        }    
       }
   }, [counter]);
 
   useEffect(() => {
     console.log(`current trail length: ${trail.length} markers`);
-    
     if (trail.length > markerBuffer) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
@@ -124,32 +131,6 @@ function App() {
       } 
     }
 }, [trail]);
-
-  const refreshUI = (() => {
-    if(mapRef.current) {      
-      let bounds = mapRef.current.getBounds();
-      if (bounds) {
-       
-        refreshCentrelines(bounds); 
-      } 
-    }       
-  });
-
-  const refreshCentrelines = ((bounds) => {
-    const start = Date.now();
-    let response = getCentrelines(bounds, position[0].latlng);     
-    response.then((body) => {
-      let cl = []
-      if (body.data) {
-        for (let i = 0; i < body.data.length; i++) {
-          cl.push(body.data[i])
-      }
-      const millis = Date.now() - start;
-      console.log(`Fetched ${centrelines.length} centrelines in ${millis} ms`)
-      setCentreLines(cl);
-      }     
-    });
-  })
 
   const insertPoint = (point) => {
     setPoints(points => [...points, point]);
@@ -162,11 +143,6 @@ function App() {
   const updateLines = (lines) => {
     console.log(lines)
     setLines([lines]);
-  }
-
-  const updateCentrelines = (data) => {
-    //console.log(data)
-    //setLines([lines]);
   }
 
   const reset = () => {
@@ -254,7 +230,7 @@ function App() {
               }}
               >      
             </CircleMarker>
-            <CircleMarker
+            {/* <CircleMarker
             key={`lock-${idx}`} 
             stroke={true}
             center={point.lock}
@@ -269,7 +245,7 @@ function App() {
               }, 
             }}
             >      
-            </CircleMarker>
+            </CircleMarker> */}
           </Fragment>
           )}
           </Pane >
@@ -340,7 +316,7 @@ function App() {
           {centrelines.map((line, idx) =>
             <Centreline
               key={`marker-${idx}`}    
-              positions={line}
+              data={line}
               idx={idx}
             >           
             </Centreline>

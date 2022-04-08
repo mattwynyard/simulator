@@ -2,22 +2,15 @@ import { Polyline } from 'react-leaflet';
 
 function Centreline(props) {
     const color = { color: 'blue' }
-    let geojson = JSON.parse(props.positions.geojson);
-    let coords = []
-    geojson.coordinates.forEach(element => {
-        element.forEach(coord => {
-          let temp = coord[0];
-          coord[0] = coord[1];
-          coord[1] = temp;
-          coords.push(coord)
-        });     
-    });
     return ( <Polyline
         key={`marker-${props.idx}`} 
-        pathOptions={props.color ? props.color : color}
-        positions={coords} 
-        weight={props.weight ? props.weight : 4}
-        opacity={props.opacity ? props.opacity: 0.5}
+        pathOptions={props.data.color ? props.data.color : color}
+        positions={props.data.geojson} 
+        cwid={props.data.cwid} 
+        label={props.data.label} 
+        roadid={props.data.roadid}
+        weight={props.data.weight ? props.data.weight : 4}
+        opacity={props.data.opacity ? props.data.opacity: 0.5}
         >
       </Polyline>);
   }
