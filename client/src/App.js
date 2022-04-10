@@ -17,13 +17,10 @@ function App() {
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
- 
   const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
   const [faultLines, setFaultLines] = useState([]);
   const [trail, setTrail] = useState([]);
-  //const [lockPosition, setLockPosition] = useState([]);
-  
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
@@ -37,7 +34,7 @@ function App() {
         methods: ["GET", "POST"]
       }
     });
-    setSocketApp(socket)
+    setSocketApp(socket);
     socket.on("connect", () => {
       console.log("connect");
       setOnline(true)
@@ -45,11 +42,12 @@ function App() {
       socket.on("reset", () => {
           reset();
       });
-      socket.on("latlng", data => {
+
+      socket.on("latlng", (data) => {
         setPosition([data]);   
       });
 
-      socket.on("trail", data => {
+      socket.on("trail", (data) => {
         const millis = Date.now() - start;
         if (data.length > markerBuffer) {
           setMarkerBuffer(data.length + (DEFAULT_BUFFER_SIZE / 2)); 
@@ -63,16 +61,16 @@ function App() {
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         setTrail(data);
       });
-      socket.on("insertPoint", data => {
-        insertFaultPoint(data);
-      });
-      socket.on("insertLine", data => {
+      // socket.on("insertPoint", (data) => {
+      //   insertFaultPoint(data);
+      // });
+      socket.on("insertLine", (data) => {
         insertFaultLine(data);
       });
       // socket.on("updateLine", data => {
       //   updateLines(data);
       // });
-      socket.on("centrelines", data => {
+      socket.on("centrelines", (data) => {
         const millis = Date.now() - start;
         console.log(`Fetched ${data.length} centrelines in ${millis} ms`)
         setCentreLines(data);
@@ -104,7 +102,7 @@ function App() {
         setCounter(counter => counter + 1); 
       }
       if (mapRef.current) {
-        mapRef.current.newCenter(position[0].latlng);     
+        mapRef.current.newCenter([...position[0].latlng]);     
       }
     }
   }, [position, mapRef]);
@@ -291,7 +289,7 @@ function App() {
          {faultPoints.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
-              center={L.latLng(point.latlng[0], point.latlng[1])}
+              center={[point.latlng]}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}
@@ -330,7 +328,7 @@ function App() {
           </Pane>  
           <MapRef 
             ref={mapRef} 
-            center={position.length !== 0 ? position[0].latlng : center} 
+            center={position.length !== 0 ? [position[0].latlng] : center} 
             />  
          </MapContainer>  
     </div>
