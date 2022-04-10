@@ -65,7 +65,7 @@ module.exports = {
         let maxy = bounds._northEast.lat;
         return new Promise((resolve, reject) => {
             let sql = "SELECT ts, bearing, velocity, rate, ST_AsGeoJSON(geom) as geojson, ST_AsGeoJSON(lock) as lockjson FROM trail " +
-            "WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+            "WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") ORDER BY ts ASC;"
             connection.query(sql, (err, result) => {
                 if (err) {
                     console.error('Error executing query', err.stack)

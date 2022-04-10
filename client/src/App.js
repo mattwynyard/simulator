@@ -1,6 +1,5 @@
 import './App.css';
 import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
@@ -13,7 +12,7 @@ let start = null;
 function App() {
 
   const REFRESH_RATE = 5;
-  const DEFAULT_BUFFER_SIZE = 100;
+  const MAX_TRAIL_SIZE = 50;
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
@@ -25,7 +24,7 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [socketApp, setSocketApp] = useState(null);
-  const [markerBuffer, setMarkerBuffer] = useState(DEFAULT_BUFFER_SIZE)
+  //const [markerBuffer, setMarkerBuffer] = useState(DEFAULT_BUFFER_SIZE);
 
   useEffect(() => {
     const socket = socketIOClient(SERVER_URL, {
@@ -36,50 +35,46 @@ function App() {
     });
     setSocketApp(socket);
     socket.on("connect", () => {
-      console.log("connect");
       setOnline(true)
       socket.sendBuffer = []; 
       socket.on("reset", () => {
           reset();
       });
-
       socket.on("latlng", (data) => {
         setPosition([data]);   
       });
-
       socket.on("trail", (data) => {
         const millis = Date.now() - start;
-        if (data.length > markerBuffer) {
-          setMarkerBuffer(data.length + (DEFAULT_BUFFER_SIZE / 2)); 
+        if (data.length > MAX_TRAIL_SIZE) {
+          setTrail(data.slice(MAX_TRAIL_SIZE))        
         } else {
-          if (data.length > DEFAULT_BUFFER_SIZE) {
-            setMarkerBuffer(data.length); 
-          } else {
-            setMarkerBuffer(DEFAULT_BUFFER_SIZE); 
-          }         
+          setTrail(data);
         }
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
-        setTrail(data);
+        
       });
-      // socket.on("insertPoint", (data) => {
-      //   insertFaultPoint(data);
-      // });
-      socket.on("insertLine", (data) => {
-        insertFaultLine(data);
-      });
-      // socket.on("updateLine", data => {
-      //   updateLines(data);
-      // });
       socket.on("centrelines", (data) => {
         const millis = Date.now() - start;
         console.log(`Fetched ${data.length} centrelines in ${millis} ms`)
         setCentreLines(data);
       });
-      socket.on("inspection", data => {
-        console.log(data);
+      socket.on("inspection", (inspection) => {
+        let lines = [];
+        let points = []
+        inspection.data.forEach((row) => {
+          if (row.type === 'point') {
+            points.push(row);
+          } else if (row.type = 'line') {
+            lines.push(row);
+          }
+        });
+        setFaultLines(lines);
+        setFaultPoints(points)
       });
     });
-      return () => socket.disconnect();   
+      return () => {
+        socket.disconnect();  
+      } 
   }, []);
 
   useEffect(() => {
@@ -121,7 +116,7 @@ function App() {
 
   useEffect(() => {
     console.log(`current trail length: ${trail.length} markers`);
-    if (trail.length > markerBuffer) {
+    if (trail.length >= MAX_TRAIL_SIZE) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
         start = Date.now();
@@ -130,53 +125,10 @@ function App() {
     }
   }, [trail]);
 
-  const insertFaultPoint = (fault) => {
-    // let temp = [...faultPoints];
-    // temp.push(fault);
-    // setFaultPoints(temp);
-    //setFaultPoints(faultPoints => [...faultPoints, fault]);
-  }
-
-  const insertFaultLine = (fault) => {
-    // let temp = [...faultPoints];
-    // temp.push(fault);
-    // setFaultLines(temp);
-    //setFaultLines(faultLines=> [...faultLines, fault]);
-  }
-
-  // const updateLines = (lines) => {
-  //   console.log(lines)
-  //   setLines([lines]);
-  // }
 
   const reset = () => {
     setFaultLines([]);
     setFaultPoints([]);
-  }
-  
-  const getCentrelines = async (bounds, center)=> {
-    try {
-      const response = await fetch("http://localhost:5000/centrelines", {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',        
-          },  
-          body: JSON.stringify({
-            bounds: bounds,
-            center: center
-        })    
-      });
-      if (response.ok) {
-          const body = await response.json();
-          return body; 
-      } else {         
-          return Error(response);
-      }
-    } catch {
-        return new Error("connection error")
-    }      
   }
 
   return (
@@ -232,7 +184,15 @@ function App() {
                   console.log('marker clicked')
                 }, 
               }}
-              >      
+            > 
+            <Popup
+              key={`markerpu-${idx}`}>
+              {`timestamp: ${point.timestamp}`}<br></br>
+              {`bearing : ${point.bearing}`}<br></br> 
+              {`velocity: ${point.velocity}`}<br></br> 
+              {`lat: ${point.latlng[0]}`}<br></br> 
+              {`lng: ${point.latlng[1]}`}<br></br> 
+            </Popup>      
             </CircleMarker>
             <CircleMarker
               key={`lock-${idx}`} 
@@ -248,48 +208,56 @@ function App() {
                   console.log('marker clicked')
                 }, 
             }}
-            >      
+            >
+            <Popup
+            key={`lockpu-${idx}`}>
+            {`timestamp: ${point.timestamp}`}<br></br>
+            {`bearing : ${point.bearing}`}<br></br> 
+            {`velocity: ${point.velocity}`}<br></br> 
+            {`lat: ${point.latlng[0]}`}<br></br> 
+            {`lng: ${point.latlng[1]}`}<br></br> 
+          </Popup>       
             </CircleMarker>
           </Fragment>
           )}
           </Pane >
            
          <Pane name="lines" style={{ zIndex: 990 }}>
-         {faultLines.map((line, idx) =>
-            <Polyline
-              key={`marker-${idx}`} 
-              style={{ zIndex: 999 }}   
-              positions={line.latlng}
-              idx={idx}
-              color={line.color}
-              weight ={line.weight}
-              opacity={line.opacity}
-              eventHandlers={{
-                click: () => {
-                  console.log('line clicked')
-                },
-                mouseover: (e) => {
-                  console.log("mouse over")
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                }
-              }}
-            > 
-            <Popup
-                key={`marker-${idx}`}>
-                  {line.id}<br></br>
-                  
-              </Popup>            
-            </Polyline>
-          )}
+          {faultLines.map((line, idx) =>
+              <Polyline
+                key={`marker-${idx}`} 
+                style={{ zIndex: 999 }}   
+                positions={line.latlng}
+                idx={idx}
+                color={line.color}
+                weight ={line.weight}
+                opacity={line.opacity}
+                eventHandlers={{
+                  click: () => {
+                    console.log('line clicked')
+                  },
+                  mouseover: (e) => {
+                    console.log("mouse over")
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  }
+                }}
+              > 
+              <Popup
+                  key={`marker-${idx}`}>
+                    {line.id}<br></br>
+                    
+                </Popup>            
+              </Polyline>
+            )}
          </Pane>
          <Pane name="points" style={{ zIndex: 990}}>
          {faultPoints.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
-              center={[point.latlng]}
+              center={point.latlng}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}
