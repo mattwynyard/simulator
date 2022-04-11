@@ -2,30 +2,14 @@
 const express = require('express');
 const app = express();
 const http = require('http');
-
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-
 const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
-
-let points = [];
-let lines = [];
-let pointMap = new Map();
-let lineMap = new Map();
-
-const refreshDataStore = (map) => {
-  let f = [];
-  map.forEach((value) => {
-    f.push(value);
-  });
-  return f;
-}
 
 const io = new Server(server, {
   cors: {
