@@ -9,7 +9,10 @@
 
 }
 
-.points {
-  z-index: 999;
+.lock-marker .trail-marker {
+  z-index: 900;
+}
 
+.popup {
+  z-index: 1000;
 }

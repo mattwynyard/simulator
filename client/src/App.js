@@ -24,7 +24,6 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [socketApp, setSocketApp] = useState(null);
-  //const [markerBuffer, setMarkerBuffer] = useState(DEFAULT_BUFFER_SIZE);
 
   useEffect(() => {
     const socket = socketIOClient(SERVER_URL, {
@@ -34,7 +33,7 @@ function App() {
       }
     });
     setSocketApp(socket);
-    socket.on("connect", () => {
+      socket.on("connect", () => {
       setOnline(true)
       socket.sendBuffer = []; 
       socket.on("reset", () => {
@@ -45,8 +44,8 @@ function App() {
       });
       socket.on("trail", (data) => {
         const millis = Date.now() - start;
-        if (data.length > MAX_TRAIL_SIZE) {
-          setTrail(data.slice(MAX_TRAIL_SIZE))        
+        if (data.length >= MAX_TRAIL_SIZE) {
+          setTrail(data.slice(MAX_TRAIL_SIZE));        
         } else {
           setTrail(data);
         }
@@ -79,7 +78,6 @@ function App() {
 
   useEffect(() => {
     if (position.length > 0) {
-
       let ms = position[0].timestamp.split('.')[1];
       if (ms === '000') {
         let p = {};
@@ -112,7 +110,7 @@ function App() {
           }
         }    
       }
-  }, [counter]);
+  }, [counter, mapRef]);
 
   useEffect(() => {
     console.log(`current trail length: ${trail.length} markers`);
@@ -152,6 +150,7 @@ function App() {
          <Pane name="position" style={{ zIndex: 1000 }}>
           {position.map((point, idx) =>
             <CircleMarker
+              className={"position"}
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
@@ -160,17 +159,13 @@ function App() {
               color={"#3388ff"}
               fillColor={"blue"}
               fillOpacity={1.0}
-              eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                }, 
-              }}
               >      
             </CircleMarker>
           )}
           {trail.map((point, idx) =>
           <Fragment key={`fragment-${idx}`} >
             <CircleMarker
+              className = {"trail-marker"}
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
@@ -180,21 +175,33 @@ function App() {
               fillColor={"lime"}
               fillOpacity={1.0}
               eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                }, 
+                click: (e) => {
+                  e.target.openPopup();
+                },
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
+                } 
               }}
             > 
             <Popup
-              key={`markerpu-${idx}`}>
-              {`timestamp: ${point.timestamp}`}<br></br>
-              {`bearing : ${point.bearing}`}<br></br> 
-              {`velocity: ${point.velocity}`}<br></br> 
-              {`lat: ${point.latlng[0]}`}<br></br> 
-              {`lng: ${point.latlng[1]}`}<br></br> 
+              className = {"popup"}
+              key={`markerpu-${idx}`}
+              >
+                <div>
+                {`timestamp: ${point.timestamp}`}<br></br>
+                {`bearing : ${point.bearing}`}<br></br> 
+                {`velocity: ${point.velocity}`}<br></br> 
+                {`lat: ${point.latlng[0]}`}<br></br> 
+                {`lng: ${point.latlng[1]}`}<br></br> 
+                </div>
+              
             </Popup>      
             </CircleMarker>
             <CircleMarker
+              className = {"lock-marker"}
               key={`lock-${idx}`} 
               stroke={true}
               center={point.lock}
@@ -204,19 +211,29 @@ function App() {
               fillColor={"red"}
               fillOpacity={1.0}
               eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                }, 
+                click: (e) => {
+                  e.target.openPopup();
+                },
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
+                } 
             }}
             >
-            <Popup
-            key={`lockpu-${idx}`}>
-            {`timestamp: ${point.timestamp}`}<br></br>
-            {`bearing : ${point.bearing}`}<br></br> 
-            {`velocity: ${point.velocity}`}<br></br> 
-            {`lat: ${point.latlng[0]}`}<br></br> 
-            {`lng: ${point.latlng[1]}`}<br></br> 
-          </Popup>       
+              <Popup
+                className = {"popup"}
+                key={`lockpu-${idx}`}>
+                <div>
+                  {`timestamp: ${point.timestamp}`}<br></br>
+                  {`bearing : ${point.bearing}`}<br></br> 
+                  {`velocity: ${point.velocity}`}<br></br> 
+                  {`lat: ${point.lock[0]}`}<br></br> 
+                  {`lng: ${point.lock[1]}`}<br></br> 
+                </div>
+                
+              </Popup>       
             </CircleMarker>
           </Fragment>
           )}
@@ -233,11 +250,10 @@ function App() {
                 weight ={line.weight}
                 opacity={line.opacity}
                 eventHandlers={{
-                  click: () => {
-                    console.log('line clicked')
+                  click: (e) => {
+                    e.target.openPopup();
                   },
                   mouseover: (e) => {
-                    console.log("mouse over")
                     e.target.openPopup();
                   },
                   mouseout: (e) => {
@@ -245,10 +261,9 @@ function App() {
                   }
                 }}
               > 
-              <Popup
+                <Popup
                   key={`marker-${idx}`}>
-                    {line.id}<br></br>
-                    
+                  {line.id}<br></br>    
                 </Popup>            
               </Polyline>
             )}
