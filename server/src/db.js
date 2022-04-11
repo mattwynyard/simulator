@@ -58,6 +58,20 @@ module.exports = {
         });
     },
 
+    resetTrail: () => {
+        return new Promise((resolve, reject) => {
+            let sql = "DELETE FROM trail;"
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     trail: (bounds) => {
         let minx = bounds._southWest.lng;
         let miny = bounds._southWest.lat;

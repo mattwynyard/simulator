@@ -45,7 +45,7 @@ function App() {
       socket.on("trail", (data) => {
         const millis = Date.now() - start;
         if (data.length >= MAX_TRAIL_SIZE) {
-          setTrail(data.slice(MAX_TRAIL_SIZE));        
+          setTrail(data.slice(data.length - MAX_TRAIL_SIZE));        
         } else {
           setTrail(data);
         }
@@ -190,14 +190,13 @@ function App() {
               className = {"popup"}
               key={`markerpu-${idx}`}
               >
-                <div>
-                {`timestamp: ${point.timestamp}`}<br></br>
-                {`bearing : ${point.bearing}`}<br></br> 
-                {`velocity: ${point.velocity}`}<br></br> 
-                {`lat: ${point.latlng[0]}`}<br></br> 
-                {`lng: ${point.latlng[1]}`}<br></br> 
-                </div>
-              
+              <div>
+              {`timestamp: ${point.timestamp}`}<br></br>
+              {`bearing : ${point.bearing}`}<br></br> 
+              {`velocity: ${point.velocity}`}<br></br> 
+              {`lat: ${point.latlng[0]}`}<br></br> 
+              {`lng: ${point.latlng[1]}`}<br></br> 
+              </div>         
             </Popup>      
             </CircleMarker>
             <CircleMarker

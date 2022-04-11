@@ -93,10 +93,6 @@ app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
 
-app.get('/initialise', async (req, res) => {
-  res.send({ points: points, lines, lines});
-});
-
 /**
  * incoming location from access
  */
@@ -125,11 +121,7 @@ app.post('/inspection', async (req, res) => {
 
 app.get('/reset', async (req, res) => {
   try {
-    pointMap = new Map();
-    lineMap = new Map();
-    points = [];
-    lines = [];
-    io.emit("reset", { points: [], lines: []})
+    db.resetTrail();
     res.send("reset");
   } catch(error) {
     console.log(error)
@@ -139,62 +131,27 @@ app.get('/reset', async (req, res) => {
 });
 
 app.post('/insertPoint', async (req, res) => {
-  io.emit("insertPoint", req.body);
-  pointMap.set(req.body.id, req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
-  lineMap.set(req.body.id, req.body);
-  io.emit("insertLine", req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/updateLine', async (req, res) => {
-  if (lineMap.has(req.body.id)) {
-    lineMap.delete(req.body.id);
-    lineMap.set(req.body.id, req.body);
-    lines = refreshDataStore(lineMap);
-    io.emit("updateLine", lines);
     res.send({ message: "updated"});
-  } else {
-    res.send({ message: "not updated"});
-  }
 });
 
 app.post('/deleteLine', async (req, res) => {
-  if (lineMap.has(req.body.id)) {
-    lineMap.delete(req.body.id);
-    lines = refreshDataStore(lineMap);
-    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
-  } else {
-    console.log("notfound:" + req.body.id)
-    res.send({ message: "id " + req.body.id + "not found"});
-  }
 });
 
 app.post('/updatePoint', async (req, res) => {
-  if (pointMap.has(req.body.id)) {
-    pointMap.delete(req.body.id);
-    pointMap.set(req.body.id, req.body);
-    points = refreshDataStore(pointMap);
     res.send({ message: "updated"});
-  } else {
-    res.send({ message: "id not found"});
-  } 
 });
 
 app.post('/deletePoint', async (req, res) => {
-  if (pointMap.has(req.body.id)) {
-    pointMap.delete(req.body.id);
-    points = refreshDataStore(pointMap);
-    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
-  } else {
-    console.log("notfound:" + req.body.id)
-    res.send({ message: "id not found"});
-  }
 });
 
 module.exports = app;
