@@ -115,7 +115,7 @@ module.exports = {
             let lnglat = util.swapLatLng(row.latlng);
             sql = `INSERT INTO public.defects(
                 id, inspection, type, color, fault, code, gpstime, altitude, fill, fillcolor, opacity, fillopacity, radius, weight, geom)
-                VALUES (${data}, ST_MakePoint(${lnglat}));` 
+                VALUES (${data}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326));` 
         } else if (row.type === 'line') {
             let wkt = util.arrayToWkt(row.latlng);
             sql = `INSERT INTO public.defects(
@@ -137,18 +137,23 @@ module.exports = {
     },
 
     inspection: (bounds, center) => {
-        let minx = bounds._southWest.lng;
-        let miny = bounds._southWest.lat;
-        let maxx = bounds._northEast.lng;
-        let maxy = bounds._northEast.lat;
-        let lat = center[0];
-        let lng = center[1];
-  
-        return new Promise((resolve, reject) => {
-            let sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+        let sql = null;
+        if (bounds) {
+            let minx = bounds._southWest.lng;
+            let miny = bounds._southWest.lat;
+            let maxx = bounds._northEast.lng;
+            let maxy = bounds._northEast.lat;
+            let lat = center[0];
+            let lng = center[1];
+            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
             "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
-             + lng + "," + lat + "),4326)) AS dist FROM defects WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
-             + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);" 
+            + lng + "," + lat + "),4326)) AS dist FROM defects WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
+            + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);"
+        } else {
+            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
+        }
+         return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
                 if (err) {
                     console.error('Error executing query', err.stack)

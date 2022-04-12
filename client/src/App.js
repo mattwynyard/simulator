@@ -24,7 +24,7 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [socketApp, setSocketApp] = useState(null);
-  //const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const socket = socketIOClient(SERVER_URL, {
@@ -55,26 +55,35 @@ function App() {
       });
       socket.on("geometry", (data) => {
         const millis = Date.now() - start;
-        console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`)
-        setCentreLines(data.centreline);
+        if (data.centreline) {
+          console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`);
+          setCentreLines(data.centreline);
+        }
+        if (data.inspection) {
+          console.log(`Fetched ${data.inspection.points.length} point faults in ${millis} ms`);
+          console.log(`Fetched ${data.inspection.lines.length} line faults in ${millis} ms`);
+          setFaultLines(data.inspection.lines);
+          setFaultPoints(data.inspection.points)
+        }
       });
-      // socket.on("loaded", (result) => {
-      //   setLoaded(true)  
+      socket.on("loaded", (result) => {
+        console.log(result)
+        setLoaded(true)  
+      });
+      // socket.on("inspection", (inspection) => {
+      //   let points = [];
+      //   let lines = [];
+      //   inspection.data.forEach((row) => {
+      //     console.log(row)
+      //     if (row.type === 'point') {
+      //       points.push(row);
+      //     } else if (row.type = 'line') {
+      //       lines.push(row);
+      //     }
+      //   });       
+      //   setFaultLines(lines);
+      //   setFaultPoints(points)
       // });
-      socket.on("inspection", (inspection) => {
-        let points = [];
-        let lines = [];
-        inspection.data.forEach((row) => {
-          console.log(row)
-          if (row.type === 'point') {
-            points.push(row);
-          } else if (row.type = 'line') {
-            lines.push(row);
-          }
-        });       
-        setFaultLines(lines);
-        setFaultPoints(points)
-      });
     });
       return () => {
         socket.disconnect();  
@@ -105,6 +114,17 @@ function App() {
     }
   }, [position, mapRef]);
 
+
+  useEffect(() => {
+    if(mapRef.current) {      
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("inspection", bounds, position[0].latlng);
+      }
+    }
+  }, [loaded])
+
   useEffect(() => {
       if (counter === 1 || counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
@@ -112,16 +132,13 @@ function App() {
           if (bounds) {
             start = Date.now();
             socketApp.emit("geometry", bounds, position[0].latlng);
-            // if (loaded) {
-            //   socketApp.emit("inspection", bounds, position[0].latlng);
-            // }
           }
         }    
       }
   }, [counter, mapRef]);
 
   useEffect(() => {
-    console.log(`current trail length: ${trail.length} markers`);
+    //console.log(`current trail length: ${trail.length} markers`);
     if (trail.length >= MAX_TRAIL_SIZE) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
@@ -251,7 +268,7 @@ function App() {
               <Polyline
                 key={`marker-${idx}`} 
                 style={{ zIndex: 999 }}   
-                positions={line.latlng}
+                positions={line.geojson}
                 idx={idx}
                 color={line.color}
                 weight ={line.weight}
@@ -279,7 +296,7 @@ function App() {
          {faultPoints.map((point, idx) =>
             <CircleMarker
               key={`marker-${idx}`} 
-              center={point.latlng}
+              center={point.geojson}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}

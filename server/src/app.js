@@ -54,40 +54,97 @@ io.on('connection',(socket) => {
     io.emit("trail", data);
   });
   socket.on("geometry", async (bounds, center) => {
-    let cls = await db.centrelines(bounds, center);
-    let ins = await db.inspection(bounds, center);
-    //console.log(lines);
-    cls.rows.forEach(row => {
-      let line = JSON.parse(row.geojson).coordinates;
-      let newLine = [];
-      line[0].forEach((point) => {
-        let coords = [];
-        coords.push(point[1]);
-        coords.push(point[0]);
-        newLine.push(coords);
+    console.log("/geometry")
+    let cls = null;
+    let ins = null;
+    try {
+      cls = await db.centrelines(bounds, center);
+      cls.rows.forEach(row => {
+        let line = JSON.parse(row.geojson).coordinates;
+        let newLine = [];
+        line[0].forEach((point) => {
+          let coords = [];
+          coords.push(point[1]);
+          coords.push(point[0]);
+          newLine.push(coords);
+        });
+        row.geojson = newLine;
       });
-      row.geojson = newLine;
-    });
-    io.emit("geometry", {centreline: cls.rows, inspection: ins.rows});
+    } catch (error) {
+      console.log(error)
+    }
+    
+    try {
+      ins = await db.inspection(bounds, center);
+      if (ins.rowCount > 0) {
+        console.log(ins.rowCount)
+        let points = [];
+        let lines = [];
+        ins.rows.forEach(row => {
+          if (row.type === 'point') {
+            let pointLngLat = JSON.parse(row.geojson).coordinates;
+            let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+            row.geojson = pointLatLng;
+            points.push(row);
+          } else if (row.type === 'line') {
+            let line = JSON.parse(row.geojson).coordinates;
+            let newLine = [];
+            line.forEach((point) => {
+              let coords = [];
+              coords.push(point[1]);
+              coords.push(point[0]);
+              newLine.push(coords);
+            });
+            row.geojson = newLine;
+            lines.push(row)
+          }        
+        });
+        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines}});
+      } else {
+        io.emit("geometry", {centreline: cls.rows, inspection: null});
+      }
+    } catch (error) {
+      console.log(error)
+    }
+      
+
+      
+     
   });
   socket.on("inspection", async (bounds, center) => {
-    let data = await db.inspection(bounds, center);
-    //console.log(lines);
-    data.rows.forEach(row => {
-      let line = JSON.parse(row.geojson).coordinates;
-      let newLine = [];
-      line[0].forEach((point) => {
-        let coords = [];
-        coords.push(point[1]);
-        coords.push(point[0]);
-        newLine.push(coords);
-      });
-      row.geojson = newLine;
-    });
-    io.emit("centrelines", data.rows);
-    data = null;
+    try {
+      let ins = await db.inspection(bounds, center);
+      console.log(ins.rowCount)
+      let points = [];
+      let lines = [];
+      if (ins.rowCount > 0) {
+        ins.rows.forEach(row => {
+          if (row.type === 'point') {
+            let pointLngLat = JSON.parse(row.geojson).coordinates;
+            let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+            row.geojson = pointLatLng;
+            points.push(row);
+          } else if (row.type === 'line') {
+            let line = JSON.parse(row.geojson).coordinates;
+            let newLine = [];
+            line.forEach((point) => {
+              let coords = [];
+              coords.push(point[1]);
+              coords.push(point[0]);
+              newLine.push(coords);
+            });
+            row.geojson = newLine;
+            lines.push(row)
+          }        
+        });
+      }   
+      io.emit("geometry", {inspection: {points: points, lines: lines}});
+    } catch (error) {
+      console.log(error)
+    }
   });
-});
+
+}); //connection
 
 //serve tiles
 app.get('/tiles/:z/:x/:y', async (req, res) => {
