@@ -53,8 +53,25 @@ io.on('connection',(socket) => {
     })
     io.emit("trail", data);
   });
-  socket.on("centrelines", async (bounds, center) => {
-    let data = await db.centrelines(bounds, center);
+  socket.on("geometry", async (bounds, center) => {
+    let cls = await db.centrelines(bounds, center);
+    let ins = await db.inspection(bounds, center);
+    //console.log(lines);
+    cls.rows.forEach(row => {
+      let line = JSON.parse(row.geojson).coordinates;
+      let newLine = [];
+      line[0].forEach((point) => {
+        let coords = [];
+        coords.push(point[1]);
+        coords.push(point[0]);
+        newLine.push(coords);
+      });
+      row.geojson = newLine;
+    });
+    io.emit("geometry", {centreline: cls.rows, inspection: ins.rows});
+  });
+  socket.on("inspection", async (bounds, center) => {
+    let data = await db.inspection(bounds, center);
     //console.log(lines);
     data.rows.forEach(row => {
       let line = JSON.parse(row.geojson).coordinates;
@@ -75,6 +92,14 @@ io.on('connection',(socket) => {
 //serve tiles
 app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
+});
+
+app.post('/start', async (res, req) => {
+  console.log("start")
+});
+
+app.post('/stop', async (res, req) => {
+  console.log("stop")
 });
 
 /**
@@ -99,13 +124,25 @@ app.post('/centrelines', async (req, res) => {
 });
 
 app.post('/inspection', async (req, res) => {
-  io.emit("inspection", req.body);
+  let count = 0;
+  let errors = 0;
+  for (let i = 0; i < req.body.data.length; i++) {
+    try {  
+      let result = await db.insertInspection(req.body.inspection, req.body.data[i]);
+      count += result.rowCount;
+    } catch (error) {
+        console.log(error);
+        errors++;
+    }
+  }  
+  io.emit("loaded", {inserted: count, error: errors});
   res.send({result: "ok"})
 });
 
 app.get('/reset', async (req, res) => {
   try {
-    db.resetTrail();
+    await db.resetTrail();
+    await db.resetInspection();
     res.send("reset");
   } catch(error) {
     console.log(error)

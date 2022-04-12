@@ -24,6 +24,7 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [socketApp, setSocketApp] = useState(null);
+  //const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const socket = socketIOClient(SERVER_URL, {
@@ -52,21 +53,25 @@ function App() {
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         
       });
-      socket.on("centrelines", (data) => {
+      socket.on("geometry", (data) => {
         const millis = Date.now() - start;
-        console.log(`Fetched ${data.length} centrelines in ${millis} ms`)
-        setCentreLines(data);
+        console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`)
+        setCentreLines(data.centreline);
       });
+      // socket.on("loaded", (result) => {
+      //   setLoaded(true)  
+      // });
       socket.on("inspection", (inspection) => {
+        let points = [];
         let lines = [];
-        let points = []
         inspection.data.forEach((row) => {
+          console.log(row)
           if (row.type === 'point') {
             points.push(row);
           } else if (row.type = 'line') {
             lines.push(row);
           }
-        });
+        });       
         setFaultLines(lines);
         setFaultPoints(points)
       });
@@ -90,12 +95,12 @@ function App() {
         if (p.lock.length !== 0) {
           t.push(p);
         }
-        setCenter([...position[0].latlng]);
+        setCenter(position[0].latlng);
         setTrail(t);
         setCounter(counter => counter + 1); 
       }
       if (mapRef.current) {
-        mapRef.current.newCenter([...position[0].latlng]);     
+        mapRef.current.newCenter(position[0].latlng);     
       }
     }
   }, [position, mapRef]);
@@ -106,7 +111,10 @@ function App() {
           let bounds = mapRef.current.getBounds();
           if (bounds) {
             start = Date.now();
-            socketApp.emit("centrelines", bounds, position[0].latlng);
+            socketApp.emit("geometry", bounds, position[0].latlng);
+            // if (loaded) {
+            //   socketApp.emit("inspection", bounds, position[0].latlng);
+            // }
           }
         }    
       }
