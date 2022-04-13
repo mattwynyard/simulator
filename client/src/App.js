@@ -146,6 +146,16 @@ function App() {
     setFaultPoints([]);
   }
 
+  const updateGeometry = () => {
+    if(mapRef.current) {      
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("geometry", bounds, position[0].latlng);
+      }
+    }
+  }
+
   return (
     <div className="App">
       <div className="panel">
@@ -157,6 +167,7 @@ function App() {
           minZoom={13}
           maxZoom={18}
           scrollWheelZoom={true}
+
           keyboard={true}
           eventHandlers={{
               load: () => {
@@ -164,6 +175,11 @@ function App() {
               },
             }}
         >
+        <MapRef 
+          ref={mapRef} 
+          update={updateGeometry}
+          center={position.length !== 0 ? [position[0].latlng] : center} 
+          />
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
          <Pane name="position" style={{ zIndex: 1000 }}>
@@ -315,11 +331,7 @@ function App() {
             >           
             </Centreline>
           )}
-          </Pane>  
-          <MapRef 
-            ref={mapRef} 
-            center={position.length !== 0 ? [position[0].latlng] : center} 
-            />  
+          </Pane>    
          </MapContainer>  
     </div>
     

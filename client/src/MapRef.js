@@ -18,7 +18,7 @@ const MapRef = forwardRef((props, ref) => {
         //console.log("movend")
       },
       zoomend: () => {
-        //console.log("zoomend")
+        props.update()
     },
     });
     const newCenter = (center) => {
