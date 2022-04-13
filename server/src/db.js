@@ -77,7 +77,7 @@ module.exports = {
     },
 
     prevPosition: () => {
-        const sql = "ST_AsGeoJSON(geom) as geojson ORDER BY ts DESC LIMIT 1";
+        const sql = "SELECT ST_AsGeoJSON(geom) as geojson FROM trail ORDER BY ts DESC LIMIT 1";
         return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
                 if (err) {

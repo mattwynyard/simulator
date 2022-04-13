@@ -1,3 +1,5 @@
+const EARTH_RADIUS = 6371000;
+
 function buildQuery(arr) {
     let query = ""; 
     for (var i = 0; i < arr.length; i += 1) {
@@ -8,6 +10,23 @@ function buildQuery(arr) {
         }
     }
     return query;
+}
+
+function haversine(point1, point2) {
+    
+    let x1 = point2[1] - point1[1]; //lat index 1
+    let dLat = radians(x1);
+    let x2 = point2[0] - point1[0]; //lng index 0
+    let dLon = radians(x2);
+    let a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+        Math.cos(radians(point1[1])) * Math.cos(radians(point2[1])) * 
+         Math.sin(dLon/2) * Math.sin(dLon/2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return EARTH_RADIUS * c;
+}
+
+function radians(n) {
+    return n * (Math.PI / 180)
 }
 
 function parseInteger(x) {
@@ -76,4 +95,4 @@ function arrayToWkt(arr) {
     return wkt;
 }
 
-module.exports = {buildQuery, parseInteger, parseDate, parseString, parseNumeric, swapLatLng, arrayToWkt, parseBoolean}
+module.exports = {buildQuery, parseInteger, parseDate, parseString, parseNumeric, swapLatLng, arrayToWkt, parseBoolean, haversine}

@@ -9,10 +9,17 @@
 
 }
 
-.lock-marker .trail-marker .fault-marker {
+.lock-marker .trail-marker .fault-marker .centre-line {
   z-index: 900;
 }
 
 .popup {
   z-index: 1000;
+}
+
+.panel {
+  background-color:white;
+  width: 10%;
+  height: 10%;
+  position: relative;
 }

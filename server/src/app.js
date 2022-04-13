@@ -10,6 +10,8 @@ const bodyParser = require('body-parser');
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
+const util = require('./util.js') ;
+const MIN_DISTANCE = 3;
 
 const io = new Server(server, {
   cors: {
@@ -54,7 +56,6 @@ io.on('connection',(socket) => {
     io.emit("trail", data);
   });
   socket.on("geometry", async (bounds, center) => {
-    console.log("/geometry")
     let cls = null;
     let ins = null;
     try {
@@ -76,7 +77,6 @@ io.on('connection',(socket) => {
     try {
       ins = await db.inspection(bounds, center);
       if (ins.rowCount > 0) {
-        console.log(ins.rowCount)
         let points = [];
         let lines = [];
         ins.rows.forEach(row => {
@@ -165,13 +165,27 @@ app.post('/stop', async (res, req) => {
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
     try {
-      let prev = db.prevPosition();
-      await db.updateTrail(req.body);
+      let prev = await db.prevPosition();
+      if (prev.rowCount > 0) {
+        let point1 = JSON.parse(prev.rows[0].geojson).coordinates;
+        let point2 = [req.body.latlng[1], req.body.latlng[0]];
+        let d = util.haversine(point1, point2);
+        console.log("distance: " + Math.round(d * 10) / 10);
+        if (d >= MIN_DISTANCE) {
+          await db.updateTrail(req.body);
+          io.emit("latlng", req.body);
+        }    
+      } else {
+        await db.updateTrail(req.body);
+        io.emit("latlng", req.body);
+      }   
     } catch (err) {
       console.log(err)
     }
+   } else {
+    io.emit("latlng", req.body);
    }
-  io.emit("latlng", req.body);
+  
   res.send({ message: "ok"}); 
 });
 

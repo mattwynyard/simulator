@@ -9,11 +9,16 @@ const MapRef = forwardRef((props, ref) => {
         console.log("click")
       },
       zoom: () => {
+        //console.log("zoom")
       },
       move: () => {
+        //console.log("move")
+      },
+      movend: () => {
+        //console.log("movend")
       },
       zoomend: () => {
-          console.log("zoomend")
+        //console.log("zoomend")
     },
     });
     const newCenter = (center) => {

@@ -148,6 +148,8 @@ function App() {
 
   return (
     <div className="App">
+      <div className="panel">
+      </div>
       <MapContainer 
           className="map" 
           //center={center} 
@@ -255,7 +257,7 @@ function App() {
           )}
           </Pane >
            
-         <Pane name="lines" style={{ zIndex: 990 }}>
+         <Pane name="lines">
           {faultLines.map((line, idx) =>
               <Polyline
                 key={`marker-${idx}`} 
@@ -285,7 +287,7 @@ function App() {
               </Polyline>
             )}
          </Pane>
-         <Pane name="points" style={{ zIndex: 990}}>
+         <Pane name="points">
           {faultPoints.map((point, idx) =>
             <FaultPoint
               className = {"fault=marker"}
@@ -303,9 +305,10 @@ function App() {
             />
           )}
          </Pane>
-          <Pane name="centreline" style={{ zIndex: 900}}>
+          <Pane name="centreline">
           {centrelines.map((line, idx) =>
             <Centreline
+              className = {"centre-line"}
               key={`marker-${idx}`}    
               data={line}
               idx={idx}
