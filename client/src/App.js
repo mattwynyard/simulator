@@ -204,7 +204,7 @@ function App() {
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
-              radius ={2}
+              radius ={1}
               fill={true}
               color={"lime"}
               fillColor={"lime"}
@@ -239,7 +239,7 @@ function App() {
               key={`lock-${idx}`} 
               stroke={true}
               center={point.lock}
-              radius ={2}
+              radius ={1}
               fill={true}
               color={"#FF0000"}
               fillColor={"#FF0000"}
@@ -303,7 +303,7 @@ function App() {
               </Polyline>
             )}
          </Pane>
-         <Pane name="points">
+         <Pane name="points" className = {"fault=marker"} style={{ zIndex: 1000 }}>
           {faultPoints.map((point, idx) =>
             <FaultPoint
               className = {"fault=marker"}
@@ -321,7 +321,7 @@ function App() {
             />
           )}
          </Pane>
-          <Pane name="centreline">
+          <Pane name="centreline" className = {"centre-line"}>
           {centrelines.map((line, idx) =>
             <Centreline
               className = {"centre-line"}

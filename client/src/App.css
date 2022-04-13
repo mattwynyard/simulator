@@ -9,7 +9,7 @@
 
 }
 
-.lock-marker .trail-marker .fault-marker .centre-line {
+.fault-marker .centre-line {
   z-index: 900;
 }
 
