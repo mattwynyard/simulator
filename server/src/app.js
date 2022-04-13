@@ -73,7 +73,6 @@ io.on('connection',(socket) => {
     } catch (error) {
       console.log(error)
     }
-    
     try {
       ins = await db.inspection(bounds, center);
       if (ins.rowCount > 0) {
@@ -166,6 +165,7 @@ app.post('/stop', async (res, req) => {
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
     try {
+      let prev = db.prevPosition();
       await db.updateTrail(req.body);
     } catch (err) {
       console.log(err)
