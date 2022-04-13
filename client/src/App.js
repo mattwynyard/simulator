@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
+import FaultPoint from './FaultPoint.js';
 import socketIOClient from "socket.io-client";
 const SERVER_URL = "http://localhost:5000";
 let start = null;
@@ -70,20 +71,7 @@ function App() {
         console.log(result)
         setLoaded(true)  
       });
-      // socket.on("inspection", (inspection) => {
-      //   let points = [];
-      //   let lines = [];
-      //   inspection.data.forEach((row) => {
-      //     console.log(row)
-      //     if (row.type === 'point') {
-      //       points.push(row);
-      //     } else if (row.type = 'line') {
-      //       lines.push(row);
-      //     }
-      //   });       
-      //   setFaultLines(lines);
-      //   setFaultPoints(points)
-      // });
+
     });
       return () => {
         socket.disconnect();  
@@ -147,6 +135,10 @@ function App() {
       } 
     }
   }, [trail]);
+
+  useEffect(() => {
+    //console.log(faultPoints)
+  }, [faultPoints]);
 
 
   const reset = () => {
@@ -231,8 +223,8 @@ function App() {
               center={point.lock}
               radius ={2}
               fill={true}
-              color={"red"}
-              fillColor={"red"}
+              color={"#FF0000"}
+              fillColor={"#FF0000"}
               fillOpacity={1.0}
               eventHandlers={{
                 click: (e) => {
@@ -286,6 +278,7 @@ function App() {
                 }}
               > 
                 <Popup
+                  className = {"popup"}
                   key={`marker-${idx}`}>
                   {line.id}<br></br>    
                 </Popup>            
@@ -293,34 +286,21 @@ function App() {
             )}
          </Pane>
          <Pane name="points" style={{ zIndex: 990}}>
-         {faultPoints.map((point, idx) =>
-            <CircleMarker
-              key={`marker-${idx}`} 
+          {faultPoints.map((point, idx) =>
+            <FaultPoint
+              className = {"fault=marker"}
+              key={point.id}
+              id={point.id}
+              fault={point.fault}
               center={point.geojson}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}
               opacity={point.opacity}
-              fillColor={point.fillColor}
-              fillOpacity={point.fillOpacity}
-              eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                },
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                }
-              }}
-              > 
-              <Popup
-                key={`marker-${idx}`}>
-                  {point.id}<br></br>
-                  {point.fault}<br></br>
-              </Popup>       
-            </CircleMarker>
+              fillColor={point.color}
+              fillOpacity={point.opacity}
+              geojson={point.geojson}
+            />
           )}
          </Pane>
           <Pane name="centreline" style={{ zIndex: 900}}>
