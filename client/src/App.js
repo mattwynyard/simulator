@@ -7,6 +7,7 @@ import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import FaultPoint from './FaultPoint.js';
 import socketIOClient from "socket.io-client";
+
 const SERVER_URL = "http://localhost:5000";
 let start = null;
 
