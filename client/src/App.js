@@ -46,11 +46,7 @@ function App() {
       });
       socket.on("trail", (data) => {
         const millis = Date.now() - start;
-        if (data.length >= MAX_TRAIL_SIZE) {
-          setTrail(data.slice(data.length - MAX_TRAIL_SIZE));        
-        } else {
-          setTrail(data);
-        }
+        setTrail(data);
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         
       });
@@ -82,18 +78,14 @@ function App() {
     if (position.length > 0) {
       let ms = position[0].timestamp.split('.')[1];
       if (ms === '000') {
-        let p = {};
-        p.timestamp = position[0].timestamp;
-        p.bearing = position[0].bearing;
-        p.velocity = position[0].velocity;
-        p.latlng = [...position[0].latlng];
-        p.lock = [...position[0].lock];
-        let t = [...trail];
-        if (p.lock.length !== 0) {
-          t.push(p);
-        }
+        let newPoint = {};
+        newPoint.timestamp = position[0].timestamp;
+        newPoint.bearing = position[0].bearing;
+        newPoint.velocity = position[0].velocity;
+        newPoint.latlng = [...position[0].latlng];
+        newPoint.lock = [...position[0].lock];
         setCenter(position[0].latlng);
-        setTrail(t);
+        setTrail(prevState => prevState.concat(newPoint));
         setCounter(counter => counter + 1); 
       }
       if (mapRef.current) {
@@ -113,6 +105,7 @@ function App() {
     }
   }, [loaded])
 
+
   useEffect(() => {
       if (counter === 1 || counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
@@ -126,7 +119,6 @@ function App() {
   }, [counter, mapRef]);
 
   useEffect(() => {
-    //console.log(`current trail length: ${trail.length} markers`);
     if (trail.length >= MAX_TRAIL_SIZE) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
@@ -134,7 +126,7 @@ function App() {
         socketApp.emit("trail", bounds);    
       } 
     }
-  }, [trail]);
+  }, [trail, mapRef]);
 
   useEffect(() => {
     //console.log(faultPoints)
@@ -197,82 +189,86 @@ function App() {
               >      
             </CircleMarker>
           )}
-          {trail.map((point, idx) =>
-          <Fragment key={`fragment-${idx}`} >
-            <CircleMarker
-              className = {"trail-marker"}
-              key={`marker-${idx}`} 
-              stroke={true}
-              center={point.latlng}
-              radius ={1}
-              fill={true}
-              color={"lime"}
-              fillColor={"lime"}
-              fillOpacity={1.0}
-              eventHandlers={{
-                click: (e) => {
-                  e.target.openPopup();
-                },
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                } 
-              }}
-            > 
-            <Popup
-              className = {"popup"}
-              key={`markerpu-${idx}`}
-              >
-              <div>
-              {`timestamp: ${point.timestamp}`}<br></br>
-              {`bearing : ${point.bearing}`}<br></br> 
-              {`velocity: ${point.velocity}`}<br></br> 
-              {`lat: ${point.latlng[0]}`}<br></br> 
-              {`lng: ${point.latlng[1]}`}<br></br> 
-              </div>         
-            </Popup>      
-            </CircleMarker>
-            <CircleMarker
-              className = {"lock-marker"}
-              key={`lock-${idx}`} 
-              stroke={true}
-              center={point.lock}
-              radius ={1}
-              fill={true}
-              color={"#FF0000"}
-              fillColor={"#FF0000"}
-              fillOpacity={1.0}
-              eventHandlers={{
-                click: (e) => {
-                  e.target.openPopup();
-                },
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                } 
-            }}
-            >
+           </Pane >
+           <Pane name="trail" style={{ zIndex: 999 }}>
+            {trail.map((point, idx) =>
+            <Fragment key={`fragment-${idx}`} >
+              <CircleMarker
+                className = {"trail-marker"}
+                key={`marker-${idx}`} 
+                stroke={true}
+                center={point.latlng}
+                radius ={1}
+                fill={true}
+                color={"lime"}
+                fillColor={"lime"}
+                fillOpacity={1.0}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  } 
+                }}
+              > 
               <Popup
                 className = {"popup"}
-                key={`lockpu-${idx}`}>
+                key={`markerpu-${idx}`}
+                style={{ zIndex: 1000 }}   
+                >
+                <div>
+                {`timestamp: ${point.timestamp}`}<br></br>
+                {`bearing : ${point.bearing}`}<br></br> 
+                {`velocity: ${point.velocity}`}<br></br> 
+                {`lat: ${point.latlng[0]}`}<br></br> 
+                {`lng: ${point.latlng[1]}`}<br></br> 
+                </div>         
+              </Popup>      
+              </CircleMarker>
+              <CircleMarker
+                className = {"lock-marker"}
+                key={`lock-${idx}`} 
+                stroke={true}
+                center={point.lock}
+                radius ={1}
+                fill={true}
+                color={"#FF0000"}
+                fillColor={"#FF0000"}
+                fillOpacity={1.0}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  } 
+              }}
+              >
+              <Popup
+                className = {"popup"}
+                key={`lockpu-${idx}`}
+                style={{ zIndex: 1000 }}   
+                >
                 <div>
                   {`timestamp: ${point.timestamp}`}<br></br>
                   {`bearing : ${point.bearing}`}<br></br> 
                   {`velocity: ${point.velocity}`}<br></br> 
-                  {`lat: ${point.lock[0]}`}<br></br> 
-                  {`lng: ${point.lock[1]}`}<br></br> 
+                  {`lat: ${point.lock ? point.lock[0] : null}`}<br></br> 
+                  {`lng: ${point.lock ? point.lock[1] : null}`}<br></br> 
                 </div>
                 
               </Popup>       
             </CircleMarker>
           </Fragment>
           )}
-          </Pane >
-           
+         </Pane >
          <Pane name="lines">
           {faultLines.map((line, idx) =>
               <Polyline
@@ -303,10 +299,10 @@ function App() {
               </Polyline>
             )}
          </Pane>
-         <Pane name="points" className = {"fault=marker"} style={{ zIndex: 1000 }}>
+         <Pane name="points" className = {"fault-marker"} style={{ zIndex: 999 }}>
           {faultPoints.map((point, idx) =>
             <FaultPoint
-              className = {"fault=marker"}
+              className = {"fault-marker"}
               key={point.id}
               id={point.id}
               fault={point.fault}

@@ -50,7 +50,11 @@ io.on('connection',(socket) => {
       let geojson = JSON.parse(row.geojson);
       newRow.latlng = [geojson.coordinates[1], geojson.coordinates[0]];
       let lockjson = JSON.parse(row.lockjson);
-      newRow.lock = [lockjson.coordinates[1], lockjson.coordinates[0]];
+      if (lockjson) {
+        newRow.lock = [lockjson.coordinates[1], lockjson.coordinates[0]];
+      } else {
+        newRow.lock = [geojson.coordinates[1], geojson.coordinates[0]];
+      }    
       data.push(newRow)
     })
     io.emit("trail", data);
@@ -113,7 +117,7 @@ io.on('connection',(socket) => {
   socket.on("inspection", async (bounds, center) => {
     try {
       let ins = await db.inspection(bounds, center);
-      console.log(ins.rowCount)
+      //console.log(ins.rowCount)
       let points = [];
       let lines = [];
       if (ins.rowCount > 0) {
@@ -162,15 +166,18 @@ app.post('/stop', async (res, req) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
+   
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
     try {
       let prev = await db.prevPosition();
+      if (req.body.lock.length === 0) {
+        req.body.lock = [...req.body.latlng]
+      }
       if (prev.rowCount > 0) {
         let point1 = JSON.parse(prev.rows[0].geojson).coordinates;
         let point2 = [req.body.latlng[1], req.body.latlng[0]];
         let d = util.haversine(point1, point2);
-        console.log("distance: " + Math.round(d * 10) / 10);
         if (d >= MIN_DISTANCE) {
           await db.updateTrail(req.body);
           io.emit("latlng", req.body);
@@ -184,8 +191,7 @@ app.post('/stop', async (res, req) => {
     }
    } else {
     io.emit("latlng", req.body);
-   }
-  
+   }  
   res.send({ message: "ok"}); 
 });
 

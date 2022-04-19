@@ -26,16 +26,16 @@ export default function FaultPoint(props) {
             > 
             <Popup
                 className = {"popup"}
-                autoClose={false}
+                autoClose={false} 
             >
-            <div>
-                {`id: ${props.id}`}<br></br>
-                {`fault: ${props.fault}`}<br></br>
-                {`color: ${props.color}`}<br></br>
-                {`fill color : ${props.fillColor}`}<br></br> 
-                {`lat: ${props.geojson[0]}`}<br></br> 
-                {`lng: ${props.geojson[1]}`}<br></br> 
-            </div> 
+                <div>
+                    {`id: ${props.id}`}<br></br>
+                    {`fault: ${props.fault}`}<br></br>
+                    {`color: ${props.color}`}<br></br>
+                    {`fill color : ${props.fillColor}`}<br></br> 
+                    {`lat: ${props.geojson[0]}`}<br></br> 
+                    {`lng: ${props.geojson[1]}`}<br></br> 
+                </div> 
             </Popup>       
         </CircleMarker>
     );   

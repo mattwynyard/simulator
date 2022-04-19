@@ -19,8 +19,9 @@ const MapRef = forwardRef((props, ref) => {
       },
       zoomend: () => {
         props.update()
-    },
-    });
+      }
+    }, []);
+
     const newCenter = (center) => {
       setCenter(center);
     };
