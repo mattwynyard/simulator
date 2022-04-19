@@ -34,7 +34,7 @@
     "usb-detection": "^4.10.0"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^4.19.1",
     "eslint-config-airbnb": "^18.0.1",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.20.1",

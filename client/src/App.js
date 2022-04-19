@@ -1,169 +1,165 @@
 import './App.css';
-import AntDrawer from'./AntDrawer.js'
-import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, useMapEvents, Pane} from 'react-leaflet';
-import L from 'leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef} from 'react';
+import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
-import Socket from './Socket.js'
+import MapRef from './MapRef.js';
+import FaultPoint from './FaultPoint.js';
+import socketIOClient from "socket.io-client";
+const SERVER_URL = "http://localhost:5000";
+let start = null;
 
-const MapRef = forwardRef((props, ref) => {
-  const [center, setCenter] = useState(null);
-  const [bounds, setBounds] = useState(null);
-  const map = useMapEvents({
-    click: () => {
-      console.log("click")
-    },
-    zoom: () => {
-      let mapBounds = map.getBounds();
-      setBounds(mapBounds);
-      setCenter(center);
-      if(center !== null) {
-        props.callback(mapBounds, center);
-      }
-    },
-  })
-  const newCenter = (center) => {
-    let mapBounds = map.getBounds();
-    setBounds(mapBounds);
-    setCenter(center);
-  };
-  useImperativeHandle(ref, () => {
-    return {
-      newCenter: newCenter
-    }
- });
-
-  useEffect(
-    () => {
-      if (center) {
-        map.panTo(props.center[0])
-      }
-      if(bounds !== null) {
-        props.callback(bounds, center);
-      }      
-    }, [center]);
-    return null
-  });
-
-  
 function App() {
 
-  const [initialise, setIntialise] = useState(false);
+  const REFRESH_RATE = 5;
+  const MAX_TRAIL_SIZE = 50;
   const [isRemote] = useState(false);
+  const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState([-36.81835, 174.74581]);
-  const [points, setPoints] = useState([]);
-  const [lines, setLines] = useState([]);
+  const [faultPoints, setFaultPoints] = useState([]);
+  const [faultLines, setFaultLines] = useState([]);
+  const [trail, setTrail] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
+  const [counter, setCounter] = useState(0);
+  const [socketApp, setSocketApp] = useState(null);
+  const [loaded, setLoaded] = useState(false);
 
-  useEffect(
-    () => {
-      const initialise = async () => {
-        try {
-          const response = await fetch("http://localhost:5000/initialise", {
-              method: 'GET',
-              credentials: 'same-origin',
-              headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',        
-              },      
-          });
-          if (response.ok) {
-              const body = await response.json();
-              return body; 
-          } else { 
-              return Error(response);
-          }
-        } catch {
-            return {error: "server down"}
-        }
+  useEffect(() => {
+    const socket = socketIOClient(SERVER_URL, {
+      cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST"]
       }
-      if (!initialise) {
-        console.log("initialise")
-        initialise()
-        .then((res) => {
-          if (res.error) {
-            alert(res.error);
-            return;
-          }
-          console.log(res)       
-          setIntialise(true)    
-        })
-        .catch(console.error); 
+    });
+    setSocketApp(socket);
+      socket.on("connect", () => {
+      setOnline(true)
+      socket.sendBuffer = []; 
+      socket.on("reset", () => {
+          reset();
+      });
+      socket.on("latlng", (data) => {
+        setPosition([data]);   
+      });
+      socket.on("trail", (data) => {
+        const millis = Date.now() - start;
+        setTrail(data);
+        console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         
-      }
-      console.log("mount")
+      });
+      socket.on("geometry", (data) => {
+        const millis = Date.now() - start;
+        if (data.centreline) {
+          console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`);
+          setCentreLines(data.centreline);
+        }
+        if (data.inspection) {
+          console.log(`Fetched ${data.inspection.points.length} point faults in ${millis} ms`);
+          console.log(`Fetched ${data.inspection.lines.length} line faults in ${millis} ms`);
+          setFaultLines(data.inspection.lines);
+          setFaultPoints(data.inspection.points)
+        }
+      });
+      socket.on("loaded", (result) => {
+        console.log(result)
+        setLoaded(true)  
+      });
+
+    });
+      return () => {
+        socket.disconnect();  
+      } 
   }, []);
 
   useEffect(() => {
-    let lat = center[0];;
-    let lng = center[1];
-    setPosition([L.latLng(lat, lng)]); 
-  }, [initialise])
+    if (position.length > 0) {
+      let ms = position[0].timestamp.split('.')[1];
+      if (ms === '000') {
+        let newPoint = {};
+        newPoint.timestamp = position[0].timestamp;
+        newPoint.bearing = position[0].bearing;
+        newPoint.velocity = position[0].velocity;
+        newPoint.latlng = [...position[0].latlng];
+        newPoint.lock = [...position[0].lock];
+        setCenter(position[0].latlng);
+        setTrail(prevState => prevState.concat(newPoint));
+        setCounter(counter => counter + 1); 
+      }
+      if (mapRef.current) {
+        mapRef.current.newCenter(position[0].latlng);     
+      }
+    }
+  }, [position, mapRef]);
+
 
   useEffect(() => {
-    setCenter(position);
-    if(mapRef.current) {
-      mapRef.current.newCenter(position[0])
-    }  
-  }, [position]);
+    if(mapRef.current) {      
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("inspection", bounds, position[0].latlng);
+      }
+    }
+  }, [loaded])
 
-  const insertPoint = (point) => {
-    setPoints(points => [...points, point]);
-  }
 
-  const insertLine = (line) => {
-    setLines(lines => [...lines, line]);
-  }
+  useEffect(() => {
+      if (counter === 1 || counter % (REFRESH_RATE) === 0) {
+        if(mapRef.current) {      
+          let bounds = mapRef.current.getBounds();
+          if (bounds) {
+            start = Date.now();
+            socketApp.emit("geometry", bounds, position[0].latlng);
+          }
+        }    
+      }
+  }, [counter, mapRef]);
+
+  useEffect(() => {
+    if (trail.length >= MAX_TRAIL_SIZE) {
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("trail", bounds);    
+      } 
+    }
+  }, [trail, mapRef]);
+
+  useEffect(() => {
+    //console.log(faultPoints)
+  }, [faultPoints]);
+
 
   const reset = () => {
-    setLines([]);
-    setPoints([]);
+    setFaultLines([]);
+    setFaultPoints([]);
   }
-  
-  const getCentrelines = async (bounds, center)=> {
-    try {
-      const response = await fetch("http://localhost:5000/centrelines", {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',        
-          },  
-          body: JSON.stringify({
-            bounds: bounds,
-            center: center
-        })    
-      });
-      if (response.ok) {
-          const body = await response.json();
-          let fp = []
-          for (let i = 0; i < body.data.length; i++) {
-              fp.push(body.data[i])
-          }
-          setCentreLines(fp)
-          return body; 
-      } else {
-          
-          return Error(response);
+
+  const updateGeometry = () => {
+    if(mapRef.current) {      
+      let bounds = mapRef.current.getBounds();
+      if (bounds) {
+        start = Date.now();
+        socketApp.emit("geometry", bounds, position[0].latlng);
       }
-    } catch {
-        return new Error("connection error")
-    }      
+    }
   }
 
   return (
     <div className="App">
+      <div className="panel">
+      </div>
       <MapContainer 
           className="map" 
-          center={center} 
+          //center={center} 
           zoom={18} 
           minZoom={13}
           maxZoom={18}
           scrollWheelZoom={true}
+
           keyboard={true}
           eventHandlers={{
               load: () => {
@@ -171,107 +167,170 @@ function App() {
               },
             }}
         >
+        <MapRef 
+          ref={mapRef} 
+          update={updateGeometry}
+          center={position.length !== 0 ? [position[0].latlng] : center} 
+          />
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
          <Pane name="position" style={{ zIndex: 1000 }}>
-          {position.map((position, idx) =>
+          {position.map((point, idx) =>
             <CircleMarker
+              className={"position"}
               key={`marker-${idx}`} 
               stroke={true}
-              center={position}
+              center={point.latlng}
               radius ={6}
               fill={true}
               color={"#3388ff"}
               fillColor={"blue"}
               fillOpacity={1.0}
-              eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                }, 
-              }}
               >      
             </CircleMarker>
           )}
-          </Pane >
-           
-         <Pane name="lines" style={{ zIndex: 990 }}>
-         {lines.map((line, idx) =>
-            <Polyline
-              key={`marker-${idx}`} 
-              style={{ zIndex: 999 }}   
-              positions={line.latlng}
-              idx={idx}
-              color={line.color}
-              weight ={line.weight}
-              opacity={line.opacity}
-              eventHandlers={{
-                click: () => {
-                  console.log('line clicked')
-                },
-                mouseover: (e) => {
-                  console.log("mouse over")
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                }
+           </Pane >
+           <Pane name="trail" style={{ zIndex: 999 }}>
+            {trail.map((point, idx) =>
+            <Fragment key={`fragment-${idx}`} >
+              <CircleMarker
+                className = {"trail-marker"}
+                key={`marker-${idx}`} 
+                stroke={true}
+                center={point.latlng}
+                radius ={1}
+                fill={true}
+                color={"lime"}
+                fillColor={"lime"}
+                fillOpacity={1.0}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  } 
+                }}
+              > 
+              <Popup
+                className = {"popup"}
+                key={`markerpu-${idx}`}
+                style={{ zIndex: 1000 }}   
+                >
+                <div>
+                {`timestamp: ${point.timestamp}`}<br></br>
+                {`bearing : ${point.bearing}`}<br></br> 
+                {`velocity: ${point.velocity}`}<br></br> 
+                {`lat: ${point.latlng[0]}`}<br></br> 
+                {`lng: ${point.latlng[1]}`}<br></br> 
+                </div>         
+              </Popup>      
+              </CircleMarker>
+              <CircleMarker
+                className = {"lock-marker"}
+                key={`lock-${idx}`} 
+                stroke={true}
+                center={point.lock}
+                radius ={1}
+                fill={true}
+                color={"#FF0000"}
+                fillColor={"#FF0000"}
+                fillOpacity={1.0}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  } 
               }}
-            > 
-            <Popup
-                key={`marker-${idx}`}>
-                  {line.id}<br></br>
-                  
-              </Popup>            
-            </Polyline>
+              >
+              <Popup
+                className = {"popup"}
+                key={`lockpu-${idx}`}
+                style={{ zIndex: 1000 }}   
+                >
+                <div>
+                  {`timestamp: ${point.timestamp}`}<br></br>
+                  {`bearing : ${point.bearing}`}<br></br> 
+                  {`velocity: ${point.velocity}`}<br></br> 
+                  {`lat: ${point.lock ? point.lock[0] : null}`}<br></br> 
+                  {`lng: ${point.lock ? point.lock[1] : null}`}<br></br> 
+                </div>
+                
+              </Popup>       
+            </CircleMarker>
+          </Fragment>
           )}
+         </Pane >
+         <Pane name="lines">
+          {faultLines.map((line, idx) =>
+              <Polyline
+                key={`marker-${idx}`} 
+                style={{ zIndex: 999 }}   
+                positions={line.geojson}
+                idx={idx}
+                color={line.color}
+                weight ={line.weight}
+                opacity={line.opacity}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  }
+                }}
+              > 
+                <Popup
+                  className = {"popup"}
+                  key={`marker-${idx}`}>
+                  {line.id}<br></br>    
+                </Popup>            
+              </Polyline>
+            )}
          </Pane>
-         <Pane name="points" style={{ zIndex: 990}}>
-         {points.map((point, idx) =>
-            <CircleMarker
-              key={`marker-${idx}`} 
-              center={L.latLng(point.latlng[0], point.latlng[1])}
+         <Pane name="points" className = {"fault-marker"} style={{ zIndex: 999 }}>
+          {faultPoints.map((point, idx) =>
+            <FaultPoint
+              className = {"fault-marker"}
+              key={point.id}
+              id={point.id}
+              fault={point.fault}
+              center={point.geojson}
               radius ={point.radius}
               fill={point.fill}
               color={point.color}
               opacity={point.opacity}
-              fillColor={point.fillColor}
-              fillOpacity={point.fillOpacity}
-              eventHandlers={{
-                click: () => {
-                  console.log('marker clicked')
-                },
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                }
-              }}
-              > 
-              <Popup
-                key={`marker-${idx}`}>
-                  {point.id}<br></br>
-                  {point.fault}<br></br>
-              </Popup>       
-            </CircleMarker>
+              fillColor={point.color}
+              fillOpacity={point.opacity}
+              geojson={point.geojson}
+            />
           )}
          </Pane>
-          <Pane name="centreline" style={{ zIndex: 900}}>
+          <Pane name="centreline" className = {"centre-line"}>
           {centrelines.map((line, idx) =>
             <Centreline
+              className = {"centre-line"}
               key={`marker-${idx}`}    
-              positions={line}
+              data={line}
               idx={idx}
             >           
             </Centreline>
           )}
-          </Pane>  
-          <MapRef ref={mapRef} center={center} callback={getCentrelines}></MapRef>  
-          <Socket setPosition={setPosition} insertPoint={insertPoint} insertLine={insertLine} reset={reset}/>
-         </MapContainer>
-         <AntDrawer className="drawer" ></AntDrawer>
-         
+          </Pane>    
+         </MapContainer>  
     </div>
+    
   );
 }
 

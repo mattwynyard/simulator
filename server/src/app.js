@@ -2,30 +2,16 @@
 const express = require('express');
 const app = express();
 const http = require('http');
-//const server = require('http').createServer(app);
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-
 const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
-
-let points = [];
-let lines = [];
-let pointMap = new Map();
-let lineMap = new Map();
-
-const refreshDataStore = (map) => {
-  let f = [];
-  map.forEach((value) => {
-    f.push(value);
-  });
-  return f;
-}
+const util = require('./util.js') ;
+const MIN_DISTANCE = 3;
 
 const io = new Server(server, {
   cors: {
@@ -51,49 +37,189 @@ app.use((req, res, next) => {
   next();
 });
 
-io.on('connection', (socket) => {
+io.on('connection',(socket) => {
   console.log("client connected on socket");
-  socket.emit("api", "ack")
-});
+  socket.on("trail", async (bounds) => {
+    let trail = await db.trail(bounds);
+    let data = []
+    trail.rows.forEach(row => {
+      let newRow = {};
+      newRow.timestamp = row.ts;
+      newRow.bearing = row.bearing;
+      newRow.velocity = row.velocity;
+      let geojson = JSON.parse(row.geojson);
+      newRow.latlng = [geojson.coordinates[1], geojson.coordinates[0]];
+      let lockjson = JSON.parse(row.lockjson);
+      if (lockjson) {
+        newRow.lock = [lockjson.coordinates[1], lockjson.coordinates[0]];
+      } else {
+        newRow.lock = [geojson.coordinates[1], geojson.coordinates[0]];
+      }    
+      data.push(newRow)
+    })
+    io.emit("trail", data);
+  });
+  socket.on("geometry", async (bounds, center) => {
+    let cls = null;
+    let ins = null;
+    try {
+      cls = await db.centrelines(bounds, center);
+      cls.rows.forEach(row => {
+        let line = JSON.parse(row.geojson).coordinates;
+        let newLine = [];
+        line[0].forEach((point) => {
+          let coords = [];
+          coords.push(point[1]);
+          coords.push(point[0]);
+          newLine.push(coords);
+        });
+        row.geojson = newLine;
+      });
+    } catch (error) {
+      console.log(error)
+    }
+    try {
+      ins = await db.inspection(bounds, center);
+      if (ins.rowCount > 0) {
+        let points = [];
+        let lines = [];
+        ins.rows.forEach(row => {
+          if (row.type === 'point') {
+            let pointLngLat = JSON.parse(row.geojson).coordinates;
+            let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+            row.geojson = pointLatLng;
+            points.push(row);
+          } else if (row.type === 'line') {
+            let line = JSON.parse(row.geojson).coordinates;
+            let newLine = [];
+            line.forEach((point) => {
+              let coords = [];
+              coords.push(point[1]);
+              coords.push(point[0]);
+              newLine.push(coords);
+            });
+            row.geojson = newLine;
+            lines.push(row)
+          }        
+        });
+        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines}});
+      } else {
+        io.emit("geometry", {centreline: cls.rows, inspection: null});
+      }
+    } catch (error) {
+      console.log(error)
+    }
+      
+
+      
+     
+  });
+  socket.on("inspection", async (bounds, center) => {
+    try {
+      let ins = await db.inspection(bounds, center);
+      //console.log(ins.rowCount)
+      let points = [];
+      let lines = [];
+      if (ins.rowCount > 0) {
+        ins.rows.forEach(row => {
+          if (row.type === 'point') {
+            let pointLngLat = JSON.parse(row.geojson).coordinates;
+            let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+            row.geojson = pointLatLng;
+            points.push(row);
+          } else if (row.type === 'line') {
+            let line = JSON.parse(row.geojson).coordinates;
+            let newLine = [];
+            line.forEach((point) => {
+              let coords = [];
+              coords.push(point[1]);
+              coords.push(point[0]);
+              newLine.push(coords);
+            });
+            row.geojson = newLine;
+            lines.push(row)
+          }        
+        });
+      }   
+      io.emit("geometry", {inspection: {points: points, lines: lines}});
+    } catch (error) {
+      console.log(error)
+    }
+  });
+
+}); //connection
 
 //serve tiles
 app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
 
-app.get('/initialise', async (req, res) => {
-  res.send({ points: points, lines, lines});
+app.post('/start', async (res, req) => {
+  console.log("start")
+});
+
+app.post('/stop', async (res, req) => {
+  console.log("stop")
 });
 
 /**
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-  io.emit("latlng", req.body.latlng[0]);
+   
+   let arr = req.body.timestamp.split('.');
+   if (arr[1] === "000") {
+    try {
+      let prev = await db.prevPosition();
+      if (req.body.lock.length === 0) {
+        req.body.lock = [...req.body.latlng]
+      }
+      if (prev.rowCount > 0) {
+        let point1 = JSON.parse(prev.rows[0].geojson).coordinates;
+        let point2 = [req.body.latlng[1], req.body.latlng[0]];
+        let d = util.haversine(point1, point2);
+        if (d >= MIN_DISTANCE) {
+          await db.updateTrail(req.body);
+          io.emit("latlng", req.body);
+        }    
+      } else {
+        await db.updateTrail(req.body);
+        io.emit("latlng", req.body);
+      }   
+    } catch (err) {
+      console.log(err)
+    }
+   } else {
+    io.emit("latlng", req.body);
+   }  
   res.send({ message: "ok"}); 
 });
 
 app.post('/centrelines', async (req, res) => {
-  let result = await db.centrelines(req.body.bounds, req.body.center);
-  res.send({data: result.rows})
+  let centre = await db.centrelines(req.body.bounds, req.body.center);
+  res.send({data: centre.rows})
 });
 
-app.post('/closestCentreline', async (req, res) => {
-  let result = await db.closestCentreline(req.body.center);
-  res.send({data: result.rows})
-});
-
-app.get('/fault', async (req, res) => {
-  //res.send({ points: faults});
+app.post('/inspection', async (req, res) => {
+  let count = 0;
+  let errors = 0;
+  for (let i = 0; i < req.body.data.length; i++) {
+    try {  
+      let result = await db.insertInspection(req.body.inspection, req.body.data[i]);
+      count += result.rowCount;
+    } catch (error) {
+        console.log(error);
+        errors++;
+    }
+  }  
+  io.emit("loaded", {inserted: count, error: errors});
+  res.send({result: "ok"})
 });
 
 app.get('/reset', async (req, res) => {
   try {
-    pointMap = new Map();
-    lineMap = new Map();
-    points = [];
-    lines = [];
-    io.emit("reset", { points: [], lines: []})
+    await db.resetTrail();
+    await db.resetInspection();
     res.send("reset");
   } catch(error) {
     console.log(error)
@@ -103,71 +229,27 @@ app.get('/reset', async (req, res) => {
 });
 
 app.post('/insertPoint', async (req, res) => {
-  io.emit("insertPoint", req.body);
-  pointMap.set(req.body.id, req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
-  lineMap.set(req.body.id, req.body);
-  io.emit("insertLine", req.body);
-  res.send({ message: "ok"});
-});
-
-app.post('/appendLine', async (req, res) => {
-  let line = lineMap.get(req.body.id);
-  line.latlng.push(req.body.latlng[0]);
-  io.emit("appendLine", req.body);
   res.send({ message: "ok"});
 });
 
 app.post('/updateLine', async (req, res) => {
-  if (lineMap.has(req.body.id)) {
-    lineMap.delete(req.body.id);
-    lineMap.set(req.body.id, req.body);
-    lines = refreshDataStore(lineMap);
-    io.emit("updateLine", lines);
     res.send({ message: "updated"});
-  } else {
-    res.send({ message: "not updated"});
-  }
 });
 
 app.post('/deleteLine', async (req, res) => {
-  console.log(req.body);
-  if (lineMap.has(req.body.id)) {
-    lineMap.delete(req.body.id);
-    lines = refreshDataStore(lineMap);
-    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
-  } else {
-    console.log("notfound:" + req.body.id)
-    res.send({ message: "id " + req.body.id + "not found"});
-  }
 });
 
 app.post('/updatePoint', async (req, res) => {
-  if (pointMap.has(req.body.id)) {
-    pointMap.delete(req.body.id);
-    pointMap.set(req.body.id, req.body);
-    points = refreshDataStore(pointMap);
     res.send({ message: "updated"});
-  } else {
-    res.send({ message: "id not found"});
-  } 
 });
 
 app.post('/deletePoint', async (req, res) => {
-  console.log(req.body);
-  if (pointMap.has(req.body.id)) {
-    pointMap.delete(req.body.id);
-    points = refreshDataStore(pointMap);
-    console.log("deleted:" + req.body.id)
     res.send({ message: "deleted"});
-  } else {
-    console.log("notfound:" + req.body.id)
-    res.send({ message: "id not found"});
-  }
 });
 
 module.exports = app;
