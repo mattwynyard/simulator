@@ -155,6 +155,34 @@ module.exports = {
         });
     },
 
+    inspectionIndex: (bounds, center) => {
+        let sql = null;
+        if (bounds) {
+            let minx = bounds._southWest.lng;
+            let miny = bounds._southWest.lat;
+            let maxx = bounds._northEast.lng;
+            let maxy = bounds._northEast.lat;
+            let lat = center[0];
+            let lng = center[1];
+            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects WHERE geom && " +
+            "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+        } else {
+            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
+        }
+         return new Promise((resolve, reject) => {
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     inspection: (bounds, center) => {
         let sql = null;
         if (bounds) {
@@ -206,6 +234,29 @@ module.exports = {
             });
         });
     },
+
+    centrelinesIndex: (bounds, center) => {
+        let minx = bounds._southWest.lng;
+        let miny = bounds._southWest.lat;
+        let maxx = bounds._northEast.lng;
+        let maxy = bounds._northEast.lat;
+        let lat = center[0];
+        let lng = center[1];
+        let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson FROM centreline "
+        + "WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+        return new Promise((resolve, reject) => {
+            
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     closestCentreline: (center) => {
         console.log(center);
         let lat = center[0].lat;

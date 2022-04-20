@@ -15,6 +15,7 @@ const MapRef = forwardRef((props, ref) => {
         //console.log("zoom")
       },
       move: (e) => {
+        //console.log("move")
         //props.update(map.getBounds(), map.getCenter())
       },
       moveend: (e) => {
@@ -27,7 +28,7 @@ const MapRef = forwardRef((props, ref) => {
       },
       zoomend: (e) => {
         //console.log("zoom end")
-        props.update(map.getBounds(), map.getCenter()) 
+        //props.update(map.getBounds(), map.getCenter()) 
       }
     }, []);
 

@@ -10,6 +10,7 @@ import socketIOClient from "socket.io-client";
 
 const SERVER_URL = "http://localhost:5000";
 let start = null;
+let trailStart = null;
 
 const socket = socketIOClient(SERVER_URL, {
   cors: {
@@ -81,6 +82,7 @@ function App() {
         console.log(result)
         let bounds = mapRef.current.getBounds();
         let center = mapRef.current.getCenter();
+        start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
 
@@ -131,6 +133,7 @@ function App() {
         mapRef.current.setZoom(MAX_ZOOM); 
         let bounds = mapRef.current.getBounds();
         let center = mapRef.current.getCenter();
+        start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);
       } else {
         mapRef.current.setMinZoom(MIN_ZOOM);
@@ -139,7 +142,7 @@ function App() {
   }, [realTime, mapRef]);
 
   useEffect(() => {
-      if (counter === 1 || counter % (REFRESH_RATE) === 0) {
+      if (counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
           let bounds = mapRef.current.getBounds();
           if (bounds) {
@@ -154,7 +157,7 @@ function App() {
     if (trail.length >= MAX_TRAIL_SIZE) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-        start = Date.now();
+        trailStart = Date.now();
         socket.emit("trail", bounds);    
       } 
     }
@@ -170,14 +173,14 @@ function App() {
     setFaultPoints([]);
   }
 
-  const updateGeometry = useCallback((bounds, center) => {
+  const updateGeometry = (bounds, center) => {
     if(mapRef.current) {        
         if (!realTime) {
           start = Date.now();
           socket.emit("geometry", bounds, [center.lat, center.lng]);
         }
     }
-  }, [!realTime]);
+  }
 
   return (
     <div className="App">
