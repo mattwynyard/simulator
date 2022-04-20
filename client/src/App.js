@@ -1,19 +1,30 @@
 import './App.css';
 import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useRef, Fragment} from 'react';
+import React, { useState, useEffect, useRef, Fragment, useCallback} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import FaultPoint from './FaultPoint.js';
 import socketIOClient from "socket.io-client";
+
 const SERVER_URL = "http://localhost:5000";
 let start = null;
+let trailStart = null;
+
+const socket = socketIOClient(SERVER_URL, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"]
+  }
+});
 
 function App() {
 
   const REFRESH_RATE = 5;
   const MAX_TRAIL_SIZE = 50;
+  const MAX_ZOOM = 18;
+  const MIN_ZOOM = 13;
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
@@ -24,22 +35,15 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  const [socketApp, setSocketApp] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [realTime, setRealTime] = useState(false);
 
   useEffect(() => {
-    const socket = socketIOClient(SERVER_URL, {
-      cors: {
-        origin: "http://localhost:8080",
-        methods: ["GET", "POST"]
-      }
-    });
-    setSocketApp(socket);
       socket.on("connect", () => {
       setOnline(true)
       socket.sendBuffer = []; 
       socket.on("reset", () => {
-          reset();
+        reset();
       });
       socket.on("latlng", (data) => {
         setPosition([data]);   
@@ -48,6 +52,16 @@ function App() {
         const millis = Date.now() - start;
         setTrail(data);
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
+        
+      });
+      socket.on("simulator", (data) => {
+        if(data === "start") {
+          setRealTime(true)
+        } else if (data === "stop") {
+          setRealTime(false)
+        } else {
+          console.log(data)
+        }
         
       });
       socket.on("geometry", (data) => {
@@ -64,8 +78,12 @@ function App() {
         }
       });
       socket.on("loaded", (result) => {
-        console.log(result)
         setLoaded(true)  
+        console.log(result)
+        let bounds = mapRef.current.getBounds();
+        let center = mapRef.current.getCenter();
+        start = Date.now();
+        socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
 
     });
@@ -95,24 +113,41 @@ function App() {
   }, [position, mapRef]);
 
 
+  // useEffect(() => {
+  //   if(mapRef.current) {      
+  //     let bounds = mapRef.current.getBounds();
+  //     let cent = mapRef.current.getCenter();
+  //     if (bounds) {
+  //       start = Date.now();
+  //       socket.emit("inspection", bounds, cent);
+  //     }
+  //   }
+  // }, [loaded, mapRef]);
+
   useEffect(() => {
+    console.log(realTime)
     if(mapRef.current) {      
-      let bounds = mapRef.current.getBounds();
-      if (bounds) {
+      if (realTime) {
+        mapRef.current.newCenter(position[0].latlng);
+        mapRef.current.setMinZoom(MAX_ZOOM);
+        mapRef.current.setZoom(MAX_ZOOM); 
+        let bounds = mapRef.current.getBounds();
+        let center = mapRef.current.getCenter();
         start = Date.now();
-        socketApp.emit("inspection", bounds, position[0].latlng);
+        socket.emit("geometry", bounds, [center.lat, center.lng]);
+      } else {
+        mapRef.current.setMinZoom(MIN_ZOOM);
       }
     }
-  }, [loaded])
-
+  }, [realTime, mapRef]);
 
   useEffect(() => {
-      if (counter === 1 || counter % (REFRESH_RATE) === 0) {
+      if (counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
           let bounds = mapRef.current.getBounds();
           if (bounds) {
             start = Date.now();
-            socketApp.emit("geometry", bounds, position[0].latlng);
+            socket.emit("geometry", bounds, position[0].latlng);
           }
         }    
       }
@@ -122,8 +157,8 @@ function App() {
     if (trail.length >= MAX_TRAIL_SIZE) {
       let bounds = mapRef.current.getBounds();
       if (bounds) {
-        start = Date.now();
-        socketApp.emit("trail", bounds);    
+        trailStart = Date.now();
+        socket.emit("trail", bounds);    
       } 
     }
   }, [trail, mapRef]);
@@ -138,13 +173,12 @@ function App() {
     setFaultPoints([]);
   }
 
-  const updateGeometry = () => {
-    if(mapRef.current) {      
-      let bounds = mapRef.current.getBounds();
-      if (bounds) {
-        start = Date.now();
-        socketApp.emit("geometry", bounds, position[0].latlng);
-      }
+  const updateGeometry = (bounds, center) => {
+    if(mapRef.current) {        
+        if (!realTime) {
+          start = Date.now();
+          socket.emit("geometry", bounds, [center.lat, center.lng]);
+        }
     }
   }
 
@@ -156,8 +190,8 @@ function App() {
           className="map" 
           //center={center} 
           zoom={18} 
-          minZoom={13}
-          maxZoom={18}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
 
           keyboard={true}
@@ -169,9 +203,11 @@ function App() {
         >
         <MapRef 
           ref={mapRef} 
+          realTime={realTime}
           update={updateGeometry}
           center={position.length !== 0 ? [position[0].latlng] : center} 
           />
+        
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
          <Pane name="position" style={{ zIndex: 1000 }}>

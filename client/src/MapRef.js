@@ -1,26 +1,51 @@
-import { useState, useEffect, useImperativeHandle, forwardRef} from 'react';
-import { useMapEvents} from 'react-leaflet';
+import { useState, useEffect, useImperativeHandle, forwardRef, useCallback} from 'react';
+import { useMapEvents, useMapEvent} from 'react-leaflet';
+import './PositionControl';
+import L from 'leaflet';
 
 const MapRef = forwardRef((props, ref) => {
     const [center, setCenter] = useState(props.center ? props.center : null);
+    const [control, setControl] = useState(null);
 
     const map = useMapEvents({
       click: () => {
         console.log("click")
       },
-      zoom: () => {
+      zoom: (e) => {
         //console.log("zoom")
       },
-      move: () => {
+      move: (e) => {
         //console.log("move")
+        //props.update(map.getBounds(), map.getCenter())
       },
-      movend: () => {
+      moveend: (e) => {
+        props.update(map.getBounds(), map.getCenter())
         //console.log("movend")
       },
-      zoomend: () => {
-        props.update()
+      zoomstart: (e) => {
+        //console.log("zoom start")
+        //props.update()
+      },
+      zoomend: (e) => {
+        //console.log("zoom end")
+        //props.update(map.getBounds(), map.getCenter()) 
       }
     }, []);
+
+    useEffect(
+      () => {
+        let control = L.positionControl()
+        map.addControl(control);
+        setControl(control)
+    }, [map]);
+
+    const onMouseMove  = useCallback((e) => {
+      let lat = Math.round(e.latlng.lat * 100000) / 100000;
+      let lng = Math.round(e.latlng.lng * 100000) / 100000;
+      control.updateHTML(lat, lng)
+    }, [control]);
+
+    useMapEvent('mousemove', onMouseMove)
 
     const newCenter = (center) => {
       setCenter(center);
@@ -28,12 +53,27 @@ const MapRef = forwardRef((props, ref) => {
 
     const getBounds = () => {
         return map.getBounds();
-      };
+    };
+
+    const setMinZoom = (zoom) => {
+      map.setMinZoom(zoom)
+    };
+
+    const setZoom = (zoom) => {
+      map.setZoom(zoom)
+    };
+
+    const getCenter = () => {
+      return map.getCenter();
+    };
 
     useImperativeHandle(ref, () => {
       return {
         newCenter: newCenter,
-        getBounds : getBounds
+        getBounds : getBounds,
+        getCenter : getCenter,
+        setMinZoom: setMinZoom,
+        setZoom: setZoom
       }
     });
   
