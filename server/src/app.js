@@ -154,14 +154,16 @@ app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
 
-app.post('/start', async (res, req) => {
-  console.log("start")
+app.post('/start', (req, res) => {
+  io.emit("simulator", "start")
+  res.send({ message: "ok"});
+  
 });
 
-app.post('/stop', async (res, req) => {
-  console.log("stop")
+app.post('/stop', (req, res) => {
+  io.emit("simulator", "stop")
+  res.send({ message: "ok"});
 });
-
 /**
  * incoming location from access
  */

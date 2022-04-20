@@ -139,7 +139,7 @@ module.exports = {
             let wkt = util.arrayToWkt(row.latlng);
             sql = `INSERT INTO public.defects(
                 id, inspection, type, color, fault, code, gpstime, altitude, fill, fillcolor, opacity, fillopacity, radius, weight, geom)
-                VALUES (${data}, ST_GeomFromText(${wkt}));` 
+                VALUES (${data}, ST_SetSRID(ST_GeomFromText(${wkt}), 4326));` 
         } else {
             throw new Error; 
         }
@@ -191,11 +191,11 @@ module.exports = {
         let maxy = bounds._northEast.lat;
         let lat = center[0];
         let lng = center[1];
-  
+        let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
+        + lng + "," + lat + "),4326)) AS dist FROM centreline WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
+        + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);" 
         return new Promise((resolve, reject) => {
-            let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
-             + lng + "," + lat + "),4326)) AS dist FROM centreline WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
-             + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);" 
+            
             connection.query(sql, (err, result) => {
                 if (err) {
                     console.error('Error executing query', err.stack)

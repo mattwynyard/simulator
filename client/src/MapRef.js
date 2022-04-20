@@ -15,15 +15,19 @@ const MapRef = forwardRef((props, ref) => {
         //console.log("zoom")
       },
       move: (e) => {
-        //console.log("move")
-        // let lat = Math.round(e.latlng.lat * 100000) / 100000;
-        // let lng = Math.round(e.latlng.lng * 100000) / 100000;
+        //props.update(map.getBounds(), map.getCenter())
       },
-      movend: (e) => {
+      moveend: (e) => {
+        props.update(map.getBounds(), map.getCenter())
         //console.log("movend")
       },
+      zoomstart: (e) => {
+        //console.log("zoom start")
+        //props.update()
+      },
       zoomend: (e) => {
-        props.update()
+        //console.log("zoom end")
+        props.update(map.getBounds(), map.getCenter()) 
       }
     }, []);
 
@@ -48,12 +52,27 @@ const MapRef = forwardRef((props, ref) => {
 
     const getBounds = () => {
         return map.getBounds();
-      };
+    };
+
+    const setMinZoom = (zoom) => {
+      map.setMinZoom(zoom)
+    };
+
+    const setZoom = (zoom) => {
+      map.setZoom(zoom)
+    };
+
+    const getCenter = () => {
+      return map.getCenter();
+    };
 
     useImperativeHandle(ref, () => {
       return {
         newCenter: newCenter,
-        getBounds : getBounds
+        getBounds : getBounds,
+        getCenter : getCenter,
+        setMinZoom: setMinZoom,
+        setZoom: setZoom
       }
     });
   
