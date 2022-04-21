@@ -59,6 +59,11 @@ io.on('connection',(socket) => {
     })
     io.emit("trail", data);
   });
+
+  socket.on("refresh", async () => {
+    console.log("refesh")
+  });
+
   socket.on("geometry", async (bounds, center) => {
     let cls = null;
     let ins = null;
@@ -109,10 +114,7 @@ io.on('connection',(socket) => {
     } catch (error) {
       console.log(error)
     }
-      
-
-      
-     
+    
   });
   socket.on("inspection", async (bounds, center) => {
     try {
