@@ -20,7 +20,7 @@ const MapRef = forwardRef((props, ref) => {
       },
       moveend: (e) => {
         props.update(map.getBounds(), map.getCenter())
-        //console.log("movend")
+
       },
       zoomstart: (e) => {
         //console.log("zoom start")
@@ -40,8 +40,8 @@ const MapRef = forwardRef((props, ref) => {
     }, [map]);
 
     const onMouseMove  = useCallback((e) => {
-      let lat = Math.round(e.latlng.lat * 100000) / 100000;
-      let lng = Math.round(e.latlng.lng * 100000) / 100000;
+      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 : center[0];
+      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 : center[1];
       control.updateHTML(lat, lng)
     }, [control]);
 
@@ -67,13 +67,18 @@ const MapRef = forwardRef((props, ref) => {
       return map.getCenter();
     };
 
+    const flyTo = (center, zoom) => {
+      map.flyTo(center, zoom);
+    }
+
     useImperativeHandle(ref, () => {
       return {
         newCenter: newCenter,
         getBounds : getBounds,
         getCenter : getCenter,
         setMinZoom: setMinZoom,
-        setZoom: setZoom
+        setZoom: setZoom,
+        flyTo: flyTo
       }
     });
   
