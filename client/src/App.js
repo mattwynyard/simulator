@@ -28,7 +28,6 @@ function App() {
   const [isRemote] = useState(false);
   const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
-  //const [center, setCenter] = useState([-36.81835, 174.74581]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
   const [faultLines, setFaultLines] = useState([]);
@@ -92,7 +91,7 @@ function App() {
           mapRef.current.setMinZoom(MIN_ZOOM);
           let bounds = mapRef.current.getBounds();
           let center = mapRef.current.getCenter();  
-          socket.emit("geometry", bounds, [center.lat, center.lng]);
+          //socket.emit("geometry", bounds, [center.lat, center.lng]);
         }
       }
       
@@ -271,7 +270,7 @@ function App() {
                 fillOpacity={1.0}
                 eventHandlers={{
                   click: (e) => {
-                    e.target.openPopup();
+                    //e.target.openPopup();
                   },
                   mouseover: (e) => {
                     e.target.openPopup();
