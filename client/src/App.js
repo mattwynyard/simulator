@@ -338,13 +338,15 @@ function App() {
               id={point.id}
               fault={point.fault}
               center={point.geojson}
+              geojson={point.geojson}
+              stroke={true}
               radius ={point.radius}
-              fill={point.fill}
+              fill={true}
               color={point.color}
               opacity={point.opacity}
-              fillColor={point.color}
+              fillColor={point.fillcolor}
               fillOpacity={point.opacity}
-              geojson={point.geojson}
+              
             />
           )}
          </Pane>
