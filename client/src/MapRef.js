@@ -19,7 +19,7 @@ const MapRef = forwardRef((props, ref) => {
         //props.update(map.getBounds(), map.getCenter())
       },
       moveend: (e) => {
-        props.update(map.getBounds(), map.getCenter())
+        props.update(map.getBounds(), map.getCenter(), map.getZoom())
 
       },
       zoomstart: (e) => {
@@ -63,6 +63,10 @@ const MapRef = forwardRef((props, ref) => {
       map.setZoom(zoom)
     };
 
+    const getZoom = () => {
+      return(map.getZoom());
+    };
+
     const getCenter = () => {
       return map.getCenter();
     };
@@ -78,6 +82,7 @@ const MapRef = forwardRef((props, ref) => {
         getCenter : getCenter,
         setMinZoom: setMinZoom,
         setZoom: setZoom,
+        getZoom: getZoom,
         flyTo: flyTo
       }
     });

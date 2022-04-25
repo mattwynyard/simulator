@@ -1,7 +1,7 @@
 import './App.css';
 import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useRef, Fragment, useCallback} from 'react';
+import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
@@ -26,7 +26,7 @@ function App() {
   const MAX_ZOOM = 18;
   const MIN_ZOOM = 13;
   const [isRemote] = useState(false);
-  const [online, setOnline] = useState(false);
+  //const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
@@ -35,14 +35,11 @@ function App() {
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  const [loaded, setLoaded] = useState(false);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
 
   useEffect(() => {
       socket.on("connect", () => {
-      setOnline(true)
       socket.sendBuffer = [];
-
       socket.on("reset", () => {
         reset();
       });
@@ -84,21 +81,21 @@ function App() {
         start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
-      if(mapRef.current) { 
-        if (realTime) { 
+      try { 
+        let realtime = JSON.parse(window.sessionStorage.getItem('realtime'));
+        if (realtime) { 
           mapRef.current.setMinZoom(MAX_ZOOM);
         } else {
           mapRef.current.setMinZoom(MIN_ZOOM);
-          let bounds = mapRef.current.getBounds();
-          let center = mapRef.current.getCenter();  
-          //socket.emit("geometry", bounds, [center.lat, center.lng]);
         }
-      }
-      
-    });
-      return () => {
-        socket.disconnect();  
+        setRealTime(realtime)
+      } catch {
+        console.log("failed to save state")
       } 
+    });
+    return () => {
+      socket.disconnect();  
+    } 
   }, []);
 
   useEffect(() => {
@@ -121,8 +118,7 @@ function App() {
     }
   }, [position, mapRef]);
 
-  useEffect(() => {
-    
+  useEffect(() => {  
     try { 
       window.sessionStorage.setItem('realtime', JSON.stringify(realTime));
       window.sessionStorage.setItem('center', JSON.stringify(center));
@@ -167,11 +163,12 @@ function App() {
     setFaultPoints([]);
   }
 
-  const updateGeometry = (bounds, center) => {
+  const updateGeometry = (bounds, center, zoom) => {
     if(mapRef.current) {        
       if (!realTime) {
         start = Date.now();
-        socket.emit("geometry", bounds, [center.lat, center.lng]);
+        console.log()
+        socket.emit("geometry", bounds, [center.lat, center.lng], zoom);
       }
     }
   }
@@ -187,7 +184,7 @@ function App() {
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
-
+          preferCanvas={true}
           keyboard={true}
           eventHandlers={{
               load: () => {
@@ -218,7 +215,7 @@ function App() {
               >      
             </CircleMarker>
           )}
-           </Pane >
+           </Pane>
            <Pane name="trail" style={{ zIndex: 999 }}>
             {trail.map((point, idx) =>
             <Fragment key={`fragment-${idx}`} >
