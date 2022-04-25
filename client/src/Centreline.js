@@ -9,7 +9,7 @@ function Centreline(props) {
         cwid={props.data.cwid} 
         label={props.data.label} 
         roadid={props.data.roadid}
-        weight={props.data.weight ? props.data.weight : 4}
+        weight={props.data.weight ? props.data.weight : 3}
         opacity={props.data.opacity ? props.data.opacity: 0.5}
         >
       </Polyline>);

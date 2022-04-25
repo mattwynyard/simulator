@@ -27,7 +27,7 @@
 
 # production
 /client/build
-/client/public/tiles
+/client/public/auckland
 /server/auckland
 /server/.env
 /server/server.cert

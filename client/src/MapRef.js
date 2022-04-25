@@ -19,7 +19,7 @@ const MapRef = forwardRef((props, ref) => {
         //props.update(map.getBounds(), map.getCenter())
       },
       moveend: (e) => {
-        props.update(map.getBounds(), map.getCenter())
+        props.update(map.getBounds(), map.getCenter(), map.getZoom())
 
       },
       zoomstart: (e) => {
@@ -40,10 +40,10 @@ const MapRef = forwardRef((props, ref) => {
     }, [map]);
 
     const onMouseMove  = useCallback((e) => {
-      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 : center[0];
-      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 : center[1];
+      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 :  map.getCenter().lat;
+      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 :  map.getCenter().lng;
       control.updateHTML(lat, lng)
-    }, [control]);
+    }, [control, map]);
 
     useMapEvent('mousemove', onMouseMove)
 
@@ -63,6 +63,10 @@ const MapRef = forwardRef((props, ref) => {
       map.setZoom(zoom)
     };
 
+    const getZoom = () => {
+      return(map.getZoom());
+    };
+
     const getCenter = () => {
       return map.getCenter();
     };
@@ -78,6 +82,7 @@ const MapRef = forwardRef((props, ref) => {
         getCenter : getCenter,
         setMinZoom: setMinZoom,
         setZoom: setZoom,
+        getZoom: getZoom,
         flyTo: flyTo
       }
     });

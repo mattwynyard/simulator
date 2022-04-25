@@ -64,7 +64,7 @@ io.on('connection',(socket) => {
     console.log("refesh")
   });
 
-  socket.on("geometry", async (bounds, center) => {
+  socket.on("geometry", async (bounds, center, zoom) => {
     let cls = null;
     let ins = null;
     try {
@@ -78,7 +78,7 @@ io.on('connection',(socket) => {
           coords.push(point[0]);
           newLine.push(coords);
         });
-        row.geojson = newLine;
+          row.geojson = newLine;
       });
     } catch (error) {
       console.log(error)
@@ -90,6 +90,7 @@ io.on('connection',(socket) => {
         let lines = [];
         ins.rows.forEach(row => {
           if (row.type === 'point') {
+            row.radius = util.getPointRadius(zoom);
             let pointLngLat = JSON.parse(row.geojson).coordinates;
             let pointLatLng = [pointLngLat[1], pointLngLat[0]];
             row.geojson = pointLatLng;
