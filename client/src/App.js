@@ -47,7 +47,7 @@ function App() {
         setPosition([data]);   
       });
       socket.on("trail", (data) => {
-        const millis = Date.now() - start;
+        const millis = Date.now() - trailStart;
         setTrail(data);
         console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
         
@@ -121,7 +121,7 @@ function App() {
   useEffect(() => {  
     try { 
       window.sessionStorage.setItem('realtime', JSON.stringify(realTime));
-      window.sessionStorage.setItem('center', JSON.stringify(center));
+      
     } catch {
       console.log("failed to save state")
     }
@@ -137,12 +137,17 @@ function App() {
   }, [realTime, mapRef]);
 
   useEffect(() => {
+    window.sessionStorage.setItem('center', JSON.stringify(center));
+  }, [center])
+
+  useEffect(() => {
       if (counter === 1 || counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
           let bounds = mapRef.current.getBounds();
+          let center = mapRef.current.getCenter();
           if (bounds) {
             start = Date.now();
-            socket.emit("geometry", bounds, position[0].latlng);
+            socket.emit("geometry", bounds, center);
           }
         }    
       }

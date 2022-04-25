@@ -40,10 +40,10 @@ const MapRef = forwardRef((props, ref) => {
     }, [map]);
 
     const onMouseMove  = useCallback((e) => {
-      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 : center[0];
-      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 : center[1];
+      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 :  map.getCenter().lat;
+      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 :  map.getCenter().lng;
       control.updateHTML(lat, lng)
-    }, [control]);
+    }, [control, map]);
 
     useMapEvent('mousemove', onMouseMove)
 
