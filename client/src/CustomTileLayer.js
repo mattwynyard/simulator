@@ -5,7 +5,7 @@ function CustomTileLayer(props) {
       return (
         <TileLayer
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="http://localhost:5000/auckland/{z}/{x}/{y}.png"
+          url="/auckland/{z}/{x}/{y}.png"
         />
       );
     } else {
