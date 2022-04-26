@@ -1,10 +1,24 @@
 import './FaultPoint.css';
-import { CircleMarker, Popup } from 'react-leaflet';
+import { CircleMarker, Popup} from 'react-leaflet';
+import { useEffect, useRef } from 'react';
+import L from 'leaflet';
 
 export default function FaultPoint(props) {
 
+    const ref = useRef(null);
+    //const myRenderer = L.canvas();
+    useEffect(() => {
+        //console.log("mount")
+        //console.log(ref.current)
+        return () => {
+            //console.log("unmount")  
+          } 
+    }, [])
+
+
     return (
         <CircleMarker
+            ref={ref}
             id={props.id}
             center={props.geojson}
             radius ={props.radius}
@@ -13,20 +27,23 @@ export default function FaultPoint(props) {
             color={props.color}
             opacity={props.opacity}
             fillColor={props.fillColor}
+            //renderer={myRenderer}
             fillOpacity={props.fillOpacity}
             eventHandlers={{
-            mouseover: (e) => {
-                console.log("mouseover")
-                e.target.openPopup();
-            },
-            mouseout: (e) => {
-                e.target.closePopup();
-            }
+                click: () => {
+                    console.log('marker clicked')
+                  },
+                mouseover: (e) => {
+                    console.log("mouseover")
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
             }}
             > 
             <Popup
                 className = {"popup"}
-                autoClose={false} 
             >
                 <div>
                     {`id: ${props.id}`}<br></br>

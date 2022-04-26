@@ -26,7 +26,6 @@ function App() {
   const MAX_ZOOM = 18;
   const MIN_ZOOM = 13;
   const [isRemote] = useState(false);
-  //const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
@@ -127,10 +126,9 @@ function App() {
     if(mapRef.current) {      
       if (realTime) { 
         console.log(`RealTime: ${realTime}`);
-        //let bounds = mapRef.current.getBounds();
-        //let center = mapRef.current.getCenter();
-        //socket.emit("geometry", bounds, [center.lat, center.lng]);
         mapRef.current.setMinZoom(MAX_ZOOM);
+        setFaultLines([]);
+        setFaultPoints([]);
       } else {
         mapRef.current.setMinZoom(MIN_ZOOM);
       }
@@ -190,13 +188,14 @@ function App() {
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
-          preferCanvas={true}
+          //preferCanvas={true}
           keyboard={true}
-          eventHandlers={{
-              load: () => {
-                console.log('onload')
-              },
-            }}
+
+          // eventHandlers={{
+          //     load: () => {
+          //       console.log('onload')
+          //     },
+          //   }}
         >
         <MapRef 
           ref={mapRef} 
@@ -233,31 +232,31 @@ function App() {
                 color={"lime"}
                 fillColor={"lime"}
                 fillOpacity={1.0}
-                eventHandlers={{
-                  click: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseover: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseout: (e) => {
-                    e.target.closePopup();
-                  } 
-                }}
+
+                // eventHandlers={{
+                //   click: (e) => {
+                //     e.target.openPopup();
+                //   },
+                //   mouseover: (e) => {
+                //     e.target.openPopup();
+                //   },
+                //   mouseout: (e) => {
+                //     e.target.closePopup();
+                //   } 
+                // }}
               > 
-              <Popup
-                className = {"popup"}
-                key={`markerpu-${idx}`}
-                style={{ zIndex: 1000 }}   
-                >
-                <div>
-                {`timestamp: ${point.timestamp}`}<br></br>
-                {`bearing : ${point.bearing}`}<br></br> 
-                {`velocity: ${point.velocity}`}<br></br> 
-                {`lat: ${point.latlng[0]}`}<br></br> 
-                {`lng: ${point.latlng[1]}`}<br></br> 
-                </div>         
-              </Popup>      
+                <Popup
+                  className = {"popup"}
+                  key={`markerpu-${idx}`} 
+                  >
+                  <div>
+                  {`timestamp: ${point.timestamp}`}<br></br>
+                  {`bearing : ${point.bearing}`}<br></br> 
+                  {`velocity: ${point.velocity}`}<br></br> 
+                  {`lat: ${point.latlng[0]}`}<br></br> 
+                  {`lng: ${point.latlng[1]}`}<br></br> 
+                  </div>         
+                </Popup>      
               </CircleMarker>
               <CircleMarker
                 className = {"lock-marker"}
@@ -300,68 +299,70 @@ function App() {
           )}
          <LayersControl.Overlay checked name="Faults">
          <LayerGroup>
-          {faultLines.map((line, idx) =>
-              <Polyline
-                key={`marker-${idx}`} 
-                style={{ zIndex: 999 }}   
-                positions={line.geojson}
-                idx={idx}
-                color={line.color}
-                weight ={line.weight}
-                opacity={line.opacity}
-                eventHandlers={{
-                  click: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseover: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseout: (e) => {
-                    e.target.closePopup();
-                  }
-                }}
-              > 
-                <Popup
-                  className = {"popup"}
-                  key={`marker-${idx}`}>
-                  {line.id}<br></br>    
-                </Popup>            
-              </Polyline>
-            )}     
-          {faultPoints.map((point, idx) =>
-            <FaultPoint
-              className = {"fault-marker"}
-              key={point.id}
-              id={point.id}
-              fault={point.fault}
-              center={point.geojson}
-              geojson={point.geojson}
-              stroke={true}
-              radius ={point.radius}
-              fill={true}
-              color={point.color}
-              opacity={point.opacity}
-              fillColor={point.fillcolor}
-              fillOpacity={point.opacity}     
-            />
-          )}
+          <Pane name="faults" className={"faults"}>
+            {faultLines.map((line, idx) =>
+                <Polyline
+                  key={`marker-${idx}`} 
+                  style={{ zIndex: 999 }}   
+                  positions={line.geojson}
+                  idx={idx}
+                  color={line.color}
+                  weight ={line.weight}
+                  opacity={line.opacity}
+                  eventHandlers={{
+                    click: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseover: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseout: (e) => {
+                      e.target.closePopup();
+                    }
+                  }}
+                > 
+                  <Popup
+                    className = {"popup"}
+                    key={`marker-${idx}`}>
+                    {line.id}<br></br>    
+                  </Popup>            
+                </Polyline>
+              )}     
+            {faultPoints.map((point, idx) =>
+              <FaultPoint
+                className = {"fault-marker"}
+                key={point.id}
+                id={point.id}
+                fault={point.fault}
+                center={point.geojson}
+                geojson={point.geojson}
+                stroke={true}
+                radius ={point.radius}
+                fill={true}
+                color={point.color}
+                opacity={point.opacity}
+                fillColor={point.fillcolor}
+                fillOpacity={point.opacity}     
+              />
+            )}
+            </Pane>
          </LayerGroup>
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
-         <LayerGroup>
-          <Pane name="centreline" className = {"centre-line"}>
-          {centrelines.map((line, idx) =>
-            <Centreline
-              className = {"centre-line"}
-              key={`marker-${idx}`}    
-              data={line}
-              idx={idx}
-            >           
-            </Centreline>
-          )}
-          </Pane> 
+          <LayerGroup>
+            <Pane name="centreline" className = {"centre-line"}>
+              {centrelines.map((line, idx) =>
+                <Centreline
+                  className = {"centre-line"}
+                  key={`marker-${idx}`}    
+                  data={line}
+                  idx={idx}
+                >           
+                </Centreline>
+              )}
+            </Pane> 
           </LayerGroup>
-         </LayersControl.Overlay>
+        </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  
     </div>
