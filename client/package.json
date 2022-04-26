@@ -1,6 +1,6 @@
 {
-  "name": "template",
-  "version": "0.1.0",
+  "name": "simulator",
+  "version": "0.3.0",
   "proxy": "http://localhost:5000",
   "start": "HTTP=false react-scripts start",
   "private": true,

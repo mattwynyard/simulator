@@ -7,6 +7,7 @@ const MapRef = forwardRef((props, ref) => {
     const [center, setCenter] = useState(props.center ? props.center : null);
     const [control, setControl] = useState(null);
 
+
     const map = useMapEvents({
       click: () => {
         console.log("click")
@@ -19,6 +20,7 @@ const MapRef = forwardRef((props, ref) => {
         //props.update(map.getBounds(), map.getCenter())
       },
       moveend: (e) => {
+        //console.log("movened")
         props.update(map.getBounds(), map.getCenter(), map.getZoom())
 
       },
@@ -36,6 +38,7 @@ const MapRef = forwardRef((props, ref) => {
       () => {
         let control = L.positionControl()
         map.addControl(control);
+
         setControl(control)
     }, [map]);
 
@@ -46,6 +49,7 @@ const MapRef = forwardRef((props, ref) => {
     }, [control, map]);
 
     useMapEvent('mousemove', onMouseMove)
+
 
     const newCenter = (center) => {
       setCenter(center);

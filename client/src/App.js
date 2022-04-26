@@ -1,5 +1,5 @@
 import './App.css';
-import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, LayerGroup, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
@@ -26,7 +26,6 @@ function App() {
   const MAX_ZOOM = 18;
   const MIN_ZOOM = 13;
   const [isRemote] = useState(false);
-  //const [online, setOnline] = useState(false);
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
@@ -120,16 +119,16 @@ function App() {
 
   useEffect(() => {  
     try { 
-      window.sessionStorage.setItem('realtime', JSON.stringify(realTime));
-      
+      window.sessionStorage.setItem('realtime', JSON.stringify(realTime));     
     } catch {
       console.log("failed to save state")
     }
     if(mapRef.current) {      
       if (realTime) { 
-        console.log(`RealTime: ${realTime}`)
-        //socket.emit("geometry", bounds, [center.lat, center.lng]);
+        console.log(`RealTime: ${realTime}`);
         mapRef.current.setMinZoom(MAX_ZOOM);
+        setFaultLines([]);
+        setFaultPoints([]);
       } else {
         mapRef.current.setMinZoom(MIN_ZOOM);
       }
@@ -189,8 +188,9 @@ function App() {
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
-          preferCanvas={true}
+          //preferCanvas={true}
           keyboard={true}
+
           eventHandlers={{
               load: () => {
                 console.log('onload')
@@ -204,61 +204,61 @@ function App() {
           />
         
         <CustomTileLayer isRemote={isRemote}/>
-         <ScaleControl name="Scale" className="scale"/>
-         <Pane name="position" style={{ zIndex: 1000 }}>
-          {position.map((point, idx) =>
+        <ScaleControl name="Scale" className="scale"/>
+        <LayersControl position="topright">
+        {position.map((point, idx) =>
+          <CircleMarker
+            className={"position"}
+            key={`marker-${idx}`} 
+            stroke={true}
+            center={point.latlng}
+            radius ={6}
+            fill={true}
+            color={"#3388ff"}
+            fillColor={"blue"}
+            fillOpacity={1.0}
+            style={{ zIndex: 999 }}   
+            >      
+          </CircleMarker>
+        )}
+          {trail.map((point, idx) =>
+          <Fragment key={`fragment-${idx}`} >
             <CircleMarker
-              className={"position"}
+              className = {"trail-marker"}
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
-              radius ={6}
+              radius ={1}
               fill={true}
-              color={"#3388ff"}
-              fillColor={"blue"}
+              color={"lime"}
+              fillColor={"lime"}
               fillOpacity={1.0}
-              >      
-            </CircleMarker>
-          )}
-           </Pane>
-           <Pane name="trail" style={{ zIndex: 999 }}>
-            {trail.map((point, idx) =>
-            <Fragment key={`fragment-${idx}`} >
-              <CircleMarker
-                className = {"trail-marker"}
-                key={`marker-${idx}`} 
-                stroke={true}
-                center={point.latlng}
-                radius ={1}
-                fill={true}
-                color={"lime"}
-                fillColor={"lime"}
-                fillOpacity={1.0}
-                eventHandlers={{
-                  click: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseover: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseout: (e) => {
-                    e.target.closePopup();
-                  } 
-                }}
+              style={{ zIndex: 950 }}   
+
+              eventHandlers={{
+                click: (e) => {
+                  e.target.openPopup();
+                },
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
+                } 
+              }}
               > 
-              <Popup
-                className = {"popup"}
-                key={`markerpu-${idx}`}
-                style={{ zIndex: 1000 }}   
-                >
-                <div>
-                {`timestamp: ${point.timestamp}`}<br></br>
-                {`bearing : ${point.bearing}`}<br></br> 
-                {`velocity: ${point.velocity}`}<br></br> 
-                {`lat: ${point.latlng[0]}`}<br></br> 
-                {`lng: ${point.latlng[1]}`}<br></br> 
-                </div>         
-              </Popup>      
+                <Popup
+                  className = {"popup"}
+                  key={`markerpu-${idx}`} 
+                  >
+                  <div>
+                    {`timestamp: ${point.timestamp}`}<br></br>
+                    {`bearing : ${point.bearing}`}<br></br> 
+                    {`velocity: ${point.velocity}`}<br></br> 
+                    {`lat: ${point.latlng[0]}`}<br></br> 
+                    {`lng: ${point.latlng[1]}`}<br></br> 
+                  </div>         
+                </Popup>      
               </CircleMarker>
               <CircleMarker
                 className = {"lock-marker"}
@@ -272,7 +272,7 @@ function App() {
                 fillOpacity={1.0}
                 eventHandlers={{
                   click: (e) => {
-                    //e.target.openPopup();
+                    e.target.openPopup();
                   },
                   mouseover: (e) => {
                     e.target.openPopup();
@@ -285,7 +285,6 @@ function App() {
               <Popup
                 className = {"popup"}
                 key={`lockpu-${idx}`}
-                style={{ zIndex: 1000 }}   
                 >
                 <div>
                   {`timestamp: ${point.timestamp}`}<br></br>
@@ -299,68 +298,74 @@ function App() {
             </CircleMarker>
           </Fragment>
           )}
-         </Pane >
-         <Pane name="lines">
-          {faultLines.map((line, idx) =>
-              <Polyline
-                key={`marker-${idx}`} 
-                style={{ zIndex: 999 }}   
-                positions={line.geojson}
-                idx={idx}
-                color={line.color}
-                weight ={line.weight}
-                opacity={line.opacity}
-                eventHandlers={{
-                  click: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseover: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseout: (e) => {
-                    e.target.closePopup();
-                  }
-                }}
-              > 
-                <Popup
-                  className = {"popup"}
-                  key={`marker-${idx}`}>
-                  {line.id}<br></br>    
-                </Popup>            
-              </Polyline>
+         <LayersControl.Overlay checked name="Faults">
+         <LayerGroup>
+          <Pane name="faults" className={"faults"}>
+            {faultLines.map((line, idx) =>
+                <Polyline
+                  key={`marker-${idx}`} 
+                  style={{ zIndex: 999 }}   
+                  positions={line.geojson}
+                  idx={idx}
+                  color={line.color}
+                  weight ={line.weight}
+                  opacity={line.opacity}
+                  eventHandlers={{
+                    click: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseover: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseout: (e) => {
+                      e.target.closePopup();
+                    }
+                  }}
+                > 
+                  <Popup
+                    className = {"popup"}
+                    key={`marker-${idx}`}>
+                    {line.id}<br></br>    
+                  </Popup>            
+                </Polyline>
+              )}     
+            {faultPoints.map((point, idx) =>
+              <FaultPoint
+                className = {"fault-marker"}
+                key={point.id}
+                id={point.id}
+                fault={point.fault}
+                center={point.geojson}
+                geojson={point.geojson}
+                stroke={true}
+                radius ={point.radius}
+                fill={true}
+                color={point.color}
+                opacity={point.opacity}
+                fillColor={point.fillcolor}
+                fillOpacity={point.opacity}     
+              />
             )}
-         </Pane>
-         <Pane name="points" className = {"fault-marker"} style={{ zIndex: 999 }}>
-          {faultPoints.map((point, idx) =>
-            <FaultPoint
-              className = {"fault-marker"}
-              key={point.id}
-              id={point.id}
-              fault={point.fault}
-              center={point.geojson}
-              geojson={point.geojson}
-              stroke={true}
-              radius ={point.radius}
-              fill={true}
-              color={point.color}
-              opacity={point.opacity}
-              fillColor={point.fillcolor}
-              fillOpacity={point.opacity}
-              
-            />
-          )}
-         </Pane>
-          <Pane name="centreline" className = {"centre-line"}>
-          {centrelines.map((line, idx) =>
-            <Centreline
-              className = {"centre-line"}
-              key={`marker-${idx}`}    
-              data={line}
-              idx={idx}
-            >           
-            </Centreline>
-          )}
-          </Pane>    
+            </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Centrelines">
+          <LayerGroup>
+           
+              {centrelines.map((line, idx) =>
+                <Centreline
+                  className = {"centre-line"}
+                  key={`marker-${idx}`}    
+                  data={line}
+                  idx={idx}
+                >           
+                </Centreline>
+              )}
+            
+          </LayerGroup>
+         
+        </LayersControl.Overlay>
+          </LayersControl>   
          </MapContainer>  
     </div>
     
