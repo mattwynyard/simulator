@@ -204,57 +204,59 @@ function App() {
           />
         
         <CustomTileLayer isRemote={isRemote}/>
-         <ScaleControl name="Scale" className="scale"/>
-         <LayersControl position="topright">
-          {position.map((point, idx) =>
+        <ScaleControl name="Scale" className="scale"/>
+        <LayersControl position="topright">
+        {position.map((point, idx) =>
+          <CircleMarker
+            className={"position"}
+            key={`marker-${idx}`} 
+            stroke={true}
+            center={point.latlng}
+            radius ={6}
+            fill={true}
+            color={"#3388ff"}
+            fillColor={"blue"}
+            fillOpacity={1.0}
+            style={{ zIndex: 999 }}   
+            >      
+          </CircleMarker>
+        )}
+          {trail.map((point, idx) =>
+          <Fragment key={`fragment-${idx}`} >
             <CircleMarker
-              className={"position"}
+              className = {"trail-marker"}
               key={`marker-${idx}`} 
               stroke={true}
               center={point.latlng}
-              radius ={6}
+              radius ={1}
               fill={true}
-              color={"#3388ff"}
-              fillColor={"blue"}
+              color={"lime"}
+              fillColor={"lime"}
               fillOpacity={1.0}
-              >      
-            </CircleMarker>
-          )}
-            {trail.map((point, idx) =>
-            <Fragment key={`fragment-${idx}`} >
-              <CircleMarker
-                className = {"trail-marker"}
-                key={`marker-${idx}`} 
-                stroke={true}
-                center={point.latlng}
-                radius ={1}
-                fill={true}
-                color={"lime"}
-                fillColor={"lime"}
-                fillOpacity={1.0}
+              style={{ zIndex: 950 }}   
 
-                eventHandlers={{
-                  click: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseover: (e) => {
-                    e.target.openPopup();
-                  },
-                  mouseout: (e) => {
-                    e.target.closePopup();
-                  } 
-                }}
+              eventHandlers={{
+                click: (e) => {
+                  e.target.openPopup();
+                },
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  e.target.closePopup();
+                } 
+              }}
               > 
                 <Popup
                   className = {"popup"}
                   key={`markerpu-${idx}`} 
                   >
                   <div>
-                  {`timestamp: ${point.timestamp}`}<br></br>
-                  {`bearing : ${point.bearing}`}<br></br> 
-                  {`velocity: ${point.velocity}`}<br></br> 
-                  {`lat: ${point.latlng[0]}`}<br></br> 
-                  {`lng: ${point.latlng[1]}`}<br></br> 
+                    {`timestamp: ${point.timestamp}`}<br></br>
+                    {`bearing : ${point.bearing}`}<br></br> 
+                    {`velocity: ${point.velocity}`}<br></br> 
+                    {`lat: ${point.latlng[0]}`}<br></br> 
+                    {`lng: ${point.latlng[1]}`}<br></br> 
                   </div>         
                 </Popup>      
               </CircleMarker>
@@ -283,7 +285,6 @@ function App() {
               <Popup
                 className = {"popup"}
                 key={`lockpu-${idx}`}
-                style={{ zIndex: 1000 }}   
                 >
                 <div>
                   {`timestamp: ${point.timestamp}`}<br></br>
@@ -350,7 +351,7 @@ function App() {
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
-            <Pane name="centreline" className = {"centre-line"}>
+           
               {centrelines.map((line, idx) =>
                 <Centreline
                   className = {"centre-line"}
@@ -360,8 +361,9 @@ function App() {
                 >           
                 </Centreline>
               )}
-            </Pane> 
+            
           </LayerGroup>
+         
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  

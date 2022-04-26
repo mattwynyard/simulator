@@ -9,9 +9,9 @@
 
 }
 
-.fault-marker .centre-line {
+/* .fault-marker .centre-line {
   z-index: 900;
-}
+} */
 
 .popup {
   z-index: 1000;

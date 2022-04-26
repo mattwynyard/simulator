@@ -1,7 +1,6 @@
 import './FaultPoint.css';
 import { CircleMarker, Popup} from 'react-leaflet';
 import { useEffect, useRef } from 'react';
-import L from 'leaflet';
 
 export default function FaultPoint(props) {
 
@@ -18,6 +17,7 @@ export default function FaultPoint(props) {
 
     return (
         <CircleMarker
+            className={"fault-marker"}
             ref={ref}
             id={props.id}
             center={props.geojson}
@@ -29,6 +29,7 @@ export default function FaultPoint(props) {
             fillColor={props.fillColor}
             //renderer={myRenderer}
             fillOpacity={props.fillOpacity}
+        
             eventHandlers={{
                 click: () => {
                     console.log('marker clicked')
