@@ -191,11 +191,11 @@ function App() {
           //preferCanvas={true}
           keyboard={true}
 
-          // eventHandlers={{
-          //     load: () => {
-          //       console.log('onload')
-          //     },
-          //   }}
+          eventHandlers={{
+              load: () => {
+                console.log('onload')
+              },
+            }}
         >
         <MapRef 
           ref={mapRef} 
@@ -233,17 +233,17 @@ function App() {
                 fillColor={"lime"}
                 fillOpacity={1.0}
 
-                // eventHandlers={{
-                //   click: (e) => {
-                //     e.target.openPopup();
-                //   },
-                //   mouseover: (e) => {
-                //     e.target.openPopup();
-                //   },
-                //   mouseout: (e) => {
-                //     e.target.closePopup();
-                //   } 
-                // }}
+                eventHandlers={{
+                  click: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseover: (e) => {
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    e.target.closePopup();
+                  } 
+                }}
               > 
                 <Popup
                   className = {"popup"}
