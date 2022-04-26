@@ -1,5 +1,5 @@
 import './App.css';
-import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, LayerGroup, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
 import Centreline from './Centreline.js';
@@ -120,14 +120,15 @@ function App() {
 
   useEffect(() => {  
     try { 
-      window.sessionStorage.setItem('realtime', JSON.stringify(realTime));
-      
+      window.sessionStorage.setItem('realtime', JSON.stringify(realTime));     
     } catch {
       console.log("failed to save state")
     }
     if(mapRef.current) {      
       if (realTime) { 
-        console.log(`RealTime: ${realTime}`)
+        console.log(`RealTime: ${realTime}`);
+        //let bounds = mapRef.current.getBounds();
+        //let center = mapRef.current.getCenter();
         //socket.emit("geometry", bounds, [center.lat, center.lng]);
         mapRef.current.setMinZoom(MAX_ZOOM);
       } else {
@@ -205,7 +206,7 @@ function App() {
         
         <CustomTileLayer isRemote={isRemote}/>
          <ScaleControl name="Scale" className="scale"/>
-         <Pane name="position" style={{ zIndex: 1000 }}>
+         <LayersControl position="topright">
           {position.map((point, idx) =>
             <CircleMarker
               className={"position"}
@@ -220,8 +221,6 @@ function App() {
               >      
             </CircleMarker>
           )}
-           </Pane>
-           <Pane name="trail" style={{ zIndex: 999 }}>
             {trail.map((point, idx) =>
             <Fragment key={`fragment-${idx}`} >
               <CircleMarker
@@ -272,7 +271,7 @@ function App() {
                 fillOpacity={1.0}
                 eventHandlers={{
                   click: (e) => {
-                    //e.target.openPopup();
+                    e.target.openPopup();
                   },
                   mouseover: (e) => {
                     e.target.openPopup();
@@ -299,8 +298,8 @@ function App() {
             </CircleMarker>
           </Fragment>
           )}
-         </Pane >
-         <Pane name="lines">
+         <LayersControl.Overlay checked name="Faults">
+         <LayerGroup>
           {faultLines.map((line, idx) =>
               <Polyline
                 key={`marker-${idx}`} 
@@ -328,9 +327,7 @@ function App() {
                   {line.id}<br></br>    
                 </Popup>            
               </Polyline>
-            )}
-         </Pane>
-         <Pane name="points" className = {"fault-marker"} style={{ zIndex: 999 }}>
+            )}     
           {faultPoints.map((point, idx) =>
             <FaultPoint
               className = {"fault-marker"}
@@ -345,11 +342,13 @@ function App() {
               color={point.color}
               opacity={point.opacity}
               fillColor={point.fillcolor}
-              fillOpacity={point.opacity}
-              
+              fillOpacity={point.opacity}     
             />
           )}
-         </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Centrelines">
+         <LayerGroup>
           <Pane name="centreline" className = {"centre-line"}>
           {centrelines.map((line, idx) =>
             <Centreline
@@ -360,7 +359,10 @@ function App() {
             >           
             </Centreline>
           )}
-          </Pane>    
+          </Pane> 
+          </LayerGroup>
+         </LayersControl.Overlay>
+          </LayersControl>   
          </MapContainer>  
     </div>
     

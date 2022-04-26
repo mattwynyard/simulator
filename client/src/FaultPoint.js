@@ -2,6 +2,7 @@ import './FaultPoint.css';
 import { CircleMarker, Popup } from 'react-leaflet';
 
 export default function FaultPoint(props) {
+
     return (
         <CircleMarker
             id={props.id}
@@ -13,14 +14,9 @@ export default function FaultPoint(props) {
             opacity={props.opacity}
             fillColor={props.fillColor}
             fillOpacity={props.fillOpacity}
-
-              
-
             eventHandlers={{
-            click: (e) => {
-                e.target.openPopup();
-            },
             mouseover: (e) => {
+                console.log("mouseover")
                 e.target.openPopup();
             },
             mouseout: (e) => {
