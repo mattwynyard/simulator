@@ -31,11 +31,10 @@ export default function FaultPoint(props) {
             fillOpacity={props.fillOpacity}
         
             eventHandlers={{
-                click: () => {
-                    console.log('marker clicked')
+                click: (e) => {
+                    //e.target.openPopup();
                   },
                 mouseover: (e) => {
-                    console.log("mouseover")
                     e.target.openPopup();
                 },
                 mouseout: (e) => {
