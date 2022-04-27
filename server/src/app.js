@@ -68,7 +68,8 @@ io.on('connection',(socket) => {
     let cls = null;
     let ins = null;
     try {
-      cls = await db.centrelinesIndex(bounds, center);
+      //cls = await db.centrelinesIndex(bounds, center);
+      cls = await db.centrelineStatus(bounds);
       cls.rows.forEach(row => {
         let line = JSON.parse(row.geojson).coordinates;
         let newLine = [];

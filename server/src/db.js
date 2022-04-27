@@ -257,6 +257,28 @@ module.exports = {
         });
     },
 
+    centrelineStatus: (bounds) => {
+        let minx = bounds._southWest.lng;
+        let miny = bounds._southWest.lat;
+        let maxx = bounds._northEast.lng;
+        let maxy = bounds._northEast.lat;
+        // let lat = center[0];
+        // let lng = center[1];
+        let sql = "SELECT c.cwid, c.roadid, c.label, ST_AsGeoJSON(c.geom) as geojson, c.status, m.color, m.opacity, m.weight FROM centreline as c, "
+        + "clmap as m WHERE c.status = m.status and geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+        return new Promise((resolve, reject) => {
+            
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     closestCentreline: (center) => {
         console.log(center);
         let lat = center[0].lat;
