@@ -190,7 +190,6 @@ function App() {
           scrollWheelZoom={true}
           //preferCanvas={true}
           keyboard={true}
-
           eventHandlers={{
               load: () => {
                 console.log('onload')
@@ -201,8 +200,7 @@ function App() {
           ref={mapRef} 
           update={updateGeometry}
           center={position.length !== 0 ? [position[0].latlng] : center} 
-          />
-        
+          />       
         <CustomTileLayer isRemote={isRemote}/>
         <ScaleControl name="Scale" className="scale"/>
         <LayersControl position="topright">
@@ -234,7 +232,6 @@ function App() {
               fillColor={"lime"}
               fillOpacity={1.0}
               style={{ zIndex: 950 }}   
-
               eventHandlers={{
                 click: (e) => {
                   e.target.openPopup();

@@ -7,11 +7,7 @@
 .position {
   z-index: 999;
 
-}
-
-/* .fault-marker .centre-line {
-  z-index: 900;
-} */
+} 
 
 .popup {
   z-index: 1000;
