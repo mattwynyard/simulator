@@ -1,24 +1,11 @@
 import './FaultPoint.css';
 import { CircleMarker, Popup} from 'react-leaflet';
-import { useEffect, useRef } from 'react';
 
 export default function FaultPoint(props) {
-
-    const ref = useRef(null);
-    //const myRenderer = L.canvas();
-    useEffect(() => {
-        //console.log("mount")
-        //console.log(ref.current)
-        return () => {
-            //console.log("unmount")  
-          } 
-    }, [])
-
 
     return (
         <CircleMarker
             className={"fault-marker"}
-            ref={ref}
             id={props.id}
             center={props.geojson}
             radius ={props.radius}

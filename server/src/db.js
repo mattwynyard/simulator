@@ -240,12 +240,9 @@ module.exports = {
         let miny = bounds._southWest.lat;
         let maxx = bounds._northEast.lng;
         let maxy = bounds._northEast.lat;
-        let lat = center[0];
-        let lng = center[1];
         let sql = "SELECT cwid, roadid, label, ST_AsGeoJSON(geom) as geojson FROM centreline "
         + "WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
         return new Promise((resolve, reject) => {
-            
             connection.query(sql, (err, result) => {
                 if (err) {
                     console.error('Error executing query', err.stack)
