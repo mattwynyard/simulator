@@ -39,8 +39,11 @@ function App() {
   useEffect(() => {
       socket.on("connect", () => {
       socket.sendBuffer = [];
-      socket.on("reset", () => {
+      socket.on("reset", () => { 
         reset();
+      });
+      socket.on("styles", (data) => { 
+        console.log(data);
       });
       socket.on("latlng", (data) => {
         setPosition([data]);   
@@ -75,6 +78,7 @@ function App() {
         }
       });
       socket.on("loaded", (result) => {
+        console.log(result)
         let bounds = mapRef.current.getBounds();
         let center = mapRef.current.getCenter();
         start = Date.now();
@@ -348,7 +352,6 @@ function App() {
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
-           
               {centrelines.map((line, idx) =>
                 <Centreline
                   className = {"centre-line"}

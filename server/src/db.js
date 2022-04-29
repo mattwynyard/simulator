@@ -118,27 +118,29 @@ module.exports = {
         let sql = null;
         data.push(util.parseInteger(row.id)); 
         data.push(util.parseInteger(inspection)); 
-        data.push(util.parseString(row.type)); 
-        data.push(util.parseString(row.color)); 
+        data.push(util.parseString(row.type));  
         data.push(util.parseString(row.fault)); 
-        data.push(util.parseString(row.code)); 
+        data.push(util.parseString(row.repair)); 
+        data.push(util.parseInteger(row.priority));
+        data.push(util.parseString(row.side));
+        data.push(util.parseInteger(row.erp));
+        data.push(util.parseInteger(row.finerp));
+        data.push(util.parseInteger(row.length));
+        data.push(util.parseNumeric(row.width));
+        data.push(util.parseInteger(row.count));  
+        data.push(util.parseString(row.photoname));
+        data.push(util.parseString(row.inspector));
         data.push(util.parseDate(row.gpstime)); 
-        data.push(util.parseNumeric(row.altitude)); 
-        data.push(util.parseBoolean(row.fill)); 
-        data.push(util.parseString(row.fillColor)); 
-        data.push(util.parseNumeric(row.opacity)); 
-        data.push(util.parseNumeric(row.fillOpacity)); 
-        data.push(util.parseInteger(row.radius)); 
-        data.push(util.parseInteger(row.weight)); 
         if (row.type === 'point') {
-            let lnglat = util.swapLatLng(row.latlng);
+            let lng = row.geojson[1];
+            let lnglat = [lng, row.geojson[0]]
             sql = `INSERT INTO public.defects(
-                id, inspection, type, color, fault, code, gpstime, altitude, fill, fillcolor, opacity, fillopacity, radius, weight, geom)
+                id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, inspector, gpstime, geom)
                 VALUES (${data}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326));` 
         } else if (row.type === 'line') {
             let wkt = util.arrayToWkt(row.latlng);
             sql = `INSERT INTO public.defects(
-                id, inspection, type, color, fault, code, gpstime, altitude, fill, fillcolor, opacity, fillopacity, radius, weight, geom)
+                id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, inspector, gpstime, geom)
                 VALUES (${data}, ST_SetSRID(ST_GeomFromText(${wkt}), 4326));` 
         } else {
             throw new Error; 
@@ -155,21 +157,19 @@ module.exports = {
         });
     },
 
-    inspectionIndex: (bounds, center) => {
+    inspectionIndex: (bounds) => {
         let sql = null;
         if (bounds) {
             let minx = bounds._southWest.lng;
             let miny = bounds._southWest.lat;
             let maxx = bounds._northEast.lng;
             let maxy = bounds._northEast.lat;
-            let lat = center[0];
-            let lng = center[1];
-            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects WHERE geom && " +
+            sql = "SELECT id, inspection, type, code, gpstime, " +
+            "ST_AsGeoJSON(geom) as geojson FROM defects WHERE geom && " +
             "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
         } else {
-            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
+            sql = "SELECT id, inspection, type, code, gpstime, " +
+            "ST_AsGeoJSON(geom) as geojson FROM defects;" 
         }
          return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
@@ -183,23 +183,10 @@ module.exports = {
         });
     },
 
-    inspection: (bounds, center) => {
-        let sql = null;
-        if (bounds) {
-            let minx = bounds._southWest.lng;
-            let miny = bounds._southWest.lat;
-            let maxx = bounds._northEast.lng;
-            let maxy = bounds._northEast.lat;
-            let lat = center[0];
-            let lng = center[1];
-            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
-            + lng + "," + lat + "),4326)) AS dist FROM defects WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
-            + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);"
-        } else {
-            sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-            "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
-        }
+    faultStyles: () => {
+        let sql = "SELECT code, description, repair, class, color, fill, fillcolor, opacity, fillopacity, shape" + 
+            " FROM public.dfmap;"
+        
          return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
                 if (err) {
@@ -211,6 +198,35 @@ module.exports = {
             });
         });
     },
+
+    // inspection: (bounds, center) => {
+    //     let sql = null;
+    //     if (bounds) {
+    //         let minx = bounds._southWest.lng;
+    //         let miny = bounds._southWest.lat;
+    //         let maxx = bounds._northEast.lng;
+    //         let maxy = bounds._northEast.lat;
+    //         let lat = center[0];
+    //         let lng = center[1];
+    //         sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+    //         "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
+    //         + lng + "," + lat + "),4326)) AS dist FROM defects WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
+    //         + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);"
+    //     } else {
+    //         sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
+    //         "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
+    //     }
+    //      return new Promise((resolve, reject) => {
+    //         connection.query(sql, (err, result) => {
+    //             if (err) {
+    //                 console.error('Error executing query', err.stack)
+    //                 return reject(err);
+    //             }
+    //             let carriage = resolve(result);
+    //             return carriage;
+    //         });
+    //     });
+    // },
 
     centrelines: (bounds, center) => {
         let minx = bounds._southWest.lng;
