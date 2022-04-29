@@ -9,28 +9,13 @@ const MapRef = forwardRef((props, ref) => {
 
 
     const map = useMapEvents({
-      click: () => {
-        console.log("click")
-      },
-      zoom: (e) => {
-        //console.log("zoom")
-      },
-      move: (e) => {
-        //console.log("move")
-        //props.update(map.getBounds(), map.getCenter())
+      click: (e) => {
+        const position = e.latlng.lat + " " + e.latlng.lng
+        navigator.clipboard.writeText(position);
       },
       moveend: (e) => {
-        //console.log("movened")
         props.update(map.getBounds(), map.getCenter(), map.getZoom())
 
-      },
-      zoomstart: (e) => {
-        //console.log("zoom start")
-        //props.update()
-      },
-      zoomend: (e) => {
-        //console.log("zoom end")
-        //props.update(map.getBounds(), map.getCenter()) 
       }
     }, []);
 
@@ -45,11 +30,11 @@ const MapRef = forwardRef((props, ref) => {
     const onMouseMove  = useCallback((e) => {
       let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 :  map.getCenter().lat;
       let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 :  map.getCenter().lng;
-      control.updateHTML(lat, lng)
+      control.updateHTML(lat, lng);
+
     }, [control, map]);
 
     useMapEvent('mousemove', onMouseMove)
-
 
     const newCenter = (center) => {
       setCenter(center);

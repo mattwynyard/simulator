@@ -5,13 +5,9 @@
 }
 
 .position {
-  z-index: 999;
+  z-index: 1000;
 
-}
-
-/* .fault-marker .centre-line {
-  z-index: 900;
-} */
+} 
 
 .popup {
   z-index: 1000;

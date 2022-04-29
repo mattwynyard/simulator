@@ -39,8 +39,11 @@ function App() {
   useEffect(() => {
       socket.on("connect", () => {
       socket.sendBuffer = [];
-      socket.on("reset", () => {
+      socket.on("reset", () => { 
         reset();
+      });
+      socket.on("styles", (data) => { 
+        console.log(data);
       });
       socket.on("latlng", (data) => {
         setPosition([data]);   
@@ -75,6 +78,7 @@ function App() {
         }
       });
       socket.on("loaded", (result) => {
+        console.log(result)
         let bounds = mapRef.current.getBounds();
         let center = mapRef.current.getCenter();
         start = Date.now();
@@ -190,7 +194,6 @@ function App() {
           scrollWheelZoom={true}
           //preferCanvas={true}
           keyboard={true}
-
           eventHandlers={{
               load: () => {
                 console.log('onload')
@@ -201,11 +204,11 @@ function App() {
           ref={mapRef} 
           update={updateGeometry}
           center={position.length !== 0 ? [position[0].latlng] : center} 
-          />
-        
+          />       
         <CustomTileLayer isRemote={isRemote}/>
         <ScaleControl name="Scale" className="scale"/>
         <LayersControl position="topright">
+        <Pane name="position">
         {position.map((point, idx) =>
           <CircleMarker
             className={"position"}
@@ -217,10 +220,11 @@ function App() {
             color={"#3388ff"}
             fillColor={"blue"}
             fillOpacity={1.0}
-            style={{ zIndex: 999 }}   
+            style={{ zIndex: 1000 }}   
             >      
           </CircleMarker>
         )}
+        </Pane>
           {trail.map((point, idx) =>
           <Fragment key={`fragment-${idx}`} >
             <CircleMarker
@@ -233,8 +237,7 @@ function App() {
               color={"lime"}
               fillColor={"lime"}
               fillOpacity={1.0}
-              style={{ zIndex: 950 }}   
-
+              style={{ zIndex: 900 }}   
               eventHandlers={{
                 click: (e) => {
                   e.target.openPopup();
@@ -351,7 +354,6 @@ function App() {
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
-           
               {centrelines.map((line, idx) =>
                 <Centreline
                   className = {"centre-line"}
@@ -363,7 +365,6 @@ function App() {
               )}
             
           </LayerGroup>
-         
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  

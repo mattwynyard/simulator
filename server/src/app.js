@@ -64,11 +64,21 @@ io.on('connection',(socket) => {
     console.log("refesh")
   });
 
+  socket.on("styles", async () => {
+    try {
+      let styles = await db.faultStyles();
+      io.emit("styles", {styles: styles.rows});
+    } catch (error) {
+      console.log(error)
+    }
+  });
+
   socket.on("geometry", async (bounds, center, zoom) => {
     let cls = null;
     let ins = null;
     try {
-      cls = await db.centrelinesIndex(bounds, center);
+      //cls = await db.centrelinesIndex(bounds, center);
+      cls = await db.centrelineStatus(bounds);
       cls.rows.forEach(row => {
         let line = JSON.parse(row.geojson).coordinates;
         let newLine = [];
@@ -84,7 +94,7 @@ io.on('connection',(socket) => {
       console.log(error)
     }
     try {
-      ins = await db.inspectionIndex(bounds, center);
+      ins = await db.inspectionIndex(bounds);
       if (ins.rowCount > 0) {
         let points = [];
         let lines = [];
@@ -234,6 +244,7 @@ app.get('/reset', async (req, res) => {
 });
 
 app.post('/insertPoint', async (req, res) => {
+  console.log(req.body)
   res.send({ message: "ok"});
 });
 

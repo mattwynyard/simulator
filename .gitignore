@@ -15,7 +15,6 @@
 .pdf
 .docx
 
-
 # dependencies
 /server/node_modules
 /client/node_modules
@@ -36,6 +35,7 @@
 /model
 *.accdb
 *.mdb
+./package-lock.json
 
 # misc
 .DS_Store
