@@ -208,6 +208,7 @@ function App() {
         <CustomTileLayer isRemote={isRemote}/>
         <ScaleControl name="Scale" className="scale"/>
         <LayersControl position="topright">
+        <Pane name="position">
         {position.map((point, idx) =>
           <CircleMarker
             className={"position"}
@@ -219,10 +220,11 @@ function App() {
             color={"#3388ff"}
             fillColor={"blue"}
             fillOpacity={1.0}
-            style={{ zIndex: 999 }}   
+            style={{ zIndex: 1000 }}   
             >      
           </CircleMarker>
         )}
+        </Pane>
           {trail.map((point, idx) =>
           <Fragment key={`fragment-${idx}`} >
             <CircleMarker
@@ -235,7 +237,7 @@ function App() {
               color={"lime"}
               fillColor={"lime"}
               fillOpacity={1.0}
-              style={{ zIndex: 950 }}   
+              style={{ zIndex: 900 }}   
               eventHandlers={{
                 click: (e) => {
                   e.target.openPopup();
@@ -363,7 +365,6 @@ function App() {
               )}
             
           </LayerGroup>
-         
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  

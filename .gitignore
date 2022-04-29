@@ -36,6 +36,7 @@
 /model
 *.accdb
 *.mdb
+./package-lock.json
 
 # misc
 .DS_Store
