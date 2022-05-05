@@ -1,11 +1,11 @@
 import './App.css';
-import { MapContainer, CircleMarker, Popup, ScaleControl, LayerGroup, LayersControl, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Popup, ScaleControl, LayerGroup, Polyline, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
-import Centreline from './Centreline.js';
+import Centreline from './geometry/Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
-import Defect from './Defect.js';
+import Defect from './geometry/Defect.js';
 import socketIOClient from "socket.io-client";
 
 const SERVER_URL = "http://localhost:5000";
@@ -190,12 +190,10 @@ function App() {
       </div>
       <MapContainer 
           className="map" 
-          //center={center} 
           zoom={18} 
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
-          //preferCanvas={true}
           keyboard={true}
           eventHandlers={{
               load: () => {
@@ -307,7 +305,7 @@ function App() {
          <LayersControl.Overlay checked name="Faults">
          <LayerGroup>
           <Pane name="faults" className={"faults"}>
-            {/* {faultLines.map((line, idx) =>
+            {faultLines.map((line, idx) =>
                 <Polyline
                   key={`marker-${idx}`} 
                   style={{ zIndex: 999 }}   
@@ -334,28 +332,13 @@ function App() {
                     {line.id}<br></br>    
                   </Popup>            
                 </Polyline>
-              )}      */}
-            {/* {faultPoints.map((point, idx) =>
-              <FaultPoint
-                className = {"fault-marker"}
-                key={point.id}
-                id={point.id}
-                fault={point.fault}
-                center={point.geojson}
-                geojson={point.geojson}
-                stroke={true}
-                radius ={point.radius}
-                fill={true}
-                color={point.color}
-                opacity={point.opacity}
-                fillColor={point.fillcolor}
-                fillOpacity={point.opacity}     
-              />
-            )} */}
-            {faultPoints.map((point, idx) =>
+              )}     
+            {faultPoints.map((defect) =>
               <Defect
-                data = {point}
-                key={point.id}
+                data = {defect}
+                key={defect.id}
+                zoom={mapRef.current ? mapRef.current.getZoom() : null}
+                map={mapRef.current}
               />
             )}
             </Pane>

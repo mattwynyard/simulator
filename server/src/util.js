@@ -114,4 +114,5 @@ function arrayToWkt(arr) {
     return wkt;
 }
 
-module.exports = {getPointRadius, buildQuery, parseInteger, parseDate, parseString, parseNumeric, swapLatLng, arrayToWkt, parseBoolean, haversine}
+module.exports = {getPointRadius, buildQuery, parseInteger, parseDate, parseString, parseNumeric, 
+    swapLatLng, arrayToWkt, parseBoolean, haversine}

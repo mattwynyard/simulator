@@ -1,42 +1,60 @@
 import { divIcon } from 'leaflet';
-import React from 'react';
+import './Defect.css'
 import { Marker, Popup} from 'react-leaflet';
 import ReactDOMServer from 'react-dom/server';
 
 function IconSqaure(props) {
-    const size = `0 0 ${props.size} ${props.size}`
+    const size = ` 0 0 ${props.size} ${props.size}`
     return (
-      <svg width={props.size} height={props.size} viewBox={size}>
-          <rect width={props.size} height={props.size} stroke={props.color} fill={props.fillcolor} 
-          strokeOpacity={props.opacity} fillOpacity={props.fillopacity}/>
+      <svg 
+        //className='defect-svg' 
+        viewBox={size}
+        //width={props.size} 
+        //height={props.size} 
+        >
+          <rect 
+            className='defect-svg' 
+            width={props.size} 
+            height={props.size} 
+            stroke={props.color} 
+            fill={props.fillcolor} 
+            strokeOpacity={props.opacity} 
+            fillOpacity={props.fillopacity}
+            />
       </svg>
     );
 }
 
-export default function DefectSquare(props) {
+export default function DefectSVGSquare(props) {
     const size = props.data.radius * 2
     const icon = divIcon({
-        className: '',
+        className: 'defect-divicon',
         iconSize: [size, size],
+        iconAnchor: [props.data.radius, props.data.radius],
         html: ReactDOMServer.renderToString(<IconSqaure size={size} color={props.data.color} fillcolor={props.data.fillcolor}
             opacity={props.data.opacity} fillopacity={props.data.fillopacity}/>),
       });
-
+    
     return (
         <Marker
             position={props.data.geojson}
             icon={icon}
             eventHandlers={{
-                mouseover: (e) => {
+                // mouseover: (e) => {
+                //     e.target.openPopup();
+                // },
+                // mouseout: (e) => {
+                //     e.target.closePopup();
+                // }
+                click: (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
          >
             <Popup
                 className = {"popup"}
+                autoPan={false}
+                closeOnClick={true}
             >
                 <div>
                     {`id: ${props.data.id}`}<br></br>

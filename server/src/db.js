@@ -204,8 +204,8 @@ module.exports = {
                     console.error('Error executing query', err.stack)
                     return reject(err);
                 }
-                let carriage = resolve(result);
-                return carriage;
+                let _result = resolve(result);
+                return _result;
             });
         });
     },
