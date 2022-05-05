@@ -106,7 +106,7 @@ io.on('connection',(socket) => {
         let lines = [];
         ins.rows.forEach(row => {
           if (row.type === 'point') {
-            row.radius = util.getPointRadius(zoom);
+            //row.radius = util.getPointRadius(zoom);
             let pointLngLat = JSON.parse(row.geojson).coordinates;
             let pointLatLng = [pointLngLat[1], pointLngLat[0]];
             row.geojson = pointLatLng;

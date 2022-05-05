@@ -26,11 +26,11 @@ function IconSqaure(props) {
 }
 
 export default function DefectSVGSquare(props) {
-    const size = props.data.radius * 2
+    //const size = props.data.radius * 2
     const icon = divIcon({
         className: 'defect-divicon',
-        iconSize: [size, size],
-        iconAnchor: [props.data.radius, props.data.radius],
+        //iconSize: [size, size],
+        //iconAnchor: [props.data.radius, props.data.radius],
         html: ReactDOMServer.renderToString(<IconSqaure size={size} color={props.data.color} fillcolor={props.data.fillcolor}
             opacity={props.data.opacity} fillopacity={props.data.fillopacity}/>),
       });

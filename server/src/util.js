@@ -1,24 +1,5 @@
 const EARTH_RADIUS = 6371000; //metres
 
-function getPointRadius(zoom) {
-    switch (zoom) {
-        case 18:
-            return 6;
-        case 17:
-            return 5;
-        case 16:
-            return 4;
-        case 15:
-            return 3;
-        case 14:
-            return 2;
-        case 13:
-            return 1;
-        default:
-            return 6;
-    }
-}
-
 function buildQuery(arr) {
     let query = ""; 
     for (var i = 0; i < arr.length; i += 1) {
@@ -114,5 +95,5 @@ function arrayToWkt(arr) {
     return wkt;
 }
 
-module.exports = {getPointRadius, buildQuery, parseInteger, parseDate, parseString, parseNumeric, 
+module.exports = {buildQuery, parseInteger, parseDate, parseString, parseNumeric, 
     swapLatLng, arrayToWkt, parseBoolean, haversine}
