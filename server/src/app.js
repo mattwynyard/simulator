@@ -67,7 +67,13 @@ io.on('connection',(socket) => {
   socket.on("styles", async () => {
     try {
       let styles = await db.faultStyles();
-      io.emit("styles", {styles: styles.rows});
+      let data = [];
+      styles.rows.forEach(element => {
+        data.push({'code': element.code, 'styles': {'fault': element.description, 'repair': element.repair, 'class': element.class,
+      'color': element.color, 'fill': element.fill, 'fillcolor': element.fillcolor, 'fillopacity': element.fillopacity, 'opacity': element.opacity,
+      'shape': element.shape}})
+      });
+      io.emit("styles", data);
     } catch (error) {
       console.log(error)
     }
@@ -94,13 +100,13 @@ io.on('connection',(socket) => {
       console.log(error)
     }
     try {
-      ins = await db.inspectionIndex(bounds);
+      ins = await db.selectInspectionMap(bounds);
       if (ins.rowCount > 0) {
         let points = [];
         let lines = [];
         ins.rows.forEach(row => {
           if (row.type === 'point') {
-            row.radius = util.getPointRadius(zoom);
+            //row.radius = util.getPointRadius(zoom);
             let pointLngLat = JSON.parse(row.geojson).coordinates;
             let pointLatLng = [pointLngLat[1], pointLngLat[0]];
             row.geojson = pointLatLng;

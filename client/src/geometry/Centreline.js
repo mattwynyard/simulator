@@ -1,5 +1,4 @@
 import { Polyline, Popup } from 'react-leaflet';
-import L from 'leaflet';
 
 function Centreline(props) {
     const color = { color: 'blue' }
@@ -16,18 +15,20 @@ function Centreline(props) {
         //renderer={L.canvas({ padding: 0.5 })}
         eventHandlers={{
             click: (e) => {
-                //e.target.openPopup();
-              },
-            mouseover: (e) => {
                 e.target.openPopup();
-            },
-            mouseout: (e) => {
-                e.target.closePopup();
-            }
+              },
+            // mouseover: (e) => {
+            //     e.target.openPopup();
+            // },
+            // mouseout: (e) => {
+            //     e.target.closePopup();
+            // }
         }}
         >
         <Popup
             className = {"popup"}
+            autoPan={false}
+            closeOnClick={true}
         >
             <div>
                 {`Id: ${props.data.cwid}`}<br></br>

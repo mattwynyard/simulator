@@ -12,6 +12,7 @@ const MapRef = forwardRef((props, ref) => {
       click: (e) => {
         const position = e.latlng.lat + " " + e.latlng.lng
         navigator.clipboard.writeText(position);
+        console.log(e.containerPoint)
       },
       moveend: (e) => {
         props.update(map.getBounds(), map.getCenter(), map.getZoom())

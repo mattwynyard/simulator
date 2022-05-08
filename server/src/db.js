@@ -157,6 +157,59 @@ module.exports = {
         });
     },
 
+    selectInspectionMap: (bounds) => {
+        let sql = null;
+        if (bounds) {
+            let minx = bounds._southWest.lng;
+            let miny = bounds._southWest.lat;
+            let maxx = bounds._northEast.lng;
+            let maxy = bounds._northEast.lat;
+            sql = "SELECT d.id, d.inspection, d.code, d.type, m.shape, m.description, d.repair, d.priority, d.side, d.starterp, d.enderp, " +
+            "d.length, d.width, d.count, d.photo, d.inspector, d.gpstime, m.class, m.color, m.fill, m.fillcolor, m.opacity, " +
+            "m.fillopacity, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap as m WHERE geom && " +
+            "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") AND d.code = m.code;"
+        } else {
+            sql = "SELECT id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, " +
+            " count, photo, inspector, gpstime, ST_AsGeoJSON(geom) as geojson FROM defects;"
+        }
+         return new Promise((resolve, reject) => {
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
+    selectInspection: (bounds) => {
+        let sql = null;
+        if (bounds) {
+            let minx = bounds._southWest.lng;
+            let miny = bounds._southWest.lat;
+            let maxx = bounds._northEast.lng;
+            let maxy = bounds._northEast.lat;
+            sql = "SELECT d.id, d.code, d.inspection, d.type, d.repair, d.priority, d.side, d.starterp, d.enderp, d.length, d.width, " +
+            " d.count, d.photo, d.inspector, d.gpstime, ST_AsGeoJSON(d.geom) as geojson FROM defects as d WHERE geom && " +
+            "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ");"
+        } else {
+            sql = "SELECT id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, " +
+            " count, photo, inspector, gpstime, ST_AsGeoJSON(geom) as geojson FROM defects;"
+        }
+         return new Promise((resolve, reject) => {
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let _result = resolve(result);
+                return _result;
+            });
+        });
+    },
+
     inspectionIndex: (bounds) => {
         let sql = null;
         if (bounds) {
@@ -199,34 +252,6 @@ module.exports = {
         });
     },
 
-    // inspection: (bounds, center) => {
-    //     let sql = null;
-    //     if (bounds) {
-    //         let minx = bounds._southWest.lng;
-    //         let miny = bounds._southWest.lat;
-    //         let maxx = bounds._northEast.lng;
-    //         let maxy = bounds._northEast.lat;
-    //         let lat = center[0];
-    //         let lng = center[1];
-    //         sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-    //         "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson, ST_Distance(geom, ST_SetSRID(ST_MakePoint("
-    //         + lng + "," + lat + "),4326)) AS dist FROM defects WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ")"
-    //         + "ORDER BY geom <-> ST_SetSRID(ST_MakePoint(" + lng + "," + lat + "),4326);"
-    //     } else {
-    //         sql = "SELECT id, inspection, type, color, fault, gpstime, fill, fillcolor, " +
-    //         "opacity, fillopacity, radius, weight, ST_AsGeoJSON(geom) as geojson FROM defects;" 
-    //     }
-    //      return new Promise((resolve, reject) => {
-    //         connection.query(sql, (err, result) => {
-    //             if (err) {
-    //                 console.error('Error executing query', err.stack)
-    //                 return reject(err);
-    //             }
-    //             let carriage = resolve(result);
-    //             return carriage;
-    //         });
-    //     });
-    // },
 
     centrelines: (bounds, center) => {
         let minx = bounds._southWest.lng;

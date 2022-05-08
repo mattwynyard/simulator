@@ -1,11 +1,11 @@
 import './App.css';
-import { MapContainer, CircleMarker, Polyline, Popup, ScaleControl, LayerGroup, LayersControl, Pane} from 'react-leaflet';
+import { MapContainer, CircleMarker, Popup, ScaleControl, LayerGroup, Polyline, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
-import Centreline from './Centreline.js';
+import Centreline from './geometry/Centreline.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
-import FaultPoint from './FaultPoint.js';
+import Defect from './geometry/Defect.js';
 import socketIOClient from "socket.io-client";
 
 const SERVER_URL = "http://localhost:5000";
@@ -35,15 +35,14 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
+  const stylesMap = new Map();
 
   useEffect(() => {
       socket.on("connect", () => {
       socket.sendBuffer = [];
+      //socket.emit("styles");
       socket.on("reset", () => { 
         reset();
-      });
-      socket.on("styles", (data) => { 
-        console.log(data);
       });
       socket.on("latlng", (data) => {
         setPosition([data]);   
@@ -71,8 +70,6 @@ function App() {
           setCentreLines(data.centreline);
         }
         if (data.inspection) {
-          //console.log(`Fetched ${data.inspection.points.length} point faults in ${millis} ms`);
-          //console.log(`Fetched ${data.inspection.lines.length} line faults in ${millis} ms`);
           setFaultLines(data.inspection.lines);
           setFaultPoints(data.inspection.points)
         }
@@ -84,6 +81,12 @@ function App() {
         start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
+      // socket.on("styles", (result) => {  
+      //   result.forEach(element => {
+      //     stylesMap.set(element.code, element.styles)
+      //   });
+      //   console.log(stylesMap)
+      //});
       try { 
         let realtime = JSON.parse(window.sessionStorage.getItem('realtime'));
         if (realtime) { 
@@ -187,12 +190,10 @@ function App() {
       </div>
       <MapContainer 
           className="map" 
-          //center={center} 
           zoom={18} 
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
-          //preferCanvas={true}
           keyboard={true}
           eventHandlers={{
               load: () => {
@@ -332,21 +333,10 @@ function App() {
                   </Popup>            
                 </Polyline>
               )}     
-            {faultPoints.map((point, idx) =>
-              <FaultPoint
-                className = {"fault-marker"}
-                key={point.id}
-                id={point.id}
-                fault={point.fault}
-                center={point.geojson}
-                geojson={point.geojson}
-                stroke={true}
-                radius ={point.radius}
-                fill={true}
-                color={point.color}
-                opacity={point.opacity}
-                fillColor={point.fillcolor}
-                fillOpacity={point.opacity}     
+            {faultPoints.map((defect) =>
+              <Defect
+                data = {defect}
+                key={defect.id}
               />
             )}
             </Pane>
@@ -368,8 +358,7 @@ function App() {
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  
-    </div>
-    
+    </div>  
   );
 }
 
