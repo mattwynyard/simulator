@@ -1,5 +1,4 @@
 import { Polyline, Popup } from 'react-leaflet';
-import L from 'leaflet';
 
 function Centreline(props) {
     const color = { color: 'blue' }

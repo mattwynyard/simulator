@@ -1,10 +1,11 @@
-import { Polygon, Popup } from 'react-leaflet';
+import { Polygon } from 'react-leaflet';
 import DefectCircle from './DefectCircle.js';
 import { useLeafletContext } from '@react-leaflet/core';
-import {buildSquare, buildTriangle } from './Shapes.js';
+import { buildSquare, buildTriangle, buildStar } from './Shapes.js';
 import { useMemo } from 'react';
+import { DefectPopup } from '../DefectPopup.js'
 
-export function getPointRadius(zoom) {
+export const getPointRadius = (zoom) => {
     switch (zoom) {
         case 18:
             return 6;
@@ -26,8 +27,10 @@ export function getPointRadius(zoom) {
 const LeafletTriangleDefect = (props) => {
     const map = useLeafletContext().map;
     const center = map.latLngToContainerPoint(props.data.geojson);
-    const radius = getPointRadius(map.getZoom());
-    const points = useMemo(() => buildTriangle(center, props.rotation, radius * 1.41), [center, props.rotation, radius]);
+    const zoom = map.getZoom();
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
+    //const points = useMemo(() => buildTriangle(center, props.rotation, radius * 1.41), [center, props.rotation, radius]);
+    const points = buildTriangle(center, props.rotation, radius * 1.41);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -42,32 +45,50 @@ const LeafletTriangleDefect = (props) => {
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
             fillOpacity={props.data.fillOpacity}
+            eventHandlers={{
+                mouseover: (e) => {
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
+            }}
         >
-            <Popup
-                className = {"popup"}
-                autoPan={false}
-                closeOnClick={true}
-            >
-                <div>
-                    {`id: ${props.data.id}`}<br></br>
-                    {`inspection: ${props.data.inspection}`}<br></br>
-                    {`code: ${props.data.code}`}<br></br>
-                    {`fault: ${props.data.description}`}<br></br>
-                    {`priority: ${props.data.priority}`}<br></br>
-                    {`repair: ${props.data.repair}`}<br></br>
-                    {`side: ${props.data.side}`}<br></br>
-                    {`start: ${props.data.starterp} m`}<br></br>
-                    {`end: ${props.data.enderp} m`}<br></br>
-                    {`length: ${props.data.length} m`}<br></br>
-                    {`width: ${props.data.width} m`}<br></br>
-                    {`count: ${props.data.count}`}<br></br>
-                    {`inspector: ${props.data.inspector}`}<br></br>
-                    {`photo: ${props.data.photo}`}<br></br>
-                    {`timestamp: ${props.data.gpstime}`}<br></br>
-                    {`lat: ${props.data.geojson[0]}`}<br></br> 
-                    {`lng: ${props.data.geojson[1]}`}<br></br> 
-                </div> 
-            </Popup>
+            <DefectPopup data ={props.data}/>
+        </Polygon>
+    );
+}
+
+const LeafletStarDefect = (props) => {
+    const map = useLeafletContext().map;
+    const center = map.latLngToContainerPoint(props.data.geojson);
+    const zoom = map.getZoom();
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
+    const points = buildStar(center, radius * 1.41, 5);
+    const latlngs = [];
+    points.forEach((point) => {
+        const latlng = map.containerPointToLatLng(point)
+        latlngs.push(latlng)
+    })
+    return (
+        <Polygon 
+            positions={latlngs}
+            stroke={props.data.stroke}
+            fill={props.data.fill}
+            color={props.data.color}
+            opacity={props.data.opacity}
+            fillColor={props.data.fillColor}
+            fillOpacity={props.data.fillOpacity}
+            eventHandlers={{
+                mouseover: (e) => {
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
+            }}
+        >
+            <DefectPopup data ={props.data}/>
         </Polygon>
     );
 }
@@ -75,8 +96,10 @@ const LeafletTriangleDefect = (props) => {
 const LeafletSquareDefect = (props) => {
     const map = useLeafletContext().map;
     const center = map.latLngToContainerPoint(props.data.geojson);
-    const radius = getPointRadius(map.getZoom());
-    const points = useMemo(() => buildSquare(center, props.rotation, radius * 2), [center, props.rotation, radius]);
+    const zoom = map.getZoom();
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
+    //const points = useMemo(() => buildSquare(center, props.rotation, radius * 2), [center, props.rotation, radius]);
+    const points = buildSquare(center, props.rotation, radius * 2);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -91,32 +114,16 @@ const LeafletSquareDefect = (props) => {
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
             fillOpacity={props.data.fillOpacity}
+            eventHandlers={{
+                mouseover: (e) => {
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
+            }}
         >
-            <Popup
-                className = {"popup"}
-                autoPan={false}
-                closeOnClick={true}
-            >
-                <div>
-                    {`id: ${props.data.id}`}<br></br>
-                    {`inspection: ${props.data.inspection}`}<br></br>
-                    {`code: ${props.data.code}`}<br></br>
-                    {`fault: ${props.data.description}`}<br></br>
-                    {`priority: ${props.data.priority}`}<br></br>
-                    {`repair: ${props.data.repair}`}<br></br>
-                    {`side: ${props.data.side}`}<br></br>
-                    {`start: ${props.data.starterp} m`}<br></br>
-                    {`end: ${props.data.enderp} m`}<br></br>
-                    {`length: ${props.data.length} m`}<br></br>
-                    {`width: ${props.data.width} m`}<br></br>
-                    {`count: ${props.data.count}`}<br></br>
-                    {`inspector: ${props.data.inspector}`}<br></br>
-                    {`photo: ${props.data.photo}`}<br></br>
-                    {`timestamp: ${props.data.gpstime}`}<br></br>
-                    {`lat: ${props.data.geojson[0]}`}<br></br> 
-                    {`lng: ${props.data.geojson[1]}`}<br></br> 
-                </div> 
-            </Popup>
+            <DefectPopup data ={props.data}/>
         </Polygon>
     );
 }
@@ -124,24 +131,27 @@ const LeafletSquareDefect = (props) => {
 export default function Defect(props) {
     if (props.data.shape === 'square') { //STC
         return (
-            <LeafletSquareDefect data={props.data} rotation={0} sides={4}/>
+            <LeafletSquareDefect data={props.data} rotation={0}/>
         );
-    // } else if (props.data.shape === 'circle') { //SUF
-    //     return (
-    //         <DefectCircle data={props.data}/>
-    //     );
+    } else if (props.data.shape === 'circle') { //SUF
+        return (
+            <DefectCircle data={props.data}/>
+        );
     } else if (props.data.shape === 'triangle') { //DRA
         return (
-            <LeafletTriangleDefect data={props.data} rotation={30} sides={3}/>
+            <LeafletTriangleDefect data={props.data} rotation={30}/>
         );
-    } else if (props.data.shape === 'diamond') { //SGN
+    } else if (props.data.shape === 'star') { //SGN
         return (
-            <LeafletSquareDefect data={props.data} rotation={40} sides={4}/>
+            <LeafletStarDefect data={props.data}/>
+        );
+    } else if (props.data.shape === 'diamond') { //MSC
+        return (
+            <LeafletSquareDefect data={props.data} rotation={40}/>
         );
     } else {
         return (
-            // <DefectCircle data={props.data}/>
-            null
+            <DefectCircle data={props.data}/>
         );
     }
        

@@ -337,8 +337,6 @@ function App() {
               <Defect
                 data = {defect}
                 key={defect.id}
-                //zoom={mapRef.current ? mapRef.current.getZoom() : null}
-                //map={mapRef.current}
               />
             )}
             </Pane>
@@ -360,8 +358,7 @@ function App() {
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  
-    </div>
-    
+    </div>  
   );
 }
 
