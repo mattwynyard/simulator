@@ -39,7 +39,6 @@ function App() {
   useEffect(() => {
       socket.on("connect", () => {
       socket.sendBuffer = [];
-      //socket.emit("styles");
       socket.on("reset", () => { 
         reset();
       });

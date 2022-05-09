@@ -16,7 +16,7 @@ export const buildTriangle = (center, rotation, size) => {
     return points;
 }
 
-export const buildStar = (center, outerRadius, numPoints) => {
+export const buildStar = (center, outerRadius, numPoints=5) => {
     const points = [];
     const innerRadius = outerRadius / 2;
     const rotate = 29.9;
