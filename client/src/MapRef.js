@@ -24,7 +24,6 @@ const MapRef = forwardRef((props, ref) => {
       () => {
         let control = L.positionControl()
         map.addControl(control);
-
         setControl(control)
     }, [map]);
 
@@ -77,8 +76,7 @@ const MapRef = forwardRef((props, ref) => {
       }
     });
   
-    useEffect(
-      () => {
+    useEffect(() => {
         if (center) {
           try {
               map.panTo(center)

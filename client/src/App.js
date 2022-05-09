@@ -35,7 +35,6 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
-  const stylesMap = new Map();
 
   useEffect(() => {
       socket.on("connect", () => {
@@ -81,12 +80,6 @@ function App() {
         start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
-      // socket.on("styles", (result) => {  
-      //   result.forEach(element => {
-      //     stylesMap.set(element.code, element.styles)
-      //   });
-      //   console.log(stylesMap)
-      //});
       try { 
         let realtime = JSON.parse(window.sessionStorage.getItem('realtime'));
         if (realtime) { 

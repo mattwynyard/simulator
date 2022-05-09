@@ -96,10 +96,7 @@ const LeafletStarDefect = (props) => {
 const LeafletSquareDefect = (props) => {
     const map = useLeafletContext().map;
     const center = map.latLngToContainerPoint(props.data.geojson);
-    const zoom = map.getZoom();
-    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
-    //const points = useMemo(() => buildSquare(center, props.rotation, radius * 2), [center, props.rotation, radius]);
-    const points = buildSquare(center, props.rotation, radius * 2);
+    const points = buildSquare(center, props.rotation, props.radius * 2);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -129,13 +126,17 @@ const LeafletSquareDefect = (props) => {
 }
 
 export default function Defect(props) {
+    const map = useLeafletContext().map;
+    const zoom = map.getZoom();
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
+
     if (props.data.shape === 'square') { //STC
         return (
-            <LeafletSquareDefect data={props.data} rotation={0}/>
+            <LeafletSquareDefect data={props.data} rotation={0} radius={radius}/>
         );
     } else if (props.data.shape === 'circle') { //SUF
         return (
-            <DefectCircle data={props.data}/>
+            <DefectCircle data={props.data} radius={radius}/>
         );
     } else if (props.data.shape === 'triangle') { //DRA
         return (
@@ -151,7 +152,7 @@ export default function Defect(props) {
         );
     } else {
         return (
-            <DefectCircle data={props.data}/>
+            <DefectCircle data={props.data} radius={radius}/>
         );
     }
        
