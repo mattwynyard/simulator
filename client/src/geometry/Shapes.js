@@ -16,6 +16,16 @@ export const buildTriangle = (center, rotation, size) => {
     return points;
 }
 
+export const buildCross = (center, rotation, size) => {
+    const points = [];
+    // for (let i = 0; i < 3; i++) {
+    //     const x = Math.round(center.x + (size * Math.cos((rotation * (Math.PI / 180)) + i * 2 * Math.PI / 3)));
+    //     const y = Math.round(center.y + (size * Math.sin((rotation * (Math.PI / 180)) + i * 2 * Math.PI / 3)));
+    //     points.push([x, y])
+    // }
+    return points;
+}
+
 export const buildStar = (center, outerRadius, numPoints=5) => {
     const points = [];
     const innerRadius = outerRadius / 2;

@@ -29,6 +29,7 @@ function App() {
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
+  const [faultSigns, setFaultSigns] = useState([]);
   const [faultLines, setFaultLines] = useState([]);
   const [trail, setTrail] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
@@ -70,6 +71,7 @@ function App() {
         if (data.inspection) {
           setFaultLines(data.inspection.lines);
           setFaultPoints(data.inspection.points)
+          setFaultSigns(data.inspection.signs)
         }
       });
       socket.on("loaded", (result) => {
@@ -326,6 +328,18 @@ function App() {
                 </Polyline>
               )}     
             {faultPoints.map((defect) =>
+              <Defect
+                data = {defect}
+                key={defect.id}
+              />
+            )}
+            </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Signs">
+         <LayerGroup>
+          <Pane name="signs" className={"signs"}>     
+            {faultSigns.map((defect) =>
               <Defect
                 data = {defect}
                 key={defect.id}

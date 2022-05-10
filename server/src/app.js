@@ -81,7 +81,8 @@ io.on('connection',(socket) => {
 
   socket.on("geometry", async (bounds, center, zoom) => {
     let cls = null;
-    let ins = null;
+    let faults = null;
+    let signs = null;
     try {
       //cls = await db.centrelinesIndex(bounds, center);
       cls = await db.centrelineStatus(bounds);
@@ -100,11 +101,13 @@ io.on('connection',(socket) => {
       console.log(error)
     }
     try {
-      ins = await db.selectInspectionMap(bounds);
-      if (ins.rowCount > 0) {
+      faults = await db.selectInspectionMap(bounds, 'fault');
+      signs = await db.selectInspectionMap(bounds, 'sign');
+      if (faults.rowCount > 0 || signs.rowCount > 0) {
         let points = [];
         let lines = [];
-        ins.rows.forEach(row => {
+        let signPoints = [];
+        faults.rows.forEach(row => {
           if (row.type === 'point') {
             //row.radius = util.getPointRadius(zoom);
             let pointLngLat = JSON.parse(row.geojson).coordinates;
@@ -122,9 +125,15 @@ io.on('connection',(socket) => {
             });
             row.geojson = newLine;
             lines.push(row)
-          }        
+          }   
         });
-        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines}});
+        signs.rows.forEach(row => {
+          let pointLngLat = JSON.parse(row.geojson).coordinates;
+          let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+          row.geojson = pointLatLng;
+          signPoints.push(row);
+        });
+        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines, signs: signPoints}});
       } else {
         io.emit("geometry", {centreline: cls.rows, inspection: null});
       }

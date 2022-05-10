@@ -11,7 +11,7 @@ export default function DefectCircle(props) {
             radius ={props.radius}
             stroke={props.data.stroke}
             fill={props.data.fill}
-            color={props.data.color}
+            color={props.color}
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
             fillOpacity={props.data.fillOpacity}
