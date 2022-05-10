@@ -64,6 +64,7 @@ function App() {
       });
       socket.on("geometry", (data) => {
         const millis = Date.now() - start;
+        //console.log(data)
         if (data.centreline) {
           console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`);
           setCentreLines(data.centreline);
@@ -172,14 +173,13 @@ function App() {
     if(mapRef.current) {        
       if (!realTime) {
         start = Date.now();
-        console.log()
         socket.emit("geometry", bounds, [center.lat, center.lng], zoom);
       }
     }
   }
 
   return (
-    <div className="App">
+    <>
       <div className="panel">
       </div>
       <MapContainer 
@@ -364,7 +364,7 @@ function App() {
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  
-    </div>  
+    </>  
   );
 }
 

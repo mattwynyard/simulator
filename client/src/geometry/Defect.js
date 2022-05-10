@@ -1,7 +1,7 @@
 import { Polygon } from 'react-leaflet';
 import DefectCircle from './DefectCircle.js';
 import { useLeafletContext } from '@react-leaflet/core';
-import { buildSquare, buildTriangle, buildStar } from './Shapes.js';
+import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
 import { useMemo } from 'react';
 import { DefectPopup } from '../DefectPopup.js';
 
@@ -30,7 +30,7 @@ const getColor = (priority) => {
     } else if (priority === 2) {
         return "#DD7500";	 
     } else if (priority === 3) {
-        return "#00FF00";
+        return "#00CD00";
     } else {
         return "#000000";
     }
@@ -52,6 +52,37 @@ const LeafletTriangleDefect = (props) => {
             color={props.color}
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
+            fillOpacity={props.data.fillOpacity}
+            eventHandlers={{
+                mouseover: (e) => {
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
+            }}
+        >
+            <DefectPopup data ={props.data}/>
+        </Polygon>
+    );
+}
+
+const LeafletCrossDefect = (props) => {
+    const map = useLeafletContext().map;
+    const points = buildCross(props.center, 0, props.radius * 2);
+    const latlngs = [];
+    points.forEach((point) => {
+        const latlng = map.containerPointToLatLng(point)
+        latlngs.push(latlng)
+    })
+    return (
+        <Polygon 
+            positions={latlngs}
+            stroke={props.data.stroke}
+            fill={props.data.fill}
+            color={props.color}
+            opacity={props.data.opacity}
+            fillColor={props.fillColor}
             fillOpacity={props.data.fillOpacity}
             eventHandlers={{
                 mouseover: (e) => {
@@ -155,7 +186,7 @@ export default function Defect(props) {
         );
     } else if (props.data.shape === 'cross') { //FTP
         return (
-            <LeafletStarDefect data={props.data} radius={radius} center={center} color={color}/>    
+            <LeafletCrossDefect data={props.data} radius={radius} center={center} color={color}/>    
         );
     } else if (props.data.shape === 'diamond') { //MSC
         return (

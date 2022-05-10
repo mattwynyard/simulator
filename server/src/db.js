@@ -334,6 +334,23 @@ module.exports = {
         });
     },
 
+    updateCentrelineStatus: (carriage) => {
+        const status = util.parseString(carriage.status.toLowerCase());
+        const id = util.parseString(util.parseInteger(carriage.id).toString());
+        let sql = `UPDATE centreline SET status = ${status} WHERE cwid = ${id};`
+        return new Promise((resolve, reject) => {
+            
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let carriage = resolve(result);
+                return carriage;
+            });
+        });
+    },
+
     closestCentreline: (center) => {
         console.log(center);
         let lat = center[0].lat;

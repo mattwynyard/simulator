@@ -11,6 +11,7 @@ const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 const util = require('./util.js') ;
+const { Console } = require('console');
 const MIN_DISTANCE = 3;
 
 const io = new Server(server, {
@@ -226,8 +227,24 @@ app.post('/stop', (req, res) => {
 });
 
 app.post('/centrelines', async (req, res) => {
-  let centre = await db.centrelines(req.body.bounds, req.body.center);
+  //let centre = await db.centrelines(req.body.bounds, req.body.center);
   res.send({data: centre.rows})
+});
+
+app.post('/centerlineStatus', async (req, res) => {
+  let count = 0;
+  let errors = 0;
+  console.log(req.body)
+  for (let i = 0; i < req.body.data.length; i++) {
+    try {
+      let result = await db.updateCentrelineStatus(req.body.data[i]);
+      count += 1;
+    } catch (error) {
+      console.log(error);
+        errors++;
+    }
+  }
+  res.send({data: "ok"})
 });
 
 app.post('/inspection', async (req, res) => {
