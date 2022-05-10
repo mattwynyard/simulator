@@ -29,18 +29,17 @@ function App() {
   const [position, setPosition] = useState([]);
   const [center, setCenter] = useState(JSON.parse(window.sessionStorage.getItem('center')) || [-36.81835, 174.74581]);
   const [faultPoints, setFaultPoints] = useState([]);
+  const [faultSigns, setFaultSigns] = useState([]);
   const [faultLines, setFaultLines] = useState([]);
   const [trail, setTrail] = useState([]);
   const [centrelines, setCentreLines] = useState([]);
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
-  const stylesMap = new Map();
 
   useEffect(() => {
       socket.on("connect", () => {
       socket.sendBuffer = [];
-      //socket.emit("styles");
       socket.on("reset", () => { 
         reset();
       });
@@ -65,6 +64,7 @@ function App() {
       });
       socket.on("geometry", (data) => {
         const millis = Date.now() - start;
+        //console.log(data)
         if (data.centreline) {
           console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`);
           setCentreLines(data.centreline);
@@ -72,6 +72,7 @@ function App() {
         if (data.inspection) {
           setFaultLines(data.inspection.lines);
           setFaultPoints(data.inspection.points)
+          setFaultSigns(data.inspection.signs)
         }
       });
       socket.on("loaded", (result) => {
@@ -81,12 +82,6 @@ function App() {
         start = Date.now();
         socket.emit("geometry", bounds, [center.lat, center.lng]);      
       });
-      // socket.on("styles", (result) => {  
-      //   result.forEach(element => {
-      //     stylesMap.set(element.code, element.styles)
-      //   });
-      //   console.log(stylesMap)
-      //});
       try { 
         let realtime = JSON.parse(window.sessionStorage.getItem('realtime'));
         if (realtime) { 
@@ -178,14 +173,13 @@ function App() {
     if(mapRef.current) {        
       if (!realTime) {
         start = Date.now();
-        console.log()
         socket.emit("geometry", bounds, [center.lat, center.lng], zoom);
       }
     }
   }
 
   return (
-    <div className="App">
+    <>
       <div className="panel">
       </div>
       <MapContainer 
@@ -342,6 +336,18 @@ function App() {
             </Pane>
          </LayerGroup>
          </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Signs">
+         <LayerGroup>
+          <Pane name="signs" className={"signs"}>     
+            {faultSigns.map((defect) =>
+              <Defect
+                data = {defect}
+                key={defect.id}
+              />
+            )}
+            </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
               {centrelines.map((line, idx) =>
@@ -358,7 +364,7 @@ function App() {
         </LayersControl.Overlay>
           </LayersControl>   
          </MapContainer>  
-    </div>  
+    </>  
   );
 }
 

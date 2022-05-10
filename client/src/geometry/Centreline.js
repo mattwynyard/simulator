@@ -4,7 +4,7 @@ function Centreline(props) {
     const color = { color: 'blue' }
     return ( <Polyline
         key={`marker-${props.idx}`} 
-        pathOptions={props.data.color ? props.data.color : color}
+        pathOptions={props.data.color ? { color: props.data.color} : { color: 'blue' }}
         positions={props.data.geojson} 
         cwid={props.data.cwid} 
         label={props.data.label} 

@@ -11,6 +11,7 @@ const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 const util = require('./util.js') ;
+const { Console } = require('console');
 const MIN_DISTANCE = 3;
 
 const io = new Server(server, {
@@ -81,7 +82,8 @@ io.on('connection',(socket) => {
 
   socket.on("geometry", async (bounds, center, zoom) => {
     let cls = null;
-    let ins = null;
+    let faults = null;
+    let signs = null;
     try {
       //cls = await db.centrelinesIndex(bounds, center);
       cls = await db.centrelineStatus(bounds);
@@ -100,11 +102,13 @@ io.on('connection',(socket) => {
       console.log(error)
     }
     try {
-      ins = await db.selectInspectionMap(bounds);
-      if (ins.rowCount > 0) {
+      faults = await db.selectInspectionMap(bounds, 'fault');
+      signs = await db.selectInspectionMap(bounds, 'sign');
+      if (faults.rowCount > 0 || signs.rowCount > 0) {
         let points = [];
         let lines = [];
-        ins.rows.forEach(row => {
+        let signPoints = [];
+        faults.rows.forEach(row => {
           if (row.type === 'point') {
             //row.radius = util.getPointRadius(zoom);
             let pointLngLat = JSON.parse(row.geojson).coordinates;
@@ -122,9 +126,15 @@ io.on('connection',(socket) => {
             });
             row.geojson = newLine;
             lines.push(row)
-          }        
+          }   
         });
-        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines}});
+        signs.rows.forEach(row => {
+          let pointLngLat = JSON.parse(row.geojson).coordinates;
+          let pointLatLng = [pointLngLat[1], pointLngLat[0]];
+          row.geojson = pointLatLng;
+          signPoints.push(row);
+        });
+        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines, signs: signPoints}});
       } else {
         io.emit("geometry", {centreline: cls.rows, inspection: null});
       }
@@ -217,8 +227,24 @@ app.post('/stop', (req, res) => {
 });
 
 app.post('/centrelines', async (req, res) => {
-  let centre = await db.centrelines(req.body.bounds, req.body.center);
+  //let centre = await db.centrelines(req.body.bounds, req.body.center);
   res.send({data: centre.rows})
+});
+
+app.post('/centerlineStatus', async (req, res) => {
+  let count = 0;
+  let errors = 0;
+  console.log(req.body)
+  for (let i = 0; i < req.body.data.length; i++) {
+    try {
+      let result = await db.updateCentrelineStatus(req.body.data[i]);
+      count += 1;
+    } catch (error) {
+      console.log(error);
+        errors++;
+    }
+  }
+  res.send({data: "ok"})
 });
 
 app.post('/inspection', async (req, res) => {

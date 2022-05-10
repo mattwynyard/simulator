@@ -16,7 +16,68 @@ export const buildTriangle = (center, rotation, size) => {
     return points;
 }
 
-export const buildStar = (center, outerRadius, numPoints) => {
+export const buildCross = (center, rotation, size) => {
+    const outerSize = size * 2;
+    const p1 = [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
+        center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p2 = [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
+            center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))] //bottom right
+    const p3 = [center.x + (0.5 * size* (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
+        center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p4 = [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
+            center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+
+    
+        return [
+            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
+                center.y - (0.5 * size* (Math.sin(rotation) - Math.cos(rotation)))],
+            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
+                center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
+            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
+                center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
+
+            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
+                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
+            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
+                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
+            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
+                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
+
+            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
+                center.y + (0.5 * size* (Math.sin(rotation) - Math.cos(rotation)))],
+            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
+                center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
+            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
+                center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
+
+            [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
+                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))],
+            [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
+                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))],
+             [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
+                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+
+        ];
+
+
+    // return [
+    //     [p1[0], p1[1] / 2], 
+    //     p1, 
+    //     [p1[0] * 2, p1[1]], 
+    //     [p2[0] * 2, p2[1]], 
+    //     p2,  
+    //     [p2[0], p2[1] * 2], 
+    //     [p3[0], p3[1] * 2], 
+    //     p3, 
+    //     [p3[0] / 2, p3[1]], 
+    //     [p4[0] / 2, p4[1]],
+    //     p4,
+    //     [p4[0], p4[1] / 2]
+    // ];
+    
+}
+
+export const buildStar = (center, outerRadius, numPoints=5) => {
     const points = [];
     const innerRadius = outerRadius / 2;
     const rotate = 29.9;

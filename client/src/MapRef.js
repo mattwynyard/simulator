@@ -7,7 +7,6 @@ const MapRef = forwardRef((props, ref) => {
     const [center, setCenter] = useState(props.center ? props.center : null);
     const [control, setControl] = useState(null);
 
-
     const map = useMapEvents({
       click: (e) => {
         const position = e.latlng.lat + " " + e.latlng.lng
@@ -24,7 +23,6 @@ const MapRef = forwardRef((props, ref) => {
       () => {
         let control = L.positionControl()
         map.addControl(control);
-
         setControl(control)
     }, [map]);
 
@@ -37,29 +35,29 @@ const MapRef = forwardRef((props, ref) => {
 
     useMapEvent('mousemove', onMouseMove)
 
-    const newCenter = (center) => {
+    const newCenter = useCallback((center) => {
       setCenter(center);
-    };
+    }, []);
 
-    const getBounds = () => {
+    const getBounds = useCallback(() => {
         return map.getBounds();
-    };
+    }, [map]);
 
-    const setMinZoom = (zoom) => {
+    const setMinZoom = useCallback((zoom) => {
       map.setMinZoom(zoom)
-    };
+    }, [map]);
 
-    const setZoom = (zoom) => {
+    const setZoom = useCallback((zoom) => {
       map.setZoom(zoom)
-    };
+    }, [map]);
 
-    const getZoom = () => {
+    const getZoom = useCallback(() => {
       return(map.getZoom());
-    };
+    }, []);
 
-    const getCenter = () => {
+    const getCenter = useCallback(() => {
       return map.getCenter();
-    };
+    }, []);
 
     const flyTo = (center, zoom) => {
       map.flyTo(center, zoom);
@@ -77,8 +75,7 @@ const MapRef = forwardRef((props, ref) => {
       }
     });
   
-    useEffect(
-      () => {
+    useEffect(() => {
         if (center) {
           try {
               map.panTo(center)

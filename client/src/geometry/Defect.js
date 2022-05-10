@@ -1,9 +1,9 @@
 import { Polygon } from 'react-leaflet';
 import DefectCircle from './DefectCircle.js';
 import { useLeafletContext } from '@react-leaflet/core';
-import { buildSquare, buildTriangle, buildStar } from './Shapes.js';
+import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
 import { useMemo } from 'react';
-import { DefectPopup } from '../DefectPopup.js'
+import { DefectPopup } from '../DefectPopup.js';
 
 export const getPointRadius = (zoom) => {
     switch (zoom) {
@@ -24,13 +24,21 @@ export const getPointRadius = (zoom) => {
     }
 }
 
+const getColor = (priority) => {
+    if (priority === 1) {
+        return "#EE00EE";
+    } else if (priority === 2) {
+        return "#DD7500";	 
+    } else if (priority === 3) {
+        return "#00CD00";
+    } else {
+        return "#000000";
+    }
+}
+
 const LeafletTriangleDefect = (props) => {
     const map = useLeafletContext().map;
-    const center = map.latLngToContainerPoint(props.data.geojson);
-    const zoom = map.getZoom();
-    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
-    //const points = useMemo(() => buildTriangle(center, props.rotation, radius * 1.41), [center, props.rotation, radius]);
-    const points = buildTriangle(center, props.rotation, radius * 1.41);
+    const points = buildTriangle(props.center, props.rotation, props.radius * 1.41);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -41,9 +49,40 @@ const LeafletTriangleDefect = (props) => {
             positions={latlngs}
             stroke={props.data.stroke}
             fill={props.data.fill}
-            color={props.data.color}
+            color={props.color}
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
+            fillOpacity={props.data.fillOpacity}
+            eventHandlers={{
+                mouseover: (e) => {
+                    e.target.openPopup();
+                },
+                mouseout: (e) => {
+                    e.target.closePopup();
+                }
+            }}
+        >
+            <DefectPopup data ={props.data}/>
+        </Polygon>
+    );
+}
+
+const LeafletCrossDefect = (props) => {
+    const map = useLeafletContext().map;
+    const points = buildCross(props.center, 0, props.radius * 2);
+    const latlngs = [];
+    points.forEach((point) => {
+        const latlng = map.containerPointToLatLng(point)
+        latlngs.push(latlng)
+    })
+    return (
+        <Polygon 
+            positions={latlngs}
+            stroke={props.data.stroke}
+            fill={props.data.fill}
+            color={props.color}
+            opacity={props.data.opacity}
+            fillColor={props.fillColor}
             fillOpacity={props.data.fillOpacity}
             eventHandlers={{
                 mouseover: (e) => {
@@ -61,10 +100,7 @@ const LeafletTriangleDefect = (props) => {
 
 const LeafletStarDefect = (props) => {
     const map = useLeafletContext().map;
-    const center = map.latLngToContainerPoint(props.data.geojson);
-    const zoom = map.getZoom();
-    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
-    const points = buildStar(center, radius * 1.41, 5);
+    const points = buildStar(props.center, props.radius * 1.41);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -75,9 +111,9 @@ const LeafletStarDefect = (props) => {
             positions={latlngs}
             stroke={props.data.stroke}
             fill={props.data.fill}
-            color={props.data.color}
+            color={props.color}
             opacity={props.data.opacity}
-            fillColor={props.data.fillColor}
+            fillColor={props.fillColor}
             fillOpacity={props.data.fillOpacity}
             eventHandlers={{
                 mouseover: (e) => {
@@ -95,11 +131,7 @@ const LeafletStarDefect = (props) => {
 
 const LeafletSquareDefect = (props) => {
     const map = useLeafletContext().map;
-    const center = map.latLngToContainerPoint(props.data.geojson);
-    const zoom = map.getZoom();
-    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
-    //const points = useMemo(() => buildSquare(center, props.rotation, radius * 2), [center, props.rotation, radius]);
-    const points = buildSquare(center, props.rotation, radius * 2);
+    const points = buildSquare(props.center, props.rotation, props.radius * 2);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -110,7 +142,7 @@ const LeafletSquareDefect = (props) => {
             positions={latlngs}
             stroke={props.data.stroke}
             fill={props.data.fill}
-            color={props.data.color}
+            color={props.color}
             opacity={props.data.opacity}
             fillColor={props.data.fillColor}
             fillOpacity={props.data.fillOpacity}
@@ -129,29 +161,41 @@ const LeafletSquareDefect = (props) => {
 }
 
 export default function Defect(props) {
+    const map = useLeafletContext().map;
+    const zoom = map.getZoom();
+    const center = map.latLngToContainerPoint(props.data.geojson);
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
+
+    const color = useMemo(() => getColor(props.data.priority))
+
     if (props.data.shape === 'square') { //STC
         return (
-            <LeafletSquareDefect data={props.data} rotation={0}/>
+            <LeafletSquareDefect data={props.data} rotation={0} radius={radius} center={center} color={color}/>
         );
-    } else if (props.data.shape === 'circle') { //SUF
+    } else if (props.data.shape === 'star') { //SUF
         return (
-            <DefectCircle data={props.data}/>
+            <LeafletStarDefect data={props.data} radius={radius} center={center} color={color}/>
         );
     } else if (props.data.shape === 'triangle') { //DRA
         return (
-            <LeafletTriangleDefect data={props.data} rotation={30}/>
+            <LeafletTriangleDefect data={props.data} rotation={30} radius={radius} center={center} color={color}/>
         );
-    } else if (props.data.shape === 'star') { //SGN
+    } else if (props.data.shape === 'circle') { //SGN
         return (
-            <LeafletStarDefect data={props.data}/>
+            <DefectCircle data={props.data} radius={radius} center={center} color={color}/>    
+        );
+    } else if (props.data.shape === 'cross') { //FTP
+        return (
+            <LeafletCrossDefect data={props.data} radius={radius} center={center} color={color}/>    
         );
     } else if (props.data.shape === 'diamond') { //MSC
         return (
-            <LeafletSquareDefect data={props.data} rotation={40}/>
+            <LeafletSquareDefect data={props.data} rotation={40} radius={radius} center={center} color={color}/>
         );
-    } else {
+    } else { //find symbol?
         return (
-            <DefectCircle data={props.data}/>
+            <DefectCircle data={props.data} radius={radius} color={color}/>
+            // <ReactLeafletSquare data={props.data} size={radius}/>
         );
     }
        
