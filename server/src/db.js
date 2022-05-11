@@ -334,10 +334,10 @@ module.exports = {
         });
     },
 
-    updateCentrelineStatus: (carriage) => {
-        const status = util.parseString(carriage.status.toLowerCase());
-        const id = util.parseString(util.parseInteger(carriage.id).toString());
-        let sql = `UPDATE centreline SET status = ${status} WHERE cwid = ${id};`
+    updateCentrelineStatus: (id, status) => {
+        const _status = util.parseString(status.toLowerCase());
+        const _id = util.parseString(util.parseInteger(id).toString());
+        let sql = `UPDATE centreline SET status = ${_status} WHERE cwid = ${_id};`
         return new Promise((resolve, reject) => {
             
             connection.query(sql, (err, result) => {

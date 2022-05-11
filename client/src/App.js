@@ -75,6 +75,13 @@ function App() {
           setFaultSigns(data.inspection.signs)
         }
       });
+      socket.on("status", (result) => {
+        console.log(result)
+        let bounds = mapRef.current.getBounds();
+        let center = mapRef.current.getCenter();
+        start = Date.now();
+        socket.emit("geometry", bounds, [center.lat, center.lng]);      
+      });
       socket.on("loaded", (result) => {
         console.log(result)
         let bounds = mapRef.current.getBounds();

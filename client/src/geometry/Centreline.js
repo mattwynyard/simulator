@@ -1,7 +1,6 @@
 import { Polyline, Popup } from 'react-leaflet';
 
 function Centreline(props) {
-    const color = { color: 'blue' }
     return ( <Polyline
         key={`marker-${props.idx}`} 
         pathOptions={props.data.color ? { color: props.data.color} : { color: 'blue' }}
@@ -9,8 +8,8 @@ function Centreline(props) {
         cwid={props.data.cwid} 
         label={props.data.label} 
         roadid={props.data.roadid}
-        weight={props.data.weight ? props.data.weight : 3}
-        opacity={props.data.opacity ? props.data.opacity: 0.5}
+        weight={12}
+        opacity={0.4}
         style={{ zIndex: 900 }}
         //renderer={L.canvas({ padding: 0.5 })}
         eventHandlers={{
