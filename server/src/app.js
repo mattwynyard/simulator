@@ -237,7 +237,7 @@ app.post('/centerlineStatus', async (req, res) => {
   console.log(req.body)
   for (let i = 0; i < req.body.data.length; i++) {
     try {
-      let result = await db.updateCentrelineStatus(req.body.data[i]);
+      let result = await db.updateCentrelineStatus(req.body.data[i].id, req.body.data[i].status);
       count += 1;
     } catch (error) {
       console.log(error);
