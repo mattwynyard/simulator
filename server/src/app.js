@@ -247,6 +247,54 @@ app.post('/centerlineStatus', async (req, res) => {
   res.send({data: "ok"})
 });
 
+app.post('/status', async (req, res) => {
+  let count = 0;
+  let errors = 0;
+  console.log(req.body.status)
+  const done = req.body.status.done;
+  const live = req.body.status.live;
+  const next = req.body.status.done;
+  const part = req.body.status.part;
+  if (done) {
+    try {
+      let result = await db.updateCentrelineStatus(done, 'done');
+      count++;
+    } catch (error) {
+      console.log(error)
+      error++;
+    }
+  }
+  if (live) {
+    try {
+      let result = await db.updateCentrelineStatus(live, 'live');
+      count++;
+    } catch (error) {
+      console.log(error);
+      error++;
+    }
+  }
+  if (next) {
+    try {
+        let result = await db.updateCentrelineStatus(next, 'next');
+        count++;
+    } catch (error) {
+      console.log(error);
+      error++;
+    }
+  }
+  if (part) {
+    try {
+      let result = await db.updateCentrelineStatus(done, 'part');
+      count++;
+    } catch (error) {
+      console.log(error);
+      error++;
+    }  
+  }
+  io.emit("status", {updated: count, error: errors});
+  res.send({data: "ok"})
+});
+
 app.post('/inspection', async (req, res) => {
   let count = 0;
   let errors = 0;
