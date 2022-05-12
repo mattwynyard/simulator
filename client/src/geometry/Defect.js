@@ -8,19 +8,19 @@ import { DefectPopup } from '../DefectPopup.js';
 export const getPointRadius = (zoom) => {
     switch (zoom) {
         case 18:
-            return 6;
+            return 9;
         case 17:
-            return 5;
+            return 8;
         case 16:
-            return 4;
+            return 7;
         case 15:
-            return 3;
-        case 14:
-            return 2;
-        case 13:
-            return 1;
-        default:
             return 6;
+        case 14:
+            return 4;
+        case 13:
+            return 3;
+        default:
+            return 3;
     }
 }
 
@@ -47,12 +47,13 @@ const LeafletTriangleDefect = (props) => {
     return (
         <Polygon 
             positions={latlngs}
-            stroke={props.data.stroke}
-            fill={props.data.fill}
-            color={props.color}
+            pathOptions={{color: "#000000"}}
+            stroke={true}
+            weight={1}
+            opacity={1}
             opacity={props.data.opacity}
-            fillColor={props.data.fillColor}
-            fillOpacity={props.data.fillOpacity}
+            fillColor={props.color}
+            fillOpacity={1.0}
             eventHandlers={{
                 mouseover: (e) => {
                     e.target.openPopup();
@@ -109,12 +110,13 @@ const LeafletStarDefect = (props) => {
     return (
         <Polygon 
             positions={latlngs}
-            stroke={props.data.stroke}
-            fill={props.data.fill}
-            color={props.color}
+            pathOptions={{color: "#000000"}}
+            stroke={true}
+            weight={2}
+            opacity={1}
             opacity={props.data.opacity}
-            fillColor={props.fillColor}
-            fillOpacity={props.data.fillOpacity}
+            fillColor={props.color}
+            fillOpacity={1.0}
             eventHandlers={{
                 mouseover: (e) => {
                     e.target.openPopup();
@@ -140,12 +142,13 @@ const LeafletSquareDefect = (props) => {
     return (
         <Polygon 
             positions={latlngs}
-            stroke={props.data.stroke}
-            fill={props.data.fill}
-            color={props.color}
+            pathOptions={{color: "#000000"}}
+            stroke={true}
+            weight={1}
+            opacity={1}
             opacity={props.data.opacity}
-            fillColor={props.data.fillColor}
-            fillOpacity={props.data.fillOpacity}
+            fillColor={props.color}
+            fillOpacity={1.0}
             eventHandlers={{
                 mouseover: (e) => {
                     e.target.openPopup();
@@ -164,8 +167,7 @@ export default function Defect(props) {
     const map = useLeafletContext().map;
     const zoom = map.getZoom();
     const center = map.latLngToContainerPoint(props.data.geojson);
-    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
-
+    const radius = useMemo(() => getPointRadius( zoom), [zoom]);
     const color = useMemo(() => getColor(props.data.priority))
 
     if (props.data.shape === 'square') { //STC

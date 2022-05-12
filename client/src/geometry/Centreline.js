@@ -1,27 +1,19 @@
-import { Polyline, Popup } from 'react-leaflet';
+import { Polyline, Popup, useMap } from 'react-leaflet';
 
 function Centreline(props) {
+
+    
+
     return ( <Polyline
-        key={`marker-${props.idx}`} 
         pathOptions={props.data.color ? { color: props.data.color} : { color: 'blue' }}
         positions={props.data.geojson} 
-        cwid={props.data.cwid} 
-        label={props.data.label} 
-        roadid={props.data.roadid}
-        weight={12}
-        opacity={0.4}
-        style={{ zIndex: 900 }}
-        //renderer={L.canvas({ padding: 0.5 })}
+        weight={props.weight}
+        opacity={0.5}
+        style={{ zIndex: 990 }}
         eventHandlers={{
             click: (e) => {
                 e.target.openPopup();
               },
-            // mouseover: (e) => {
-            //     e.target.openPopup();
-            // },
-            // mouseout: (e) => {
-            //     e.target.closePopup();
-            // }
         }}
         >
         <Popup

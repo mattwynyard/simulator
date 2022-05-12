@@ -80,7 +80,7 @@ io.on('connection',(socket) => {
     }
   });
 
-  socket.on("geometry", async (bounds, center, zoom) => {
+  socket.on("geometry", async (bounds) => {
     let cls = null;
     let faults = null;
     let signs = null;
@@ -201,19 +201,22 @@ app.post('/stop', (req, res) => {
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
     try {
-      let prev = await db.prevPosition();
+      const prev = await db.prevPosition();
+      console.log(req.body.bearing)
       if (req.body.lock.length === 0) {
         req.body.lock = [...req.body.latlng]
       }
       if (prev.rowCount > 0) {
-        let point1 = JSON.parse(prev.rows[0].geojson).coordinates;
-        let point2 = [req.body.latlng[1], req.body.latlng[0]];
-        let d = util.haversine(point1, point2);
+        const point1 = JSON.parse(prev.rows[0].geojson).coordinates;
+        //console.log(point1)
+        const point2 = [req.body.latlng[1], req.body.latlng[0]];
+        const d = util.haversine(point1, point2);
         if (d >= MIN_DISTANCE) {
           await db.updateTrail(req.body);
           io.emit("latlng", req.body);
         }    
       } else {
+
         await db.updateTrail(req.body);
         io.emit("latlng", req.body);
       }   
@@ -329,22 +332,27 @@ app.post('/insertPoint', async (req, res) => {
 });
 
 app.post('/insertLine', async (req, res) => {
+  console.log(req.body)
   res.send({ message: "ok"});
 });
 
 app.post('/updateLine', async (req, res) => {
+  console.log(req.body)
     res.send({ message: "updated"});
 });
 
 app.post('/deleteLine', async (req, res) => {
+  console.log(req.body)
     res.send({ message: "deleted"});
 });
 
 app.post('/updatePoint', async (req, res) => {
+  console.log(req.body)
     res.send({ message: "updated"});
 });
 
 app.post('/deletePoint', async (req, res) => {
+  console.log(req.body)
     res.send({ message: "deleted"});
 });
 
