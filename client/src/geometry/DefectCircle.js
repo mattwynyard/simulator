@@ -9,12 +9,13 @@ export default function DefectCircle(props) {
             id={props.data.id}
             center={props.data.geojson}
             radius ={props.radius}
-            stroke={props.data.stroke}
-            fill={props.data.fill}
-            color={props.color}
+            pathOptions={{color: "#000000"}}
+            stroke={true}
+            weight={1}
+            opacity={1}
             opacity={props.data.opacity}
-            fillColor={props.data.fillColor}
-            fillOpacity={props.data.fillOpacity}
+            fillColor={"blue"}
+            fillOpacity={1.0}
             eventHandlers={{
                 mouseover: (e) => {
                     e.target.openPopup();

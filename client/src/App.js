@@ -2,7 +2,7 @@ import './App.css';
 import { MapContainer, CircleMarker, Popup, ScaleControl, LayerGroup, Polyline, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
-import Centreline from './geometry/Centreline.js';
+import Centrelines from './geometry/Centrelines.js';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import Defect from './geometry/Defect.js';
@@ -36,6 +36,7 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
+  const [zoom, setZoom] = useState(null)
 
   useEffect(() => {
       socket.on("connect", () => {
@@ -152,10 +153,9 @@ function App() {
       if (counter === 1 || counter % (REFRESH_RATE) === 0) {
         if(mapRef.current) {      
           let bounds = mapRef.current.getBounds();
-          let center = mapRef.current.getCenter();
           if (bounds) {
             start = Date.now();
-            socket.emit("geometry", bounds, center);
+            socket.emit("geometry", bounds);
           }
         }    
       }
@@ -174,13 +174,16 @@ function App() {
   const reset = () => {
     setFaultLines([]);
     setFaultPoints([]);
+    setCentreLines([]);
   }
 
-  const updateGeometry = (bounds, center, zoom) => {
+  const updateGeometry = (bounds, zoom) => {
     if(mapRef.current) {        
       if (!realTime) {
         start = Date.now();
-        socket.emit("geometry", bounds, [center.lat, center.lng], zoom);
+        setCentreLines([]);
+        //setZoom(zoom)
+        socket.emit("geometry", bounds);
       }
     }
   }
@@ -357,16 +360,7 @@ function App() {
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
-              {centrelines.map((line, idx) =>
-                <Centreline
-                  className = {"centre-line"}
-                  key={`marker-${idx}`}    
-                  data={line}
-                  idx={idx}
-                >           
-                </Centreline>
-              )}
-            
+            <Centrelines data={centrelines} zoom={zoom}></Centrelines>
           </LayerGroup>
         </LayersControl.Overlay>
           </LayersControl>   

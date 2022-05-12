@@ -1,4 +1,5 @@
 import { Popup } from 'react-leaflet';
+import './App.css';
 
 export function DefectPopup(props) {
     return (
