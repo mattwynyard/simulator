@@ -6,6 +6,18 @@ export const buildSquare = (center, rotation, size) => {
     return [p1, p2, p3, p4]
 }
 
+export const buildLocationTriangle = (center, rotation, size) => {
+    const points = [];
+        const x0 = Math.round(center.x + (size * Math.cos((rotation * (Math.PI / 180)) * Math.PI / 3)));
+        const y0 = Math.round(center.y + (size * Math.sin((rotation * (Math.PI / 180)) * Math.PI / 3)));
+        const x1 = Math.round(center.x + (size * Math.cos((rotation * (Math.PI / 180)) + 2 * Math.PI / 3)));
+        const y1 = Math.round(center.y + (size * Math.sin((rotation * (Math.PI / 180)) + 2 * Math.PI / 3)));
+        const x2 = Math.round(center.x + (size * Math.cos((rotation * (Math.PI / 180)) + 4 * Math.PI / 3)));
+        const y2 = Math.round(center.y + (size * Math.sin((rotation * (Math.PI / 180)) + 4 * Math.PI / 3)));
+        points.push([x0, y0], [Math.round(center.x), Math.round(center.y)], [x1, y1], [x2, y2])
+    return points;
+}
+
 export const buildTriangle = (center, rotation, size) => {
     const points = [];
     for (let i = 0; i < 3; i++) {
@@ -18,66 +30,23 @@ export const buildTriangle = (center, rotation, size) => {
 
 export const buildCross = (center, rotation, size) => {
     const outerSize = size * 2;
-    const p1 = [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
-        center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
-    const p2 = [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
-            center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))] //bottom right
-    const p3 = [center.x + (0.5 * size* (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
-        center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
-    const p4 = [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
-            center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p1 = [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y - (1.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p2 = [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p3 = [center.x - (1.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p4 = [center.x + (1.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p5 = [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p6 = [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y - (1.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p7 = [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y + (1.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p8 = [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p9 = [center.x + (1.5 * size * (Math.sin(rotation) + Math.cos(rotation))), center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))]
+    const p10 = [center.x - (1.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p11 = [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
+    const p12 = [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), center.y + (1.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
 
-    
-        return [
-            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
-                center.y - (0.5 * size* (Math.sin(rotation) - Math.cos(rotation)))],
-            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
-                center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
-            [center.x - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //topright
-                center.y - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
-
-            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
-                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
-            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
-                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
-            [center.x - (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), 
-                center.y + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))], //bottom right
-
-            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
-                center.y + (0.5 * size* (Math.sin(rotation) - Math.cos(rotation)))],
-            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
-                center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
-            [center.x + (0.5 * size * (Math.sin(rotation) + Math.cos(rotation))), //bottomleft
-                center.y + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation)))],
-
-            [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
-                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))],
-            [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
-                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))],
-             [center.x + (0.5 * size * (Math.sin(rotation) - Math.cos(rotation))), //topleft
-                center.y - (0.5 * size * (Math.sin(rotation) + Math.cos(rotation)))]
-
-        ];
-
-
-    // return [
-    //     [p1[0], p1[1] / 2], 
-    //     p1, 
-    //     [p1[0] * 2, p1[1]], 
-    //     [p2[0] * 2, p2[1]], 
-    //     p2,  
-    //     [p2[0], p2[1] * 2], 
-    //     [p3[0], p3[1] * 2], 
-    //     p3, 
-    //     [p3[0] / 2, p3[1]], 
-    //     [p4[0] / 2, p4[1]],
-    //     p4,
-    //     [p4[0], p4[1] / 2]
-    // ];
-    
+    return [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12]
 }
 
-export const buildStar = (center, outerRadius, numPoints=5) => {
+export const buildStar = (center, outerRadius, numPoints=4) => {
     const points = [];
     const innerRadius = outerRadius / 2;
     const rotate = 29.9;

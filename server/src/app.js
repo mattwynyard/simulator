@@ -202,13 +202,11 @@ app.post('/stop', (req, res) => {
    if (arr[1] === "000") {
     try {
       const prev = await db.prevPosition();
-      console.log(req.body.bearing)
       if (req.body.lock.length === 0) {
         req.body.lock = [...req.body.latlng]
       }
       if (prev.rowCount > 0) {
         const point1 = JSON.parse(prev.rows[0].geojson).coordinates;
-        //console.log(point1)
         const point2 = [req.body.latlng[1], req.body.latlng[0]];
         const d = util.haversine(point1, point2);
         if (d >= MIN_DISTANCE) {
@@ -216,7 +214,6 @@ app.post('/stop', (req, res) => {
           io.emit("latlng", req.body);
         }    
       } else {
-
         await db.updateTrail(req.body);
         io.emit("latlng", req.body);
       }   

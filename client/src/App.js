@@ -2,11 +2,12 @@ import './App.css';
 import { MapContainer, CircleMarker, Popup, ScaleControl, LayerGroup, Polyline, LayersControl, Pane} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef, Fragment} from 'react';
-import Centrelines from './geometry/Centrelines.js';
+import Centrelines from './geometry/Centrelines.jsx';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import Defect from './geometry/Defect.js';
 import socketIOClient from "socket.io-client";
+import Location from './geometry/Location.jsx';
 
 const SERVER_URL = "http://localhost:5000";
 let start = null;
@@ -213,23 +214,66 @@ function App() {
         <CustomTileLayer isRemote={isRemote}/>
         <ScaleControl name="Scale" className="scale"/>
         <LayersControl position="topright">
-        <Pane name="position">
-        {position.map((point, idx) =>
-          <CircleMarker
-            className={"position"}
-            key={`marker-${idx}`} 
-            stroke={true}
-            center={point.latlng}
-            radius ={6}
-            fill={true}
-            color={"#3388ff"}
-            fillColor={"blue"}
-            fillOpacity={1.0}
-            style={{ zIndex: 1000 }}   
-            >      
-          </CircleMarker>
-        )}
-        </Pane>
+        
+          
+         <LayersControl.Overlay checked name="Faults">
+         <LayerGroup>
+          <Pane name="faults" className={"faults"}>
+            {faultLines.map((line, idx) =>
+                <Polyline
+                  key={`marker-${idx}`} 
+                  style={{ zIndex: 999 }}   
+                  positions={line.geojson}
+                  idx={idx}
+                  color={line.color}
+                  weight ={line.weight}
+                  opacity={line.opacity}
+                  eventHandlers={{
+                    click: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseover: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseout: (e) => {
+                      e.target.closePopup();
+                    }
+                  }}
+                > 
+                  <Popup
+                    className = {"popup"}
+                    key={`marker-${idx}`}>
+                    {line.id}<br></br>    
+                  </Popup>            
+                </Polyline>
+              )}     
+            {faultPoints.map((defect) =>
+              <Defect
+                data = {defect}
+                key={defect.id}
+              />
+            )}
+            </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Signs">
+         <LayerGroup>
+          <Pane name="signs" className={"signs"}>     
+            {faultSigns.map((defect) =>
+              <Defect
+                data = {defect}
+                key={defect.id}
+              />
+            )}
+            </Pane>
+         </LayerGroup>
+         </LayersControl.Overlay>
+         <LayersControl.Overlay checked name="Centrelines">
+          <LayerGroup>
+            <Centrelines data={centrelines} zoom={zoom}></Centrelines>
+          </LayerGroup>
+        </LayersControl.Overlay>
+          </LayersControl> 
           {trail.map((point, idx) =>
           <Fragment key={`fragment-${idx}`} >
             <CircleMarker
@@ -305,65 +349,10 @@ function App() {
               </Popup>       
             </CircleMarker>
           </Fragment>
-          )}
-         <LayersControl.Overlay checked name="Faults">
-         <LayerGroup>
-          <Pane name="faults" className={"faults"}>
-            {faultLines.map((line, idx) =>
-                <Polyline
-                  key={`marker-${idx}`} 
-                  style={{ zIndex: 999 }}   
-                  positions={line.geojson}
-                  idx={idx}
-                  color={line.color}
-                  weight ={line.weight}
-                  opacity={line.opacity}
-                  eventHandlers={{
-                    click: (e) => {
-                      e.target.openPopup();
-                    },
-                    mouseover: (e) => {
-                      e.target.openPopup();
-                    },
-                    mouseout: (e) => {
-                      e.target.closePopup();
-                    }
-                  }}
-                > 
-                  <Popup
-                    className = {"popup"}
-                    key={`marker-${idx}`}>
-                    {line.id}<br></br>    
-                  </Popup>            
-                </Polyline>
-              )}     
-            {faultPoints.map((defect) =>
-              <Defect
-                data = {defect}
-                key={defect.id}
-              />
-            )}
-            </Pane>
-         </LayerGroup>
-         </LayersControl.Overlay>
-         <LayersControl.Overlay checked name="Signs">
-         <LayerGroup>
-          <Pane name="signs" className={"signs"}>     
-            {faultSigns.map((defect) =>
-              <Defect
-                data = {defect}
-                key={defect.id}
-              />
-            )}
-            </Pane>
-         </LayerGroup>
-         </LayersControl.Overlay>
-         <LayersControl.Overlay checked name="Centrelines">
-          <LayerGroup>
-            <Centrelines data={centrelines} zoom={zoom}></Centrelines>
-          </LayerGroup>
-        </LayersControl.Overlay>
-          </LayersControl>   
+          )}  
+          <Pane name="position">
+          <Location className='location' data={position} style={{ zIndex: 1000 }}   ></Location>
+        </Pane>
          </MapContainer>  
     </>  
   );
