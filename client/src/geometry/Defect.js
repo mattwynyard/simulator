@@ -1,4 +1,4 @@
-import { Polygon } from 'react-leaflet';
+import { Polygon, useMap } from 'react-leaflet';
 import DefectCircle from './DefectCircle.js';
 import { useLeafletContext } from '@react-leaflet/core';
 import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
@@ -36,8 +36,8 @@ const getColor = (priority) => {
     }
 }
 
-const LeafletTriangleDefect = (props) => {
-    const map = useLeafletContext().map;
+export const LeafletTriangleDefect = (props) => {
+    const map = useMap();
     const points = buildTriangle(props.center, props.rotation, props.radius * 1.41);
     const latlngs = [];
     points.forEach((point) => {
@@ -50,8 +50,7 @@ const LeafletTriangleDefect = (props) => {
             pathOptions={{color: "#000000"}}
             stroke={true}
             weight={1}
-            opacity={1}
-            opacity={props.data.opacity}
+            opacity={1.0}
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
@@ -70,7 +69,7 @@ const LeafletTriangleDefect = (props) => {
 
 const LeafletCrossDefect = (props) => {
     const map = useLeafletContext().map;
-    const points = buildCross(props.center, 0, props.radius * 2);
+    const points = buildCross(props.center, 0, props.radius);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
@@ -78,13 +77,13 @@ const LeafletCrossDefect = (props) => {
     })
     return (
         <Polygon 
-            positions={latlngs}
-            stroke={props.data.stroke}
-            fill={props.data.fill}
-            color={props.color}
-            opacity={props.data.opacity}
-            fillColor={props.fillColor}
-            fillOpacity={props.data.fillOpacity}
+        positions={latlngs}
+        pathOptions={{color: "#000000"}}
+        stroke={true}
+        weight={1}
+        opacity={1}
+        fillColor={props.color}
+        fillOpacity={1.0}
             eventHandlers={{
                 mouseover: (e) => {
                     e.target.openPopup();
@@ -114,7 +113,6 @@ const LeafletStarDefect = (props) => {
             stroke={true}
             weight={2}
             opacity={1}
-            opacity={props.data.opacity}
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
@@ -145,8 +143,7 @@ const LeafletSquareDefect = (props) => {
             pathOptions={{color: "#000000"}}
             stroke={true}
             weight={1}
-            opacity={1}
-            opacity={props.data.opacity}
+            opacity={1.0}
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{

@@ -33,7 +33,7 @@ const MapRef = forwardRef((props, ref) => {
 
     }, [control, map]);
 
-    useMapEvent('mousemove', onMouseMove)
+    //useMapEvent('mousemove', onMouseMove)
 
     const newCenter = useCallback((center) => {
       setCenter(center);

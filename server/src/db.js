@@ -173,23 +173,17 @@ module.exports = {
             let maxy = bounds._northEast.lat;
             if (type === 'fault') {
                 sql = "SELECT d.id, d.inspection, d.code, d.type, m.shape, m.description, d.repair, d.priority, d.side, d.starterp, d.enderp, " +
-                "d.length, d.width, d.count, d.photo, d.inspector, d.gpstime, m.class, m.color, m.fill, m.fillcolor, m.opacity, " +
-                "m.fillopacity, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap as m WHERE geom && " +
-                "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") AND d.code = m.code AND m.class !='SGN'"
+                "d.length, d.width, d.count, d.photo, d.inspector, d.gpstime, m.class, ST_AsGeoJSON(d.geom) as geojson FROM defects as d,  " +
+                " dfmap as m WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") AND d.code = m.code AND m.class !='SGN'"
             } else if (type === 'sign') {
                 sql = "SELECT d.id, d.inspection, d.code, d.type, m.shape, m.description, d.repair, d.priority, d.side, d.starterp, d.enderp, " +
-                "d.count, d.photo, s.description, d.inspector, d.gpstime, m.class, m.color, m.fill, m.fillcolor, m.opacity, " +
-                "m.fillopacity, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap as m, sgmap as s WHERE geom && " +
-                "ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") AND d.code = m.code AND d.signcode = s.code AND m.class ='SGN'"; 
-            } else {
-
-            }
-            
-            
+                "d.count, d.photo, s.description, d.inspector, d.gpstime, m.class, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap as m, " +
+                " sgmap as s WHERE geom && ST_MakeEnvelope( " + minx + "," + miny + "," + maxx + "," + maxy + ") AND d.code = m.code AND d.signcode = s.code AND m.class ='SGN'"; 
+            }         
         } else {
             sql = "SELECT d.id, d.inspection, d.code, d.type, m.shape, m.description, d.repair, d.priority, d.side, d.starterp, d.enderp, " +
-            "d.length, d.width, d.count, d.photo, d.inspector, d.gpstime, m.class, m.color, m.fill, m.fillcolor, m.opacity, " +
-            "m.fillopacity, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap as m WHERE d.code = m.code";
+            "d.length, d.width, d.count, d.photo, d.inspector, d.gpstime, m.class, ST_AsGeoJSON(d.geom) as geojson FROM defects as d, dfmap " +
+            " as m WHERE d.code = m.code";
         }
          return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
@@ -352,7 +346,6 @@ module.exports = {
     },
 
     closestCentreline: (center) => {
-        console.log(center);
         let lat = center[0].lat;
         let lng = center[0].lng;
         return new Promise((resolve, reject) => {

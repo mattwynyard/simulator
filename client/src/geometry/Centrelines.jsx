@@ -1,4 +1,4 @@
-import Centreline from './Centreline.js';
+import Centreline from './Centreline.jsx';
 import { useMap } from 'react-leaflet';
 import { useMemo } from 'react';
 
