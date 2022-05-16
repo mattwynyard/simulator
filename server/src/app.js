@@ -143,6 +143,8 @@ io.on('connection',(socket) => {
     }
     
   });
+
+  // socket.on("centrelines", )
   socket.on("inspection", async (bounds, center) => {
     try {
       let ins = await db.inspection(bounds, center);
@@ -197,7 +199,6 @@ app.post('/stop', (req, res) => {
  * incoming location from access
  */
  app.post('/location', async (req, res) => {
-   
    let arr = req.body.timestamp.split('.');
    if (arr[1] === "000") {
     try {
@@ -253,7 +254,7 @@ app.post('/status', async (req, res) => {
   console.log(req.body.status)
   const done = req.body.status.done;
   const live = req.body.status.live;
-  const next = req.body.status.done;
+  const next = req.body.status.next;
   const part = req.body.status.part;
   if (done) {
     try {
@@ -284,7 +285,7 @@ app.post('/status', async (req, res) => {
   }
   if (part) {
     try {
-      let result = await db.updateCentrelineStatus(done, 'part');
+      let result = await db.updateCentrelineStatus(part, 'part');
       count++;
     } catch (error) {
       console.log(error);
