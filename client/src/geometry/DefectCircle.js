@@ -13,7 +13,6 @@ export default function DefectCircle(props) {
             stroke={true}
             weight={1}
             opacity={1}
-            opacity={props.data.opacity}
             fillColor={"blue"}
             fillOpacity={1.0}
             eventHandlers={{

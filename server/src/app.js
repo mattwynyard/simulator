@@ -38,6 +38,11 @@ app.use((req, res, next) => {
   next();
 });
 
+//serve tiles
+app.get('/tiles/:z/:x/:y', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../', req.url));
+});
+
 io.on('connection',(socket) => {
   console.log("client connected on socket");
   socket.on("trail", async (bounds) => {
@@ -80,12 +85,9 @@ io.on('connection',(socket) => {
     }
   });
 
-  socket.on("geometry", async (bounds) => {
+  const fetchCentrelines = async (bounds) => {
     let cls = null;
-    let faults = null;
-    let signs = null;
     try {
-      //cls = await db.centrelinesIndex(bounds, center);
       cls = await db.centrelineStatus(bounds);
       cls.rows.forEach(row => {
         let line = JSON.parse(row.geojson).coordinates;
@@ -98,9 +100,17 @@ io.on('connection',(socket) => {
         });
           row.geojson = newLine;
       });
+      return cls.rows;
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      return [];
     }
+   
+  }
+
+  const fetchInspection = async (bounds) => {
+    let faults = null;
+    let signs = null;
     try {
       faults = await db.selectInspectionMap(bounds, 'fault');
       signs = await db.selectInspectionMap(bounds, 'sign');
@@ -109,8 +119,7 @@ io.on('connection',(socket) => {
         let lines = [];
         let signPoints = [];
         faults.rows.forEach(row => {
-          if (row.type === 'point') {
-            //row.radius = util.getPointRadius(zoom);
+          if (row.type === 'fault') {
             let pointLngLat = JSON.parse(row.geojson).coordinates;
             let pointLatLng = [pointLngLat[1], pointLngLat[0]];
             row.geojson = pointLatLng;
@@ -134,57 +143,37 @@ io.on('connection',(socket) => {
           row.geojson = pointLatLng;
           signPoints.push(row);
         });
-        io.emit("geometry", {centreline: cls.rows, inspection: {points: points, lines: lines, signs: signPoints}});
+        return {points: points, lines: lines, signs: signPoints};
       } else {
-        io.emit("geometry", {centreline: cls.rows, inspection: null});
-      }
+        return {points: [], lines: [], signs: []};
+      }      
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      return {points: [], lines: [], signs: []};
     }
-    
-  });
+  }
 
-  // socket.on("centrelines", )
-  socket.on("inspection", async (bounds, center) => {
-    try {
-      let ins = await db.inspection(bounds, center);
-      //console.log(ins.rowCount)
-      let points = [];
-      let lines = [];
-      if (ins.rowCount > 0) {
-        ins.rows.forEach(row => {
-          if (row.type === 'point') {
-            let pointLngLat = JSON.parse(row.geojson).coordinates;
-            let pointLatLng = [pointLngLat[1], pointLngLat[0]];
-            row.geojson = pointLatLng;
-            points.push(row);
-          } else if (row.type === 'line') {
-            let line = JSON.parse(row.geojson).coordinates;
-            let newLine = [];
-            line.forEach((point) => {
-              let coords = [];
-              coords.push(point[1]);
-              coords.push(point[0]);
-              newLine.push(coords);
-            });
-            row.geojson = newLine;
-            lines.push(row)
-          }        
-        });
-      }   
-      io.emit("geometry", {inspection: {points: points, lines: lines}});
-    } catch (error) {
-      console.log(error)
-    }
+  socket.on("geometry", async (bounds, type) => {
+    if (type === "both") {
+      const cls = await fetchCentrelines(bounds);
+      const ins = await fetchInspection(bounds);  
+      io.emit("geometry", {centreline: cls, inspection: {points: ins.points, lines: ins.lines, signs: ins.signs}});    
+    } else if (type === "inspection") {
+      const ins = await fetchInspection(bounds); 
+      io.emit("geometry", {inspection: {points: ins.points, lines: ins.lines, signs: ins.signs}});   
+    } else if (type === "centreline") {
+      const cls = await fetchCentrelines(bounds);
+      io.emit("geometry", {centreline: cls});   
+    } else {
+      io.emit("geometry", {centreline: [], inspection: {points: [], lines: [], signs: []}});       
+    } 
   });
 
 }); //connection
 
-//serve tiles
-app.get('/tiles/:z/:x/:y', async (req, res) => {
-  res.sendFile(path.join(__dirname, '../', req.url));
-});
-
+/**
+ * ACCESS ENDPOINTS
+ */
 app.post('/start', (req, res) => {
   io.emit("simulator", "start")
   res.send({ message: "ok"});
@@ -299,9 +288,10 @@ app.post('/status', async (req, res) => {
 app.post('/inspection', async (req, res) => {
   let count = 0;
   let errors = 0;
+  
   for (let i = 0; i < req.body.data.length; i++) {
     try {  
-      let result = await db.insertInspection(req.body.inspection, req.body.data[i]);
+      const result = await db.insertDefect(req.body.inspection, req.body.data[i]);
       count += result.rowCount;
     } catch (error) {
         console.log(error);
@@ -326,6 +316,8 @@ app.get('/reset', async (req, res) => {
 
 app.post('/insertPoint', async (req, res) => {
   console.log(req.body)
+  const result = await db.insertDefect(req.body.inspection, req.body.data);
+  io.emit("insert", result.rowCount)
   res.send({ message: "ok"});
 });
 

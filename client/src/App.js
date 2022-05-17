@@ -51,8 +51,7 @@ function App() {
       socket.on("trail", (data) => {
         const millis = Date.now() - trailStart;
         setTrail(data);
-        console.log(`Fetched ${data.length} trail markers in ${millis} ms`);
-        
+        console.log(`Fetched ${data.length} trail markers in ${millis} ms`);   
       });
       socket.on("simulator", (data) => {
         if(data === "start") {
@@ -66,7 +65,6 @@ function App() {
       });
       socket.on("geometry", (data) => {
         const millis = Date.now() - start;
-        //console.log(data)
         if (data.centreline) {
           console.log(`Fetched ${data.centreline.length} centrelines in ${millis} ms`);
           setCentreLines(data.centreline);
@@ -80,16 +78,20 @@ function App() {
       socket.on("status", (result) => {
         console.log(result)
         let bounds = mapRef.current.getBounds();
-        let center = mapRef.current.getCenter();
         start = Date.now();
-        socket.emit("geometry", bounds, [center.lat, center.lng]);      
+        socket.emit("geometry", bounds, "centreline"); 
+      });
+      socket.on("insert", (result) => {
+        console.log(result)
+        let bounds = mapRef.current.getBounds();
+        start = Date.now();
+        socket.emit("geometry", bounds, "inspection"); 
       });
       socket.on("loaded", (result) => {
         console.log(result)
         let bounds = mapRef.current.getBounds();
-        let center = mapRef.current.getCenter();
         start = Date.now();
-        socket.emit("geometry", bounds, [center.lat, center.lng]);      
+        socket.emit("geometry", bounds, "both");      
       });
       try { 
         let realtime = JSON.parse(window.sessionStorage.getItem('realtime'));
@@ -138,8 +140,6 @@ function App() {
       if (realTime) { 
         console.log(`RealTime: ${realTime}`);
         mapRef.current.setMinZoom(MAX_ZOOM);
-        setFaultLines([]);
-        setFaultPoints([]);
       } else {
         mapRef.current.setMinZoom(MIN_ZOOM);
       }
@@ -151,12 +151,12 @@ function App() {
   }, [center])
 
   useEffect(() => {
-      if (counter === 1 || counter % (REFRESH_RATE) === 0) {
+      if (counter % REFRESH_RATE === 0) {
         if(mapRef.current) {      
           let bounds = mapRef.current.getBounds();
           if (bounds) {
             start = Date.now();
-            socket.emit("geometry", bounds);
+            socket.emit("geometry", bounds, "both");
           }
         }    
       }
@@ -175,16 +175,16 @@ function App() {
   const reset = () => {
     setFaultLines([]);
     setFaultPoints([]);
+    setFaultSigns([]);
     setCentreLines([]);
   }
 
-  const updateGeometry = (bounds, zoom) => {
+  const updateGeometry = (bounds, types) => {
     if(mapRef.current) {        
       if (!realTime) {
         start = Date.now();
         setCentreLines([]);
-        //setZoom(zoom)
-        socket.emit("geometry", bounds);
+        socket.emit("geometry", bounds, "both");
       }
     }
   }
