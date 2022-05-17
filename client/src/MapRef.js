@@ -14,7 +14,7 @@ const MapRef = forwardRef((props, ref) => {
         console.log(e.containerPoint)
       },
       moveend: (e) => {
-        props.update(map.getBounds(), map.getZoom())
+        props.update(map.getBounds())
 
       }
     }, []);
