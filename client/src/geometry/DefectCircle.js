@@ -16,11 +16,8 @@ export default function DefectCircle(props) {
             fillColor={"blue"}
             fillOpacity={1.0}
             eventHandlers={{
-                mouseover: (e) => {
+                click: (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
             > 

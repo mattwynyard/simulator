@@ -4,6 +4,7 @@ import { useLeafletContext } from '@react-leaflet/core';
 import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
 import { useMemo } from 'react';
 import { DefectPopup } from '../DefectPopup.js';
+import { DefectToast } from '../DefectToast.jsx';
 
 export const getPointRadius = (zoom) => {
     switch (zoom) {
@@ -54,15 +55,15 @@ export const LeafletTriangleDefect = (props) => {
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
-                mouseover: (e) => {
+                click: (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
         >
-            <DefectPopup data ={props.data}/>
+            {/* <DefectPopup data ={props.data}/> */}
+            <DefectToast 
+                data ={props.data} 
+            />
         </Polygon>
     );
 }
@@ -85,11 +86,8 @@ const LeafletCrossDefect = (props) => {
         fillColor={props.color}
         fillOpacity={1.0}
             eventHandlers={{
-                mouseover: (e) => {
+                click : (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
         >
@@ -116,11 +114,8 @@ const LeafletStarDefect = (props) => {
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
-                mouseover: (e) => {
+                click: (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
         >
@@ -147,11 +142,8 @@ const LeafletSquareDefect = (props) => {
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
-                mouseover: (e) => {
+                click: (e) => {
                     e.target.openPopup();
-                },
-                mouseout: (e) => {
-                    e.target.closePopup();
                 }
             }}
         >
@@ -160,7 +152,7 @@ const LeafletSquareDefect = (props) => {
     );
 }
 
-export default function Defect(props) {
+export default function DefectPoint(props) {
     const map = useLeafletContext().map;
     const zoom = map.getZoom();
     const center = map.latLngToContainerPoint(props.data.geojson);

@@ -166,7 +166,7 @@ module.exports = {
                 id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, signcode, inspector, gpstime, geom)
                 VALUES (${data}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326));`; 
         } else {
-            throw new Error; 
+            console.log(defect); 
         }
         return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
