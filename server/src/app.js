@@ -126,6 +126,7 @@ io.on('connection',(socket) => {
             points.push(row);
           } else if (row.type === 'line') {
             let line = JSON.parse(row.geojson).coordinates;
+           
             let newLine = [];
             line.forEach((point) => {
               let coords = [];
@@ -224,7 +225,6 @@ app.post('/centrelines', async (req, res) => {
 app.post('/centerlineStatus', async (req, res) => {
   let count = 0;
   let errors = 0;
-  console.log(req.body)
   for (let i = 0; i < req.body.data.length; i++) {
     try {
       let result = await db.updateCentrelineStatus(req.body.data[i].id, req.body.data[i].status);
@@ -240,7 +240,6 @@ app.post('/centerlineStatus', async (req, res) => {
 app.post('/status', async (req, res) => {
   let count = 0;
   let errors = 0;
-  console.log(req.body.status)
   const done = req.body.status.done;
   const live = req.body.status.live;
   const next = req.body.status.next;
