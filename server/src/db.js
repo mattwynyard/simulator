@@ -155,9 +155,10 @@ module.exports = {
                 id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, signcode, inspector, gpstime, geom)
                 VALUES (${data}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326));`; 
         } else if (defect.type === 'line') {
-            let wkt = util.arrayToWkt(data.latlng);
+            //console.log(defect)
+            let wkt = util.arrayToWkt(defect.geojson);
             sql = `INSERT INTO public.defects(
-                id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, inspector, gpstime, geom)
+                id, inspection, type, code, repair, priority, side, starterp, enderp, length, width, count, photo, signcode, inspector, gpstime, geom)
                 VALUES (${data}, ST_SetSRID(ST_GeomFromText(${wkt}), 4326));`;
         } else if (defect.type === 'sign') {
             let lng = defect.geojson[1];
@@ -171,7 +172,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
             connection.query(sql, (err, result) => {
                 if (err) {
-                    console.error('Error executing query', err.stack)
+                    //console.error('Error executing query', err.stack)
                     return reject(err);
                 }
                 let _result = resolve(result);

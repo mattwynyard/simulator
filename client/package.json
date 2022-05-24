@@ -1,5 +1,8 @@
 {
   "name": "simulator",
+  "jest": {
+    "verbose": true 
+  },
   "version": "0.3.0",
   "proxy": "http://localhost:5000",
   "start": "HTTP=false react-scripts start",
@@ -22,7 +25,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "jest",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -37,6 +40,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "eslint-plugin-react-hooks": "^4.3.0"
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "jest": "^26.6.0"
   }
 }

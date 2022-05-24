@@ -6,11 +6,12 @@ import Centrelines from './geometry/Centrelines.jsx';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
 import DefectPoint from './geometry/DefectPoint.jsx';
-import DefectLine from './geometry/DefectLine.jsx';
+import DefectPolygons from './geometry/DefectPolygons.jsx';
 import TrailMarker from './geometry/TrailMarker.jsx';
 import socketIOClient from "socket.io-client";
 import Location from './geometry/Location.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { Card } from 'react-bootstrap';
 
 const SERVER_URL = "http://localhost:5000";
 let start = null;
@@ -40,7 +41,8 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
-  const [zoom, setZoom] = useState(null)
+  const [zoom, setZoom] = useState(null);
+  const [showDefectCard, setShowDefectCard] = useState(false)
 
   useEffect(() => {
       socket.on("connect", () => {
@@ -102,7 +104,7 @@ function App() {
         } else {
           mapRef.current.setMinZoom(MIN_ZOOM);
         }
-        setRealTime(realtime)
+        setRealTime(realtime);
       } catch {
         console.log("failed to save state")
       } 
@@ -191,10 +193,16 @@ function App() {
     }
   }
 
+  const handleMarkerClick = (e, data) => {
+    console.log(data)
+    setShowDefectCard(true)
+  }
+
   return (
     <>
-      <div className="panel">
-      </div>
+      {/* <div className= "panel">
+        <DefectToast >
+      </div> */}
       <MapContainer 
           className="map" 
           zoom={18} 
@@ -219,16 +227,15 @@ function App() {
          <LayersControl.Overlay checked name="Faults">
          <LayerGroup>
           <Pane name="faults" className={"faults"}>
-            {faultLines.map((defect) =>
-              <DefectLine
-                data={defect}
-                key={defect.id}
+              <DefectPolygons
+                data={faultLines}
               />
-              )}     
+    
             {faultPoints.map((defect) =>
               <DefectPoint
-                data = {defect}
+                data={defect}
                 key={defect.id}
+                onClick={handleMarkerClick}
               />
             )}
             </Pane>
@@ -243,7 +250,7 @@ function App() {
                 key={defect.id}
               />
             )}
-            </Pane>
+          </Pane>
          </LayerGroup>
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">

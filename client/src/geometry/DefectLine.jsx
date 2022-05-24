@@ -1,14 +1,17 @@
 
 import { Popup, Polyline} from 'react-leaflet';
+import { getColor } from '../Utilities/Geometry.js';
+import { useMemo } from 'react'
 export default function DefectLine(props) {
+    const color = useMemo(() => getColor(props.data.priority), [props.data.priority])
 
     return (
         <Polyline
             style={{ zIndex: 999 }}   
             positions={props.data.geojson}
-            color={props.data.color}
-            weight ={props.data.weight}
-            opacity={props.data.opacity}
+            color={color}
+            weight ={10}
+            opacity={1.0}
             eventHandlers={{
                 click: (e) => {
                 e.target.openPopup();

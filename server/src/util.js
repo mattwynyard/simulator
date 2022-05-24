@@ -91,7 +91,6 @@ function arrayToWkt(arr) {
             wkt += lng.toString() + " " + lat.toString() + ", ";
         }
     }
-    console.log(wkt);
     return wkt;
 }
 

@@ -125,8 +125,7 @@ io.on('connection',(socket) => {
             row.geojson = pointLatLng;
             points.push(row);
           } else if (row.type === 'line') {
-            let line = JSON.parse(row.geojson).coordinates;
-           
+            let line = JSON.parse(row.geojson).coordinates;         
             let newLine = [];
             line.forEach((point) => {
               let coords = [];
@@ -287,13 +286,12 @@ app.post('/status', async (req, res) => {
 app.post('/inspection', async (req, res) => {
   let count = 0;
   let errors = 0;
-  
   for (let i = 0; i < req.body.data.length; i++) {
     try {  
       const result = await db.insertDefect(req.body.inspection, req.body.data[i]);
       count += result.rowCount;
     } catch (error) {
-        console.log(error);
+        console.log(error.detail);
         errors++;
     }
   }  
@@ -315,13 +313,20 @@ app.get('/reset', async (req, res) => {
 
 app.post('/insertPoint', async (req, res) => {
   console.log(req.body)
-  const result = await db.insertDefect(req.body.inspection, req.body.data);
-  io.emit("insert", result.rowCount)
+  try {
+    const result = await db.insertDefect(req.body.inspection, req.body.data);
+    io.emit("insert", result.rowCount)
+  } catch (err) {
+    console.log(err)
+  }
+  
   res.send({ message: "ok"});
 });
 
 app.post('/insertLine', async (req, res) => {
   console.log(req.body)
+  const result = await db.insertDefect(req.body.inspection, req.body.data);
+  io.emit("insert", result.rowCount)
   res.send({ message: "ok"});
 });
 

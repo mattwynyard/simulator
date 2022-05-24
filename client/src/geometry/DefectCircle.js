@@ -11,7 +11,7 @@ export default function DefectCircle(props) {
             radius ={props.radius}
             pathOptions={{color: "#000000"}}
             stroke={true}
-            weight={1}
+            weight={2}
             opacity={1}
             fillColor={"blue"}
             fillOpacity={1.0}
