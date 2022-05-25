@@ -229,8 +229,7 @@ function App() {
           <Pane name="faults" className={"faults"}>
               <DefectPolygons
                 data={faultLines}
-              />
-    
+              /> 
             {faultPoints.map((defect) =>
               <DefectPoint
                 data={defect}

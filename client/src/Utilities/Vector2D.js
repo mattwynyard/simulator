@@ -39,7 +39,12 @@ export default class Vector2D {
 	}
 
     normalise() {
-        return new Vector2D(this.vector[0] / this.magnitude(), this.vector[1] / this.magnitude());
+        if (this.magnitude() === 0) {
+            return new Vector2D(1, 1);
+        } else {
+            return new Vector2D(this.vector[0] / this.magnitude(), this.vector[1] / this.magnitude());
+        }
+        
     }
 
     tangent() {
@@ -50,5 +55,7 @@ export default class Vector2D {
 		return (this.vector[0] * b.vector[0]) + (this.vector[1] * b.vector[1]);
 	}
 
-    
+    isEqual(v) {
+        return this.vector[0] === v.vector[0] && this.vector[1] === v.vector[1];
+    }
 }

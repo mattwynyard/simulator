@@ -3,10 +3,13 @@
   "jest": {
     "verbose": true 
   },
-  "version": "0.3.0",
+  "version": "0.5.0",
   "proxy": "http://localhost:5000",
   "start": "HTTP=false react-scripts start",
   "private": true,
+  "overrides": {
+    "react-error-overlay": "6.0.9"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",
