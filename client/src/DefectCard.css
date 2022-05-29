@@ -1,0 +1,42 @@
+.fault-card-visible {
+  position: relative; 
+  width: 30%; 
+  height: 20%;
+  top: 5%;
+  left: 20%;
+  background-color: white; 
+  z-index: 1000; 
+}
+
+.fault-card-hidden {
+  /* position: fixed;  */
+  display: none; 
+  /* width: 20%; 
+  height: 10%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent; 
+  z-index: 2;  */
+}
+
+.box {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  margin-bottom: 15px;
+  border: 1px solid black;
+}
+
+.magenta {
+  background-color: magenta;
+}
+
+.orange {
+  background-color: orange;
+}
+
+.green {
+  background-color: green;
+}

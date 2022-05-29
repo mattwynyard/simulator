@@ -2,6 +2,7 @@
   width: 100%;
   height: 100vh;
   z-index: 1;
+  position: relative; 
 }
 
 .location {
@@ -9,45 +10,23 @@
 
 } 
 
-.popup {
+/* .popup .toast {
+  position: relative; 
   z-index: 1000;
-}
+  width: 100%; 
+  height: 100%;
+  top: 50%;
+  left: 50%;
+} */
 
 .panel {
   position: fixed; 
   /* display: none;  */
   width: 100%; 
-  height: 10%;
+  height: 100%;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
   background-color: transparent; 
   z-index: 2; 
 }
 
-.fault-card-visible {
-  position: fixed; 
-  /* display: none;  */
-  width: 20%; 
-  height: 10%;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: transparent; 
-  z-index: 2; 
-}
-
-.fault-card-hidden {
-  position: fixed; 
-  display: none; 
-  width: 20%; 
-  height: 10%;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: transparent; 
-  z-index: 2; 
-}

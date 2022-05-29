@@ -9,6 +9,7 @@ const MapRef = forwardRef((props, ref) => {
 
     const map = useMapEvents({
       click: (e) => {
+        console.log("map")
         const position = e.latlng.lat + " " + e.latlng.lng
         navigator.clipboard.writeText(position);
       },
@@ -32,7 +33,7 @@ const MapRef = forwardRef((props, ref) => {
 
     }, [control, map]);
 
-    //useMapEvent('mousemove', onMouseMove)
+    useMapEvent('mousemove', onMouseMove)
 
     const newCenter = useCallback((center) => {
       setCenter(center);
@@ -52,11 +53,11 @@ const MapRef = forwardRef((props, ref) => {
 
     const getZoom = useCallback(() => {
       return(map.getZoom());
-    }, []);
+    }, [map]);
 
     const getCenter = useCallback(() => {
       return map.getCenter();
-    }, []);
+    }, [map]);
 
     const flyTo = (center, zoom) => {
       map.flyTo(center, zoom);

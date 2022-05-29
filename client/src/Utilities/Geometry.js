@@ -1,17 +1,17 @@
 export const getPointRadius = (zoom) => {
     switch (zoom) {
         case 18:
-            return 9;
-        case 17:
-            return 8;
-        case 16:
-            return 7;
-        case 15:
             return 6;
-        case 14:
+        case 17:
+            return 5;
+        case 16:
             return 4;
-        case 13:
+        case 15:
             return 3;
+        case 14:
+            return 2;
+        case 13:
+            return 1;
         default:
             return 3;
     }

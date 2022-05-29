@@ -5,13 +5,13 @@ import React, { useState, useEffect, useRef} from 'react';
 import Centrelines from './geometry/Centrelines.jsx';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
-import DefectPoint from './geometry/DefectPoint.jsx';
+import { DefectCard } from './DefectCard.jsx';
+import DefectPoints from './geometry/DefectPoints.jsx';
 import DefectPolygons from './geometry/DefectPolygons.jsx';
 import TrailMarker from './geometry/TrailMarker.jsx';
 import socketIOClient from "socket.io-client";
 import Location from './geometry/Location.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Card } from 'react-bootstrap';
 
 const SERVER_URL = "http://localhost:5000";
 let start = null;
@@ -41,8 +41,8 @@ function App() {
   const mapRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [realTime, setRealTime] = useState(JSON.parse(window.sessionStorage.getItem('realtime')) || false);
-  const [zoom, setZoom] = useState(null);
   const [showDefectCard, setShowDefectCard] = useState(false)
+  const [cardData, setCardData] = useState(null)
 
   useEffect(() => {
       socket.on("connect", () => {
@@ -196,13 +196,22 @@ function App() {
   const handleMarkerClick = (e, data) => {
     console.log(data)
     setShowDefectCard(true)
+    setCardData(data)
+  }
+  const hideCard = (e) => {
+    if (showDefectCard) {
+      setShowDefectCard(false)
+    }
+    console.log(showDefectCard)
   }
 
   return (
     <>
-      {/* <div className= "panel">
-        <DefectToast >
-      </div> */}
+      <div 
+        className= "panel"
+      >
+        
+     
       <MapContainer 
           className="map" 
           zoom={18} 
@@ -210,17 +219,18 @@ function App() {
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
           keyboard={true}
-          eventHandlers={{
-              load: () => {
-                console.log('onload')
-              },
-            }}
         >
+          <DefectCard
+          show={showDefectCard}
+          data={cardData}
+          close={hideCard}
+          />
         <MapRef 
           ref={mapRef} 
           update={updateGeometry}
+          
           center={position.length !== 0 ? [position[0].latlng] : center} 
-          />       
+          />      
         <CustomTileLayer isRemote={isRemote}/>
         <ScaleControl name="Scale" className="scale"/>
         <LayersControl position="topright">
@@ -230,31 +240,26 @@ function App() {
               <DefectPolygons
                 data={faultLines}
               /> 
-            {faultPoints.map((defect) =>
-              <DefectPoint
-                data={defect}
-                key={defect.id}
-                onClick={handleMarkerClick}
-              />
-            )}
+            <DefectPoints
+              data={faultPoints}
+              onClick={handleMarkerClick}
+            />
             </Pane>
          </LayerGroup>
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Signs">
          <LayerGroup>
           <Pane name="signs" className={"signs"}>     
-            {faultSigns.map((defect) =>
-              <DefectPoint
-                data = {defect}
-                key={defect.id}
-              />
-            )}
+            <DefectPoints
+              data = {faultSigns}
+              //onClick={handleMarkerClick}
+            />
           </Pane>
          </LayerGroup>
          </LayersControl.Overlay>
          <LayersControl.Overlay checked name="Centrelines">
           <LayerGroup>
-            <Centrelines data={centrelines} zoom={zoom}></Centrelines>
+            <Centrelines data={centrelines}/>
           </LayerGroup>
         </LayersControl.Overlay>
           </LayersControl> 
@@ -267,7 +272,8 @@ function App() {
           <Pane name="position">
           <Location className='location' data={position} style={{ zIndex: 1000 }}   ></Location>
         </Pane>
-         </MapContainer>  
+         </MapContainer> 
+          </div> 
     </>  
   );
 }

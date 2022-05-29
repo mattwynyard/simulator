@@ -66,15 +66,11 @@ const DefectPolygon = (props) => {
     props.data.geojson.forEach(point => {
         const spherical = L.CRS.EPSG3857.latLngToPoint(L.latLng(point), zoom)
         const vector = new Vector2D(spherical.x, spherical.y)
-        // vectors.forEach((element) => {
-        //     if (element.isEqual(vector)) {
-        //         console.log(vector.vector)
-        //     }
-        // })
         vectors.push(vector);
     });
     let xyVectors = null;
     if (vectors.length === 2) {
+        xyVectors = buildSimplePolygon(vectors, thickness);
     } else if (vectors.length > 2) {
         xyVectors = buildComplexPolygon(vectors, thickness, props.data.id);
     }
@@ -111,13 +107,10 @@ const DefectPolygon = (props) => {
         );
     } else {
         return null;
-    }
-    
+    }  
 }
 
 export default function DefectPolygons(props) {
-
-    
     return (
         <>
         {props.data.map((defect) =>

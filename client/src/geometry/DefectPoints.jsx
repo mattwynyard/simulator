@@ -2,9 +2,7 @@ import { Polygon, useMap } from 'react-leaflet';
 import DefectCircle from './DefectCircle.js';
 import { useLeafletContext } from '@react-leaflet/core';
 import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
-import { useMemo, useState } from 'react';
-import { DefectPopup } from '../DefectPopup.js';
-import { DefectToast } from '../DefectToast.jsx';
+import { useMemo } from 'react';
 import { getColor, getPointRadius } from '../Utilities/Geometry.js';
 
 
@@ -21,20 +19,20 @@ export const LeafletTriangleDefect = (props) => {
             positions={latlngs}
             pathOptions={{color: "#000000"}}
             stroke={true}
-            weight={2}
+            weight={props.weight}
             opacity={1.0}
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
                 click: (e) => {
-                    e.target.openPopup();
+                    props.onClick(e, props.data)
                 }
             }}
         >
             {/* <DefectPopup data ={props.data}/> */}
-            <DefectToast 
+            {/* <DefectToast 
                 data ={props.data} 
-            />
+            /> */}
         </Polygon>
     );
 }
@@ -52,70 +50,63 @@ const LeafletCrossDefect = (props) => {
         positions={latlngs}
         pathOptions={{color: "#000000"}}
         stroke={true}
-        weight={2}
+        weight={props.weight}
         opacity={1}
         fillColor={props.color}
         fillOpacity={1.0}
             eventHandlers={{
                 click : (e) => {
-                    e.target.openPopup();
+                    props.onClick(e, props.data)
                 }
             }}
         >
-            <DefectPopup data ={props.data}/>
         </Polygon>
     );
 }
 
 const LeafletStarDefect = (props) => {
-    const map = useLeafletContext().map;
+    const map = useMap();
     const points = buildStar(props.center, props.radius * 1.41);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
         latlngs.push(latlng)
     })
+
+
     return (
         <Polygon 
             positions={latlngs}
             pathOptions={{color: "#000000"}}
             stroke={true}
-            weight={2}
+            weight={props.weight}
             opacity={1}
             fillColor={props.color}
             fillOpacity={1.0}
             eventHandlers={{
                 click: (e) => {
-                    e.target.openPopup();
+                    props.onClick(e, props.data)
                 }
             }}
         >
-            <DefectPopup data ={props.data}/>
         </Polygon>
     );
 }
 
 const LeafletSquareDefect = (props) => {
-
-    const [showToast, setShowToast] = useState(false);
-    const map = useLeafletContext().map;
+    const map = useMap();
     const points = buildSquare(props.center, props.rotation, props.radius * 2);
     const latlngs = [];
     points.forEach((point) => {
         const latlng = map.containerPointToLatLng(point)
         latlngs.push(latlng)
     });
-
-    const handleClick = (e) => {
-        console.log("click")
-        setShowToast(true)
-    }
     return (
         <Polygon 
             positions={latlngs}
             pathOptions={{color: "#000000"}}
             stroke={true}
-            weight={1}
+            weight={props.weight}
             opacity={1.0}
             lineCap={'square'}
             lineJoin={'square'}
@@ -123,54 +114,118 @@ const LeafletSquareDefect = (props) => {
             fillOpacity={1.0}
             eventHandlers={{
                 click: (e) => {
-                    handleClick(e);
+                    props.onClick(e, props.data)
                 }
             }}
         >
-            <DefectToast 
-                show={true}
-                data ={props.data} 
-            />
         </Polygon>
     );
 }
 
-export default function DefectPoint(props) {
-    const map = useLeafletContext().map;
+export function DefectPoint(props) {
+    const map = useMap();
     const zoom = map.getZoom();
+    const weight = zoom >= 18 ? 2 : 1
     const center = map.latLngToContainerPoint(props.data.geojson);
     const radius = useMemo(() => getPointRadius( zoom), [zoom]);
-    const color = useMemo(() => getColor(props.data.priority), [props.data.priority])
+    const color = useMemo(() => getColor(props.data.priority), [props.data.priority]);
 
     if (props.data.shape === 'square') { //STC
         return (
-            <LeafletSquareDefect data={props.data} rotation={0} radius={radius} center={center} color={color} click={props.onClick}/>
+            <LeafletSquareDefect 
+                data={props.data} 
+                rotation={0} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight} 
+                onClick={props.onClick}
+                />
         );
     } else if (props.data.shape === 'star') { //SUF
         return (
-            <LeafletStarDefect data={props.data} radius={radius} center={center} color={color}/>
+            <LeafletStarDefect 
+                data={props.data} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />
         );
     } else if (props.data.shape === 'triangle') { //DRA
         return (
-            <LeafletTriangleDefect data={props.data} rotation={30} radius={radius} center={center} color={color}/>
+            <LeafletTriangleDefect 
+                data={props.data} 
+                rotation={30} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />
         );
     } else if (props.data.shape === 'circle') { //SGN
         return (
-            <DefectCircle data={props.data} radius={radius} center={center} color={color}/>    
+            <DefectCircle 
+                data={props.data} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />    
         );
     } else if (props.data.shape === 'cross') { //FTP
         return (
-            <LeafletCrossDefect data={props.data} radius={radius} center={center} color={color}/>    
+            <LeafletCrossDefect 
+                data={props.data} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />    
         );
     } else if (props.data.shape === 'diamond') { //MSC
         return (
-            <LeafletSquareDefect data={props.data} rotation={40} radius={radius} center={center} color={color}/>
+            <LeafletSquareDefect 
+                data={props.data} 
+                rotation={40} 
+                radius={radius} 
+                center={center} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />
         );
     } else { //find symbol?
         return (
-            <DefectCircle data={props.data} radius={radius} color={color}/>
-            // <ReactLeafletSquare data={props.data} size={radius}/>
+            <DefectCircle 
+                data={props.data} 
+                radius={radius} 
+                color={color} 
+                weight={weight}
+                onClick={props.onClick}
+                />
         );
     }
        
+}
+
+export default function DefectPoints(props) {
+
+    return (
+        <>
+        {props.data.map((defect) =>
+            <DefectPoint
+              data={defect}
+              key={defect.id}
+              id={defect.id}
+              onClick={props.onClick}
+            />
+            )} 
+        </>
+    );
+
 }

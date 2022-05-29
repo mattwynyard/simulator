@@ -1,8 +1,6 @@
-import { Polyline, Popup, useMap } from 'react-leaflet';
+import { Polyline, Popup } from 'react-leaflet';
 
 function Centreline(props) {
-
-    
 
     return ( <Polyline
         pathOptions={props.data.color ? { color: props.data.color} : { color: 'blue' }}
