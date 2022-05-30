@@ -16,11 +16,10 @@ export default function DefectCircle(props) {
             fillOpacity={1.0}
             eventHandlers={{
                 click: (e) => {
-                    e.target.openPopup();
+                    props.onClick(e, props.data)
                 }
             }}
-            > 
-            <DefectPopup data ={props.data}/>       
+            >     
         </CircleMarker>
     );   
 }

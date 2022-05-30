@@ -9,7 +9,6 @@ const MapRef = forwardRef((props, ref) => {
 
     const map = useMapEvents({
       click: (e) => {
-        console.log("map")
         const position = e.latlng.lat + " " + e.latlng.lng
         navigator.clipboard.writeText(position);
       },
@@ -19,21 +18,21 @@ const MapRef = forwardRef((props, ref) => {
       }
     }, []);
 
-    useEffect(
-      () => {
-        let control = L.positionControl()
-        map.addControl(control);
-        setControl(control)
-    }, [map]);
+    // useEffect(
+    //   () => {
+    //     let control = L.positionControl()
+    //     map.addControl(control);
+    //     setControl(control)
+    // }, [map]);
 
-    const onMouseMove  = useCallback((e) => {
-      let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 :  map.getCenter().lat;
-      let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 :  map.getCenter().lng;
-      control.updateHTML(lat, lng);
+    // const onMouseMove  = useCallback((e) => {
+    //   let lat = e.latlng.lat ? Math.round(e.latlng.lat * 100000) / 100000 :  map.getCenter().lat;
+    //   let lng = e.latlng.lat ? Math.round(e.latlng.lng * 100000) / 100000 :  map.getCenter().lng;
+    //   control.updateHTML(lat, lng);
 
-    }, [control, map]);
+    // }, [control, map]);
 
-    useMapEvent('mousemove', onMouseMove)
+    // useMapEvent('mousemove', onMouseMove)
 
     const newCenter = useCallback((center) => {
       setCenter(center);

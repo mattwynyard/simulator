@@ -202,7 +202,6 @@ function App() {
     if (showDefectCard) {
       setShowDefectCard(false)
     }
-    console.log(showDefectCard)
   }
 
   return (
@@ -210,8 +209,6 @@ function App() {
       <div 
         className= "panel"
       >
-        
-     
       <MapContainer 
           className="map" 
           zoom={18} 
@@ -239,6 +236,7 @@ function App() {
           <Pane name="faults" className={"faults"}>
               <DefectPolygons
                 data={faultLines}
+                onClick={handleMarkerClick}
               /> 
             <DefectPoints
               data={faultPoints}
@@ -252,7 +250,7 @@ function App() {
           <Pane name="signs" className={"signs"}>     
             <DefectPoints
               data = {faultSigns}
-              //onClick={handleMarkerClick}
+              onClick={handleMarkerClick}
             />
           </Pane>
          </LayerGroup>

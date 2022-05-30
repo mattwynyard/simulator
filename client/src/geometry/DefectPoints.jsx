@@ -29,10 +29,6 @@ export const LeafletTriangleDefect = (props) => {
                 }
             }}
         >
-            {/* <DefectPopup data ={props.data}/> */}
-            {/* <DefectToast 
-                data ={props.data} 
-            /> */}
         </Polygon>
     );
 }
@@ -125,9 +121,17 @@ const LeafletSquareDefect = (props) => {
 export function DefectPoint(props) {
     const map = useMap();
     const zoom = map.getZoom();
-    const weight = zoom >= 18 ? 2 : 1
+    const weight = useMemo(() => {
+        console.log(zoom)
+        if (zoom >= 18) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }, [zoom]);
+    
     const center = map.latLngToContainerPoint(props.data.geojson);
-    const radius = useMemo(() => getPointRadius( zoom), [zoom]);
+    const radius = useMemo(() => getPointRadius(zoom), [zoom]);
     const color = useMemo(() => getColor(props.data.priority), [props.data.priority]);
 
     if (props.data.shape === 'square') { //STC

@@ -160,6 +160,7 @@ io.on('connection',(socket) => {
       io.emit("geometry", {centreline: cls, inspection: {points: ins.points, lines: ins.lines, signs: ins.signs}});    
     } else if (type === "inspection") {
       const ins = await fetchInspection(bounds); 
+      
       io.emit("geometry", {inspection: {points: ins.points, lines: ins.lines, signs: ins.signs}});   
     } else if (type === "centreline") {
       const cls = await fetchCentrelines(bounds);
