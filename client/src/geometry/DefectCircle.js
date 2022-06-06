@@ -1,5 +1,4 @@
 import { CircleMarker} from 'react-leaflet';
-import { DefectPopup } from '../DefectPopup.js';
 
 export default function DefectCircle(props) {
     return (

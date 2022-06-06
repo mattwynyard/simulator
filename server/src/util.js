@@ -29,6 +29,27 @@ function radians(n) {
     return n * (Math.PI / 180)
 }
 
+function parseDefect (inspection, defect) {
+    let data = [];
+    data.push(parseInteger(defect.id)); 
+    data.push(parseInteger(inspection)); 
+    data.push(parseString(defect.type));  
+    data.push(parseString(defect.fault)); 
+    data.push(parseString(defect.repair)); 
+    data.push(parseInteger(defect.priority));
+    data.push(parseString(defect.side));
+    data.push(parseInteger(defect.erp));
+    data.push(parseInteger(defect.finerp));
+    data.push(parseInteger(defect.length));
+    data.push(parseNumeric(defect.width));
+    data.push(parseInteger(defect.count));  
+    data.push(parseString(defect.photoname));
+    data.push(parseString(defect.signcode));
+    data.push(parseString(defect.inspector));
+    data.push(parseDate(defect.gpstime));
+    return data;
+}
+
 function parseInteger(x) {
     let n = parseInt(x)
     if (Number.isNaN(n)) {
@@ -94,5 +115,5 @@ function arrayToWkt(arr) {
     return wkt;
 }
 
-module.exports = {buildQuery, parseInteger, parseDate, parseString, parseNumeric, 
+module.exports = {buildQuery, parseDefect, parseInteger, parseDate, parseString, parseNumeric, 
     swapLatLng, arrayToWkt, parseBoolean, haversine}

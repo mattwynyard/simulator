@@ -343,6 +343,7 @@ app.post('/deleteLine', async (req, res) => {
 
 app.post('/updatePoint', async (req, res) => {
   console.log(req.body)
+  const result = await db.updateDefect(req.body.inspection, req.body.data);
     res.send({ message: "updated"});
 });
 

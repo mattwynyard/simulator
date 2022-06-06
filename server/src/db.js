@@ -25,7 +25,7 @@ connection.on('connect', () => {
 
 connection.on('error', error => {
     console.log(error);
-    throw err;
+    throw error;
 });
 
 module.exports = { 
@@ -129,25 +129,73 @@ module.exports = {
     //     });
     // },
 
-    insertDefect: (inspection, defect) => {
-        let data = [];
+    // parseData: (inspection, defect) => {
+    //     let data = [];
+    //     data.push(util.parseInteger(defect.id)); 
+    //     data.push(util.parseInteger(inspection)); 
+    //     data.push(util.parseString(defect.type));  
+    //     data.push(util.parseString(defect.fault)); 
+    //     data.push(util.parseString(defect.repair)); 
+    //     data.push(util.parseInteger(defect.priority));
+    //     data.push(util.parseString(defect.side));
+    //     data.push(util.parseInteger(defect.erp));
+    //     data.push(util.parseInteger(defect.finerp));
+    //     data.push(util.parseInteger(defect.length));
+    //     data.push(util.parseNumeric(defect.width));
+    //     data.push(util.parseInteger(defect.count));  
+    //     data.push(util.parseString(defect.photoname));
+    //     data.push(util.parseString(defect.signcode));
+    //     data.push(util.parseString(defect.inspector));
+    //     data.push(util.parseDate(defect.gpstime));
+    //     return data;
+    // },
+
+    updateDefect: (inspection, data) => {
+        let defect = util.parseDefect(inspection, data);
         let sql = null;
-        data.push(util.parseInteger(defect.id)); 
-        data.push(util.parseInteger(inspection)); 
-        data.push(util.parseString(defect.type));  
-        data.push(util.parseString(defect.fault)); 
-        data.push(util.parseString(defect.repair)); 
-        data.push(util.parseInteger(defect.priority));
-        data.push(util.parseString(defect.side));
-        data.push(util.parseInteger(defect.erp));
-        data.push(util.parseInteger(defect.finerp));
-        data.push(util.parseInteger(defect.length));
-        data.push(util.parseNumeric(defect.width));
-        data.push(util.parseInteger(defect.count));  
-        data.push(util.parseString(defect.photoname));
-        data.push(util.parseString(defect.signcode));
-        data.push(util.parseString(defect.inspector));
-        data.push(util.parseDate(defect.gpstime)); 
+        if (data.type === 'fault') {
+            let lng = defect.geojson[1];
+            let lnglat = [lng, defect.geojson[0]]
+            sql = `UPDATE public.defects SET
+                id=${defect.id}, inspection=${inspection}, type=${defect.type}, code=${defect.code}, repair=${defect.repair}, 
+                priority=${defect.priority}, side=${defect.side}, starterp=${defect.starterp}, enderp=${defect.enderp}, length=${defect.length},
+                 width=${defect.width}, count=${defect.count}, photo=${defect.photo}, signcode=${defect.signcode}, inspector=${defect.inspector}, 
+                 gpstime=${defect.gpstime}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326);`; 
+        } else if (data.type === 'line') {
+            //console.log(defect)
+            let wkt = util.arrayToWkt(defect.geojson);
+            sql = `UPDATE public.defects SET
+            id=${defect.id}, inspection=${inspection}, type=${defect.type}, code=${defect.code}, repair=${defect.repair}, 
+            priority=${defect.priority}, side=${defect.side}, starterp=${defect.starterp}, enderp=${defect.enderp}, length=${defect.length},
+             width=${defect.width}, count=${defect.count}, photo=${defect.photo}, signcode=${defect.signcode}, inspector=${defect.inspector}, 
+             gpstime=${defect.gpstime}, ST_SetSRID(ST_GeomFromText(${wkt}), 4326);`; 
+        } else if (data.type === 'sign') {
+            let lng = defect.geojson[1];
+            let lnglat = [lng, defect.geojson[0]]
+            sql = `UPDATE public.defects SET
+                id=${defect.id}, inspection=${inspection}, type=${defect.type}, code=${defect.code}, repair=${defect.repair}, 
+                priority=${defect.priority}, side=${defect.side}, starterp=${defect.starterp}, enderp=${defect.enderp}, length=${defect.length},
+                 width=${defect.width}, count=${defect.count}, photo=${defect.photo}, signcode=${defect.signcode}, inspector=${defect.inspector}, 
+                 gpstime=${defect.gpstime}, ST_SetSRID(ST_MakePoint(${lnglat}), 4326);`; 
+        } else {
+            console.log(defect); 
+        }
+        return new Promise((resolve, reject) => {
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    //console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let _result = resolve(result);
+                return _result;
+            });
+        });
+    },
+
+    insertDefect: (inspection, defect) => {
+        let data = util.parseDefect(inspection, defect);
+        let sql = null;
+         
         if (defect.type === 'fault') {
             let lng = defect.geojson[1];
             let lnglat = [lng, defect.geojson[0]]
