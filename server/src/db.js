@@ -129,6 +129,20 @@ module.exports = {
     //     });
     // },
 
+    deleteDefect: (id) => {
+        const sql = `DELETE FROM public.defects WHERE id=${id};`;
+        return new Promise((resolve, reject) => {
+            connection.query(sql, (err, result) => {
+                if (err) {
+                    //console.error('Error executing query', err.stack)
+                    return reject(err);
+                }
+                let _result = resolve(result);
+                return _result;
+            });
+        });
+    },
+
     insertDefect: (inspection, defect) => {
         let data = [];
         let sql = null;

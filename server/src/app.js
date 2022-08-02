@@ -321,14 +321,14 @@ app.post('/insertPoint', async (req, res) => {
     console.log(err)
   }
   
-  res.send({ message: "ok"});
+  res.send({ rows: result.rowCount});
 });
 
 app.post('/insertLine', async (req, res) => {
-  console.log(req.body)
+  //console.log(req.body)
   const result = await db.insertDefect(req.body.inspection, req.body.data);
   io.emit("insert", result.rowCount)
-  res.send({ message: "ok"});
+  res.send({ rows: result.rowCount});
 });
 
 app.post('/updateLine', async (req, res) => {
@@ -342,13 +342,21 @@ app.post('/deleteLine', async (req, res) => {
 });
 
 app.post('/updatePoint', async (req, res) => {
-  console.log(req.body)
-    res.send({ message: "updated"});
+  console.log(`Update: ${req.body}`)
+  const result = await db.updateDefect(req.body.inspection, req.body.data);
+  res.send({ message: "updated"});
 });
 
 app.post('/deletePoint', async (req, res) => {
   console.log(req.body)
-    res.send({ message: "deleted"});
+  try {
+    const result = await db.deleteDefect(req.body.id);
+    io.emit("delete", result.rowCount)
+  } catch (error) {
+    console.log(error)
+    res.send({rows: result.rowCount})
+  }
+  
 });
 
 module.exports = app;
