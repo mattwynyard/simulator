@@ -5,9 +5,10 @@ import React, { useState, useEffect, useRef} from 'react';
 import Centrelines from './geometry/Centrelines.jsx';
 import CustomTileLayer from './CustomTileLayer.js';
 import MapRef from './MapRef.js';
-import { DefectCard } from './DefectCard.jsx';
+import { DragableCard } from './components/DraggableCard.jsx';
 import DefectPoints from './geometry/DefectPoints.jsx';
 import DefectPolygons from './geometry/DefectPolygons.jsx';
+import { DefectCardBody, DefectCardHeader } from './components/DefectCard.js';
 import TrailMarker from './geometry/TrailMarker.jsx';
 import socketIOClient from "socket.io-client";
 import Location from './geometry/Location.jsx';
@@ -194,7 +195,6 @@ function App() {
   }
 
   const handleMarkerClick = (e, data) => {
-    console.log(data)
     setShowDefectCard(true)
     setCardData(data)
   }
@@ -209,6 +209,18 @@ function App() {
       <div 
         className= "panel"
       >
+        <DragableCard
+          show={showDefectCard}
+          data={cardData}
+          header={<DefectCardHeader 
+            data={cardData} 
+            close={hideCard}
+            />}
+          body= {<DefectCardBody 
+            data={cardData}
+            />}
+          />
+          
       <MapContainer 
           className="map" 
           zoom={18} 
@@ -217,15 +229,10 @@ function App() {
           scrollWheelZoom={true}
           keyboard={true}
         >
-          <DefectCard
-          show={showDefectCard}
-          data={cardData}
-          close={hideCard}
-          />
+          
         <MapRef 
           ref={mapRef} 
           update={updateGeometry}
-          
           center={position.length !== 0 ? [position[0].latlng] : center} 
           />      
         <CustomTileLayer isRemote={isRemote}/>

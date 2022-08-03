@@ -1,9 +1,9 @@
 .fault-card-visible {
-  position: relative; 
+  position: absolute;
   width: 30%; 
   height: 20%;
-  top: 5%;
-  left: 20%;
+  top: 5px;
+  left: 20px;
   background-color: white; 
   z-index: 1000; 
 }
@@ -12,7 +12,7 @@
   display: none; 
 }
 
-.header-card {
+.card-header {
  display: inline-block; 
  width: 100%;
 }
