@@ -1,13 +1,18 @@
 import './DefectCard.css';
-import {Card, CloseButton} from 'react-bootstrap';
+import {Card} from 'react-bootstrap';
 import React, { useRef, useState} from 'react';
 
 
 export function DragableCard(props) {
 
+    const TOLERANCE = 50; //resize box pixels
+
     const cardRef = useRef(null);
-    const [moving, setMoving] = useState(false)
-    const [mousePosition, setMousePosition] = useState(null)
+    const [moving, setMoving] = useState(false);
+    const [resize, setResize] = useState(false);
+    const [mouseDown, setMouseDown] = useState(false)
+    const [mousePosition, setMousePosition] = useState(null);
+    //const [height, setHeight] = useState()
 
     const setColor = () => {
         if (props.data.priority === 1) {
@@ -21,39 +26,95 @@ export function DragableCard(props) {
         }
     }
 
-    const mouseEnterHeader = (e) => {
-        const card = cardRef.current;
-        card.style.cursor = 'pointer';
+    const isMouseOverResize = (mouse, bottomRight) => { 
+        if (mouse.x > bottomRight.x || mouse.y > bottomRight.y) return false;
+        if (mouse.x >= bottomRight.x - TOLERANCE && mouse.y >= bottomRight.y - TOLERANCE) return true
+        return false;
     }
 
-    const mouseLeaveHeader = (e) => {
-        mouseUpHeader(e);
+    const mouseOverBody = (e) => {
+        const card = cardRef.current;
+        const rect = boundingRect(card)
+        const result = isMouseOverResize({x: e.clientX, y: e.clientY}, rect.bottomRight);
+        if (result && card) {
+            setResize(true)
+            card.style.cursor = 'se-resize';
+        } 
+        
+    }
+
+    const boundingRect = (card) => {
+        const top = parseInt(card.style.top)
+        const left = parseInt(card.style.left)
+        return ({topLeft: {x: left, y: top}, bottomRight: {x: left + card.clientWidth, y: top + card.clientHeight}})
+    }
+
+    const mouseUpBody = (e) => {
+        setMouseDown(false);
+        setResize(false);
+    }
+
+    const mouseDownBody = (e) => {
+        console.log("mouse down body")
+        const card = cardRef.current;
+        const rect = boundingRect(card);
+        const result = isMouseOverResize({x: e.clientX, y: e.clientY}, rect.bottomRight)
+        setMousePosition({x: e.clientX, y: e.clientY})
+        console.log(result)
+        if (result) {
+            setResize(true);
+            setMouseDown(true);
+            
+        } else {
+            setResize(false);
+
+        }
+    }
+
+    const mouseOverHeader = (e) => {
+        const card = cardRef.current;
+        card.style.cursor = 'pointer';
     }
 
     const mouseDownHeader = (e) => {
         const card = cardRef.current;
-        setMoving(true)
-        card.style.cursor = 'pointer';
-        setMousePosition({x: e.clientX, y: e.clientY})
-        console.log("mouse down header")
+        if (card) {
+            setMoving(true)
+            card.style.cursor = 'move';
+            setMousePosition({x: e.clientX, y: e.clientY})
+        }
     }
 
     const mouseUpHeader = (e) => {
         const card = cardRef.current;
-        if (setMoving) {
+        if (moving) {
             setMoving(false)
-            card.style.cursor = '';
+            if (card) card.style.cursor = '';
         }
-        console.log("mouse up header")
     }
 
     const onMouseMove = (e) => {
-        const card = cardRef.current;
+        const card = cardRef.current; 
         const newX = mousePosition.x - e.clientX;
         const newY = mousePosition.y - e.clientY;
-        setMousePosition({x: e.clientX, y: e.clientY})
-        card.style.top = card.offsetTop - newY + "px";;
-        card.style.left = card.offsetLeft - newX + "px";
+        if (card) {
+            if (mouseDown && card.style.cursor === 'se-resize') {
+
+                card.style.width = card.clientWidth - newX + "px";
+                card.style.height = card.clientHeight - newY+ "px";
+                
+            } 
+            if (moving) {
+                card.style.top = card.offsetTop - newY + "px";
+                card.style.left = card.offsetLeft - newX + "px";
+            }
+            setMousePosition({x: e.clientX, y: e.clientY})
+        }
+           
+    }
+
+    const clickClose = (e) => {
+
     }
 
     if (props.show && props.data !== null) {
@@ -63,19 +124,27 @@ export function DragableCard(props) {
                 className={props.show ? "fault-card-visible" : "fault-card-hidden"}
             >
             <Card
+                className="card"
+                
             >
                 <Card.Header 
                     className="card-header"
-                    onMouseLeave={(e) => mouseLeaveHeader(e)}
-                    onMouseEnter={(e) => mouseEnterHeader(e)}
+                    onMouseOver={(e) => mouseOverHeader(e)}
                     onMouseDown={(e) => mouseDownHeader(e)}
                     onMouseUp={(e) => mouseUpHeader(e)}
-                    onMouseMove={moving ? (e) =>  onMouseMove(e) : null}
+                    onMouseMove={moving  ? (e) =>  onMouseMove(e) : null}
                 >
                     <div className={setColor()}/>
                     {props.header}
                 </Card.Header>
-                <Card.Body >
+                <Card.Body 
+                    className="card-body"
+                    onMouseOver={(e) => mouseOverBody(e)}
+                    onMouseDown={(e) => mouseDownBody(e)}
+                    onMouseUp={(e) => mouseUpBody(e)}
+                    // onMouseMove={mouseDown ? (e) =>  onMouseMove(e) : null}
+                    onMouseMove={(e) =>  onMouseMove(e)}
+                >
                     {props.body}
                 </Card.Body>  
             </Card>

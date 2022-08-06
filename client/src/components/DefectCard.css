@@ -1,7 +1,7 @@
 .fault-card-visible {
   position: absolute;
-  width: 30%; 
-  height: 20%;
+  height: 400px;
+  width: 400px;
   top: 5px;
   left: 20px;
   background-color: white; 
@@ -10,6 +10,17 @@
 
 .fault-card-hidden {
   display: none; 
+}
+
+.card {
+  width: 100%;
+  height: inherit;
+}
+
+.card-body {
+  width: 100%;
+  height: inherit;
+
 }
 
 .card-header {
@@ -22,11 +33,6 @@
   display: inline-block; 
 }
 
-.heading-card {
-  display: inline-block;
-  text-align: center; 
-  width: 80%;
-}
 
 .box {
   position: relative;

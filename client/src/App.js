@@ -204,10 +204,20 @@ function App() {
     }
   }
 
+  const onMouseMove = (e) => {
+    //console.log({x: e.clientX, y: e.clientY})
+  }
+
+  const onMouseUp = (e) => {
+    //console.log({x: e.clientX, y: e.clientY})
+  }
+
   return (
     <>
       <div 
         className= "panel"
+        onMouseMove={(e) => onMouseMove(e)}
+        onMouseUp={(e) => onMouseUp(e)}
       >
         <DragableCard
           show={showDefectCard}
