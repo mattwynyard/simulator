@@ -1,4 +1,4 @@
-import {CloseButton} from 'react-bootstrap';
+
 
 export const DefectCardBody = (props) => {
     return (
@@ -19,10 +19,7 @@ export const DefectCardHeader = (props) => {
     return (
         <div>
             <strong className="heading-card">{`${props.data.description}`}</strong>
-                <CloseButton 
-                    className="close-btn" 
-                    onClick={props.close}
-            /> 
+                
         </div>
         
     )

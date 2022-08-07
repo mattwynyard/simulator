@@ -1,7 +1,7 @@
 import './DefectCard.css';
-import {Card} from 'react-bootstrap';
 import React, { useRef, useState} from 'react';
-
+import {CloseButton} from 'react-bootstrap';
+import { useEffect } from 'react';
 
 export function DragableCard(props) {
 
@@ -13,6 +13,11 @@ export function DragableCard(props) {
     const [mouseDown, setMouseDown] = useState(false)
     const [mousePosition, setMousePosition] = useState(null);
     //const [height, setHeight] = useState()
+
+    useEffect(() => {
+
+        
+    }, [])
 
     const setColor = () => {
         if (props.data.priority === 1) {
@@ -123,11 +128,7 @@ export function DragableCard(props) {
                 ref={cardRef}
                 className={props.show ? "fault-card-visible" : "fault-card-hidden"}
             >
-            <Card
-                className="card"
-                
-            >
-                <Card.Header 
+                <div 
                     className="card-header"
                     onMouseOver={(e) => mouseOverHeader(e)}
                     onMouseDown={(e) => mouseDownHeader(e)}
@@ -136,18 +137,20 @@ export function DragableCard(props) {
                 >
                     <div className={setColor()}/>
                     {props.header}
-                </Card.Header>
-                <Card.Body 
+                </div>
+                <CloseButton 
+                    className="close-btn" 
+                    onClick={props.close}
+                /> 
+                <div
                     className="card-body"
                     onMouseOver={(e) => mouseOverBody(e)}
                     onMouseDown={(e) => mouseDownBody(e)}
                     onMouseUp={(e) => mouseUpBody(e)}
-                    // onMouseMove={mouseDown ? (e) =>  onMouseMove(e) : null}
-                    onMouseMove={(e) =>  onMouseMove(e)}
+                    onMouseMove={mouseDown ? (e) =>  onMouseMove(e) : null}
                 >
                     {props.body}
-                </Card.Body>  
-            </Card>
+                </div>  
             </div>
         );
     } else {

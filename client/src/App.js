@@ -222,9 +222,10 @@ function App() {
         <DragableCard
           show={showDefectCard}
           data={cardData}
+          close={hideCard}
           header={<DefectCardHeader 
             data={cardData} 
-            close={hideCard}
+            
             />}
           body= {<DefectCardBody 
             data={cardData}
