@@ -120,4 +120,4 @@ else if (typeof module !== 'undefined') {
 } else if (typeof self !== 'undefined') self.simplify = simplify;
 else window.simplify = simplify;
 
-})()
+})();
