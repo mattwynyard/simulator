@@ -12,8 +12,8 @@ const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
 const util = require('./util.js') ;
 const MIN_DISTANCE = 3;
-const controllerSocket = require('./clientSocket.js');
-let access = null;
+const { connectController } = require('./clientSocket.js');
+let javaSocket = null;
 
 const io = new Server(server, {
   cors: {
@@ -25,10 +25,10 @@ const io = new Server(server, {
 server.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
   try {
-    access = controllerSocket.connectController(38200)
+    javaSocket = connectController(38200);
 
   } catch (err) {
-    console.err(err)
+    console.log(err)
   }
 });
  
@@ -52,7 +52,7 @@ app.get('/tiles/:z/:x/:y', async (req, res) => {
 
 io.on('connection',(socket) => {
   console.log("client connected on socket");
-  access.write("refresh")
+  javaSocket.write("refresh")
   socket.on("trail", async (bounds) => {
     let trail = await db.trail(bounds);
     let data = []
