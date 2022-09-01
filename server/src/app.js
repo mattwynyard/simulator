@@ -4,8 +4,9 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const morgan = require('morgan');
+//const morgan = require('morgan');
 const cors = require('cors');
+const path = require('path');
 const bodyParser = require('body-parser');
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
@@ -33,7 +34,7 @@ server.listen(port, () => {
 });
  
 app.use(cors());
-app.use(morgan('dev'));
+//app.use(morgan('dev'));
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.json({limit: '500mb', extended: false}));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: false }))
@@ -49,6 +50,12 @@ app.use((req, res, next) => {
 app.get('/tiles/:z/:x/:y', async (req, res) => {
   res.sendFile(path.join(__dirname, '../', req.url));
 });
+
+// app.use(express.static(path.join(__dirname, 'build')));
+
+// app.get('/', function (req, res) {
+//   res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// });
 
 io.on('connection',(socket) => {
   console.log("client connected on socket");
@@ -310,6 +317,7 @@ app.post('/inspection', async (req, res) => {
 
 app.get('/reset', async (req, res) => {
   try {
+    console.log(req.body)
     await db.resetTrail();
     await db.resetInspection();
     res.send("reset");

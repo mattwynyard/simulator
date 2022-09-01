@@ -7,7 +7,7 @@
     "start": "node src/app.js",
     "server": "nodemon src/server.js",
     "debug": "node --inspect src/app.js",
-    "dev": "nodemon src/app.js",
+    "start-dev": "nodemon src/app.js",
     "lint": "eslint --fix src",
     "audit": "snyk test",
     "test": "mocha -w"
