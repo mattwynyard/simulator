@@ -4,13 +4,13 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-//const morgan = require('morgan');
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
 const db = require('./db.js');
 const port = process.env.PROXY_PORT;
 const host = process.env.PROXY;
+const javaPort = process.env.JAVA_PORT;
 const util = require('./util.js') ;
 const MIN_DISTANCE = 3;
 const { connectController } = require('./clientSocket.js');
@@ -26,7 +26,7 @@ const io = new Server(server, {
 server.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
   try {
-    javaSocket = connectController(38200);
+    javaSocket = connectController(javaPort);
 
   } catch (err) {
     console.log(err)
@@ -34,7 +34,6 @@ server.listen(port, () => {
 });
  
 app.use(cors());
-//app.use(morgan('dev'));
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.json({limit: '500mb', extended: false}));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: false }))
