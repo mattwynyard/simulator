@@ -55,13 +55,15 @@ const DefectPolygon = (props) => {
     const map = useMap();
     const zoom = map.getZoom();
     const thickness = useMemo(() => getLineWeight(zoom), [zoom]);
+
     const weight = useMemo((zoom) => {
         if (zoom >= 18) {
             return 2;
         } else {
             return 1;
         }
-    }, [zoom]);
+    }, []);
+    
     const vectors = [];
     const latlngs = [];
     props.data.geojson.forEach(point => {

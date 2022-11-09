@@ -1,5 +1,5 @@
 import { Polygon, useMap } from 'react-leaflet';
-import { buildLocationTriangle } from './Shapes.js';
+import { buildLocationTriangle } from './Shapes.jsx';
 import { CircleMarker} from 'react-leaflet';
 
 export const LeafletTriangle = (props) => {

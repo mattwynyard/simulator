@@ -3,12 +3,12 @@ import { MapContainer, ScaleControl, LayerGroup, LayersControl, Pane} from 'reac
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect, useRef} from 'react';
 import Centrelines from './geometry/Centrelines.jsx';
-import CustomTileLayer from './CustomTileLayer.js';
+import CustomTileLayer from './components/CustomTileLayer.jsx';
 import MapRef from './MapRef.js';
 import { DragableCard } from './components/DraggableCard.jsx';
 import DefectPoints from './geometry/DefectPoints.jsx';
 import DefectPolygons from './geometry/DefectPolygons.jsx';
-import { DefectCardBody, DefectCardHeader } from './components/DefectCard.js';
+import { DefectCardBody, DefectCardHeader } from './components/DefectCard.jsx';
 import TrailMarker from './geometry/TrailMarker.jsx';
 import socketIOClient from "socket.io-client";
 import Location from './geometry/Location.jsx';

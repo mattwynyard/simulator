@@ -1,7 +1,7 @@
 import { Polygon, useMap } from 'react-leaflet';
-import DefectCircle from './DefectCircle.js';
+import DefectCircle from './DefectCircle.jsx';
 import { useLeafletContext } from '@react-leaflet/core';
-import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.js';
+import { buildSquare, buildTriangle, buildStar, buildCross } from './Shapes.jsx';
 import { useMemo } from 'react';
 import { getColor, getPointRadius } from '../Utilities/Geometry.js';
 
