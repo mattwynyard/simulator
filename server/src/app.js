@@ -13,7 +13,7 @@ const host = process.env.PROXY;
 const javaPort = process.env.JAVA_PORT;
 const util = require('./util.js') ;
 const MIN_DISTANCE = 3;
-const { connectController } = require('./clientSocket.js');
+//const { connectController } = require('./clientSocket.js');
 let javaSocket = null;
 
 const io = new Server(server, {
@@ -25,12 +25,12 @@ const io = new Server(server, {
 
 server.listen(port, () => {
   console.log(`Listening: http://${host}:${port}`);
-  try {
-    javaSocket = connectController(javaPort);
+  // try {
+  //   javaSocket = connectController(javaPort);
 
-  } catch (err) {
-    console.log(err)
-  }
+  // } catch (err) {
+  //   console.log(err)
+  // }
 });
  
 app.use(cors());

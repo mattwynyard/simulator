@@ -62,7 +62,7 @@ const MapRef = forwardRef((props, ref) => {
       map.flyTo(center, zoom);
     }
 
-    useImperativeHandle(ref, () => {
+useImperativeHandle(ref, () => {
       return {
         newCenter: newCenter,
         getBounds : getBounds,

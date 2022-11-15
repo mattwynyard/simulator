@@ -205,11 +205,9 @@ function App() {
   }
 
   const onMouseMove = (e) => {
-    //console.log({x: e.clientX, y: e.clientY})
   }
 
   const onMouseUp = (e) => {
-    //console.log({x: e.clientX, y: e.clientY})
   }
 
   return (
